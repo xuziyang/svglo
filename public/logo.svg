@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 48" role="img" aria-labelledby="title desc">
+  <title id="title">SVGlo</title>
+  <desc id="desc">A pixel-to-vector logo mark followed by the SVGlo wordmark.</desc>
+  <defs>
+    <linearGradient id="svglo-logo-bg" x1="6" y1="4" x2="42" y2="44">
+      <stop stop-color="#111827"/>
+      <stop offset="0.58" stop-color="#334155"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+    <linearGradient id="svglo-logo-stroke" x1="12" y1="10" x2="36" y2="38">
+      <stop stop-color="#67e8f9"/>
+      <stop offset="0.48" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </linearGradient>
+    <linearGradient id="svglo-wordmark" x1="54" y1="12" x2="145" y2="38">
+      <stop stop-color="#111827"/>
+      <stop offset="0.55" stop-color="#334155"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="40" height="40" rx="11" fill="url(#svglo-logo-bg)"/>
+  <rect x="13" y="12" width="4.6" height="4.6" rx="1.2" fill="#67e8f9"/>
+  <rect x="19" y="12" width="4.6" height="4.6" rx="1.2" fill="#a78bfa"/>
+  <rect x="13" y="18" width="4.6" height="4.6" rx="1.2" fill="#f8fafc" opacity="0.9"/>
+  <path d="M31.1 14.4 C25.8 12.9 21.4 15.4 21.4 19 C21.4 23.5 31.6 22.3 31.6 28.3 C31.6 32.8 26.2 34.9 18.8 32.2" fill="none" stroke="url(#svglo-logo-stroke)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M25.7 15.1 L30.2 14.2 L31.3 18.4" fill="none" stroke="#f8fafc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+  <circle cx="21.4" cy="19" r="1.8" fill="#f8fafc"/>
+  <circle cx="31.6" cy="28.3" r="1.8" fill="#f8fafc"/>
+  <circle cx="18.8" cy="32.2" r="1.8" fill="#f59e0b"/>
+  <text x="54" y="33" fill="url(#svglo-wordmark)" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="27" font-weight="800" letter-spacing="0">SVGlo</text>
+</svg>
