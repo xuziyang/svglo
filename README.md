@@ -20,17 +20,20 @@ wasm 的 `ColorImageConverter` / `BinaryImageConverter` 以 `tick()` 分片运�
 1. [Rust](https://www.rust-lang.org/tools/install) + `wasm-pack`
 2. Node.js 18+
 
-## 首次准备：构建 wasm 包
+## wasm 包
 
-wasm 包来自同仓库的 `vtracer/webapp`，需先编译：
+wasm 包（`vendor/vtracer-webapp-pkg/`）已随仓库提交，开箱即用，无需本地编译 Rust。
+
+如需更新（上游 vtracer 改动后重新生成）：
 
 ```sh
 cd ../vtracer/webapp
 wasm-pack build --target web --release
 # 产出 ../vtracer/webapp/pkg/
+cp -r ../vtracer/webapp/pkg/* vendor/vtracer-webapp-pkg/
 ```
 
-本工程的 `package.json` 通过 `file:../vtracer/webapp/pkg` 引用它。
+本工程的 `package.json` 通过 `file:vendor/vtracer-webapp-pkg` 引用它。
 
 ## 开发与构建
 
@@ -47,7 +50,7 @@ npm run typecheck # 类型检查
 `npm run build` 产出的 `dist/` 是纯静态站点，可直接部署到任意静态托管：
 
 - Cloudflare Pages / Vercel / Netlify：连接仓库，构建命令 `npm run build`，输出目录 `dist`
-- 注意：构建前需确保 `../vtracer/webapp/pkg` 已生成（CI 中加一步 `wasm-pack build`）
+- wasm 依赖已 vendored 进仓库（`vendor/`），CI 无需额外编译步骤
 
 ## 关键集成点
 
