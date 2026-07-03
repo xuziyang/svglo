@@ -1,5 +1,6 @@
-import type { RefObject } from 'react';
+import { useMemo, type RefObject } from 'react';
 import type { ConvertStatus } from '../hooks/useVTracer';
+import { Segmented } from './Segmented';
 
 export type PreviewView = 'before' | 'after' | 'compare';
 
@@ -38,21 +39,23 @@ export function PreviewPane(props: PreviewPaneProps) {
 
   const running = status === 'running';
   const viewBox = imageDims ? `0 0 ${imageDims.w} ${imageDims.h}` : undefined;
+  const svgBytes = useMemo(
+    () => (svgString ? new Blob([svgString]).size : 0),
+    [svgString],
+  );
 
   return (
     <section className="preview">
       <div className="preview-toolbar">
-        <div className="segmented">
-          {(['before', 'after', 'compare'] as const).map((v) => (
-            <button
-              key={v}
-              className={`seg-btn ${view === v ? 'is-active' : ''}`}
-              onClick={() => onViewChange(v)}
-            >
-              {v === 'before' ? '原图' : v === 'after' ? '矢量' : '对比'}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          value={view}
+          options={[
+            { value: 'before', label: '原图' },
+            { value: 'after', label: '矢量' },
+            { value: 'compare', label: '对比' },
+          ]}
+          onChange={(v) => onViewChange(v as PreviewView)}
+        />
         <div className="preview-actions">
           <button
             className="btn btn-ghost"
@@ -132,7 +135,7 @@ export function PreviewPane(props: PreviewPaneProps) {
             尺寸 {imageDims.w} × {imageDims.h}px
           </span>
           {svgString && (
-            <span>SVG · {(new Blob([svgString]).size / 1024).toFixed(1)} KB</span>
+            <span>SVG · {(svgBytes / 1024).toFixed(1)} KB</span>
           )}
         </div>
       )}

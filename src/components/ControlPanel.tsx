@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { ColorMode, Hierarchical, PathMode, VTracerConfig } from '../lib/vtracer';
 import { PRESETS, type Preset } from '../lib/presets';
+import { Segmented } from './Segmented';
 
 interface ControlPanelProps {
   config: VTracerConfig;
@@ -165,28 +166,6 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
         {hint && <span className="field-hint">{hint}</span>}
       </div>
       {children}
-    </div>
-  );
-}
-
-interface SegmentedProps {
-  value: string;
-  options: { value: string; label: string }[];
-  onChange: (value: string) => void;
-}
-
-function Segmented({ value, options, onChange }: SegmentedProps) {
-  return (
-    <div className="segmented">
-      {options.map((opt) => (
-        <button
-          key={opt.value}
-          className={`seg-btn ${value === opt.value ? 'is-active' : ''}`}
-          onClick={() => onChange(opt.value)}
-        >
-          {opt.label}
-        </button>
-      ))}
     </div>
   );
 }

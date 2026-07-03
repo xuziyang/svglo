@@ -35,10 +35,16 @@ export interface VTracerConfig {
 
 let initPromise: Promise<void> | null = null;
 
-/** Initialise the wasm module exactly once. */
+/** Initialise the wasm module exactly once; allow retry on failure. */
 export function ensureWasm(): Promise<void> {
   if (!initPromise) {
-    initPromise = init(wasmUrl).then(() => undefined);
+    initPromise = init(wasmUrl).then(
+      () => undefined,
+      (err) => {
+        initPromise = null;
+        throw err;
+      },
+    );
   }
   return initPromise;
 }
@@ -74,6 +80,7 @@ function runTickLoop(
   shouldStop?: () => boolean,
 ): Promise<void> {
   return new Promise((resolve) => {
+    let lastPct = -1;
     const tick = () => {
       if (shouldStop?.()) {
         resolve();
@@ -85,7 +92,14 @@ function runTickLoop(
       while (!(done = converter.tick()) && performance.now() - start < 25) {
         // batch
       }
-      onProgress?.(converter.progress());
+      // Throttle progress callbacks to integer-percent changes so a 1ms tick
+      // cadence doesn't trigger dozens of React re-renders per second.
+      const p = converter.progress();
+      const pct = Math.round(p);
+      if (onProgress && pct !== lastPct) {
+        lastPct = pct;
+        onProgress(p);
+      }
       if (done) {
         resolve();
         return;
@@ -113,9 +127,7 @@ export async function convertImage(opts: ConvertOptions): Promise<string> {
   await ensureWasm();
 
   // Clear any paths from a previous run.
-  while (svg.firstChild) {
-    svg.removeChild(svg.firstChild);
-  }
+  svg.replaceChildren();
 
   const params = buildParams(canvas.id, svg.id, config);
   const converter: Converter =

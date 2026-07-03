@@ -122,11 +122,8 @@ export default function App() {
   }, []);
 
   const activePresetId = useMemo(() => {
-    const snapshot = JSON.stringify(config);
-    for (const p of PRESETS) {
-      if (JSON.stringify(p.config) === snapshot) return p.id;
-    }
-    return null;
+    const keys = Object.keys(DEFAULT_CONFIG) as (keyof VTracerConfig)[];
+    return PRESETS.find((p) => keys.every((k) => p.config[k] === config[k]))?.id ?? null;
   }, [config]);
 
   return (
