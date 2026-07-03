@@ -127,7 +127,7 @@ export async function convertImage(opts: ConvertOptions): Promise<string> {
     converter.init();
     await runTickLoop(converter, onProgress, shouldStop);
     const svgString = new XMLSerializer().serializeToString(svg);
-    return `<?xml version="1.0" encoding="UTF-8"?>\n<!-- Generator: visioncortex VTracer (https://github.com/visioncortex/vtracer) -->\n${svgString}`;
+    return `<?xml version="1.0" encoding="UTF-8"?>\n${svgString}`;
   } finally {
     converter.free();
   }

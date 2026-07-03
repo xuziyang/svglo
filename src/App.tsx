@@ -95,7 +95,7 @@ export default function App() {
     const a = document.createElement('a');
     a.href = url;
     const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-    a.download = `vtracer-${ts}.svg`;
+    a.download = `svglo-${ts}.svg`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -141,7 +141,7 @@ export default function App() {
                 把图片变成 <span className="accent">SVG 矢量图</span>
               </h1>
               <p className="hero-lead">
-                基于 visioncortex VTracer 引擎，在浏览器中本地完成转换。无需上传，无需注册。
+                在浏览器中本地完成转换，无需上传，无需注册。
               </p>
               <ul className="hero-feats">
                 <li>🔒 完全本地处理，图片不离开浏览器</li>

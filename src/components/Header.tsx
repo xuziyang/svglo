@@ -32,22 +32,6 @@ export function Header({ hasImage, onReset }: HeaderProps) {
               换一张图
             </button>
           )}
-          <a
-            className="link-btn"
-            href="https://github.com/visioncortex/vtracer"
-            target="_blank"
-            rel="noreferrer"
-          >
-            GitHub
-          </a>
-          <a
-            className="link-btn"
-            href="https://www.visioncortex.org/vtracer-docs"
-            target="_blank"
-            rel="noreferrer"
-          >
-            算法文档
-          </a>
         </nav>
       </div>
     </header>
