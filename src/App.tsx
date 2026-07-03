@@ -178,16 +178,6 @@ export default function App() {
           </div>
         )}
       </main>
-
-      <footer className="footer">
-        <span>
-          核心引擎{' '}
-          <a href="https://github.com/visioncortex/vtracer" target="_blank" rel="noreferrer">
-            visioncortex VTracer
-          </a>{' '}
-          （MIT / Apache-2.0）· 本站为独立前端实现
-        </span>
-      </footer>
     </div>
   );
 }
