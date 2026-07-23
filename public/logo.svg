@@ -1,31 +1,55 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 48" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 48" role="img" aria-labelledby="title desc">
   <title id="title">SVGlo</title>
-  <desc id="desc">A pixel-to-vector logo mark followed by the SVGlo wordmark.</desc>
+  <desc id="desc">SVGlo logo: pixel-to-vector mark with wordmark.</desc>
   <defs>
-    <linearGradient id="svglo-logo-bg" x1="6" y1="4" x2="42" y2="44">
-      <stop stop-color="#111827"/>
-      <stop offset="0.58" stop-color="#334155"/>
-      <stop offset="1" stop-color="#0f766e"/>
+    <linearGradient id="l-bg" x1="6" y1="4" x2="42" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4f46e5"/>
+      <stop offset="0.55" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
     </linearGradient>
-    <linearGradient id="svglo-logo-stroke" x1="12" y1="10" x2="36" y2="38">
-      <stop stop-color="#67e8f9"/>
-      <stop offset="0.48" stop-color="#a78bfa"/>
-      <stop offset="1" stop-color="#f59e0b"/>
+    <linearGradient id="l-path" x1="14" y1="12" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#e0e7ff"/>
+      <stop offset="0.5" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#fde68a"/>
     </linearGradient>
-    <linearGradient id="svglo-wordmark" x1="54" y1="12" x2="145" y2="38">
-      <stop stop-color="#111827"/>
-      <stop offset="0.55" stop-color="#334155"/>
-      <stop offset="1" stop-color="#0f766e"/>
+    <linearGradient id="l-word" x1="56" y1="10" x2="150" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1f2330"/>
+      <stop offset="0.7" stop-color="#312e81"/>
+      <stop offset="1" stop-color="#4f46e5"/>
     </linearGradient>
   </defs>
-  <rect x="4" y="4" width="40" height="40" rx="11" fill="url(#svglo-logo-bg)"/>
-  <rect x="13" y="12" width="4.6" height="4.6" rx="1.2" fill="#67e8f9"/>
-  <rect x="19" y="12" width="4.6" height="4.6" rx="1.2" fill="#a78bfa"/>
-  <rect x="13" y="18" width="4.6" height="4.6" rx="1.2" fill="#f8fafc" opacity="0.9"/>
-  <path d="M31.1 14.4 C25.8 12.9 21.4 15.4 21.4 19 C21.4 23.5 31.6 22.3 31.6 28.3 C31.6 32.8 26.2 34.9 18.8 32.2" fill="none" stroke="url(#svglo-logo-stroke)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M25.7 15.1 L30.2 14.2 L31.3 18.4" fill="none" stroke="#f8fafc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
-  <circle cx="21.4" cy="19" r="1.8" fill="#f8fafc"/>
-  <circle cx="31.6" cy="28.3" r="1.8" fill="#f8fafc"/>
-  <circle cx="18.8" cy="32.2" r="1.8" fill="#f59e0b"/>
-  <text x="54" y="33" fill="url(#svglo-wordmark)" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="27" font-weight="800" letter-spacing="0">SVGlo</text>
+
+  <!-- mark -->
+  <rect x="4" y="4" width="40" height="40" rx="11" fill="url(#l-bg)"/>
+  <rect x="5.5" y="5.5" width="37" height="17" rx="10" fill="#ffffff" opacity="0.08"/>
+  <!-- pixels -->
+  <rect x="12" y="12" width="5" height="5" rx="1.2" fill="#c7d2fe"/>
+  <rect x="18.5" y="12" width="5" height="5" rx="1.2" fill="#a5b4fc" opacity="0.95"/>
+  <rect x="12" y="18.5" width="5" height="5" rx="1.2" fill="#e0e7ff" opacity="0.85"/>
+  <!-- vector S -->
+  <path
+    d="M32.6 15.4
+       C27.4 13.6 22.6 15.9 22.6 19.4
+       C22.6 23.7 32.1 22.9 32.1 28.2
+       C32.1 32.4 26.8 34.7 19.6 32.2"
+    fill="none"
+    stroke="url(#l-path)"
+    stroke-width="3.6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <circle cx="22.6" cy="19.4" r="1.7" fill="#ffffff"/>
+  <circle cx="32.1" cy="28.2" r="1.7" fill="#ffffff"/>
+  <circle cx="19.6" cy="32.2" r="1.8" fill="#fbbf24"/>
+
+  <!-- wordmark -->
+  <text
+    x="56"
+    y="33"
+    fill="url(#l-word)"
+    font-family="Inter, Segoe UI, system-ui, -apple-system, sans-serif"
+    font-size="28"
+    font-weight="800"
+    letter-spacing="-0.5"
+  >SVGlo</text>
 </svg>

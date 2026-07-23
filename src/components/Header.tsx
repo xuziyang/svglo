@@ -11,41 +11,33 @@ export function Header({ hasImage, onReset }: HeaderProps) {
           <span className="brand-mark" aria-hidden>
             <svg viewBox="0 0 32 32" width="30" height="30">
               <defs>
-                <linearGradient id="svglo-mark-bg" x1="5" y1="3" x2="27" y2="29">
-                  <stop stopColor="#111827" />
-                  <stop offset="0.58" stopColor="#334155" />
-                  <stop offset="1" stopColor="#0f766e" />
+                <linearGradient id="svglo-mark-bg" x1="4" y1="2" x2="28" y2="30">
+                  <stop stopColor="#4f46e5" />
+                  <stop offset="0.55" stopColor="#6366f1" />
+                  <stop offset="1" stopColor="#8b5cf6" />
                 </linearGradient>
-                <linearGradient id="svglo-mark-stroke" x1="8" y1="7" x2="24" y2="25">
-                  <stop stopColor="#67e8f9" />
-                  <stop offset="0.48" stopColor="#a78bfa" />
-                  <stop offset="1" stopColor="#f59e0b" />
+                <linearGradient id="svglo-mark-path" x1="10" y1="8" x2="24" y2="24">
+                  <stop stopColor="#e0e7ff" />
+                  <stop offset="0.5" stopColor="#ffffff" />
+                  <stop offset="1" stopColor="#fde68a" />
                 </linearGradient>
               </defs>
               <rect width="32" height="32" rx="9" fill="url(#svglo-mark-bg)" />
-              <rect x="7" y="6" width="3.5" height="3.5" rx="1" fill="#67e8f9" />
-              <rect x="11.5" y="6" width="3.5" height="3.5" rx="1" fill="#a78bfa" />
-              <rect x="7" y="10.5" width="3.5" height="3.5" rx="1" fill="#f8fafc" opacity="0.9" />
+              <rect x="1.2" y="1.2" width="29.6" height="14" rx="8" fill="#ffffff" opacity="0.08" />
+              <rect x="6.5" y="6.5" width="4" height="4" rx="1" fill="#c7d2fe" />
+              <rect x="11.5" y="6.5" width="4" height="4" rx="1" fill="#a5b4fc" opacity="0.95" />
+              <rect x="6.5" y="11.5" width="4" height="4" rx="1" fill="#e0e7ff" opacity="0.85" />
               <path
-                d="M21.5 8.5 C17.2 7.4 13.7 9.3 13.7 12.2 C13.7 15.7 21.8 14.9 21.8 19.4 C21.8 23.1 17.5 24.7 11.6 22.7"
+                d="M22.8 9.2 C18.6 7.8 14.8 9.6 14.8 12.4 C14.8 15.8 22.4 15.2 22.4 19.4 C22.4 22.8 18.2 24.6 12.4 22.6"
                 fill="none"
-                stroke="url(#svglo-mark-stroke)"
-                strokeWidth="3.2"
+                stroke="url(#svglo-mark-path)"
+                strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              <path
-                d="M17.2 9.1 L20.7 8.4 L21.6 11.7"
-                fill="none"
-                stroke="#f8fafc"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                opacity="0.95"
-              />
-              <circle cx="13.7" cy="12.2" r="1.45" fill="#f8fafc" />
-              <circle cx="21.8" cy="19.4" r="1.45" fill="#f8fafc" />
-              <circle cx="11.6" cy="22.7" r="1.45" fill="#f59e0b" />
+              <circle cx="14.8" cy="12.4" r="1.35" fill="#ffffff" />
+              <circle cx="22.4" cy="19.4" r="1.35" fill="#ffffff" />
+              <circle cx="12.4" cy="22.6" r="1.45" fill="#fbbf24" />
             </svg>
           </span>
           <span className="brand-text">
