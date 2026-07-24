@@ -110,6 +110,7 @@ export const en: Messages = {
     privacyBody:
       'SVGlo has no image upload endpoint and does not store your images or results. Conversion runs locally through WebAssembly, and downloads are generated on your device.',
     privacy: 'Privacy',
+    copyright: '© 2026 SVGlo. All rights reserved.',
     close: 'Close',
   },
 };

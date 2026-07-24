@@ -98,6 +98,7 @@ export interface Messages {
     privacySummary: string;
     privacyBody: string;
     privacy: string;
+    copyright: string;
     close: string;
   };
 }

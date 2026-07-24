@@ -40,6 +40,7 @@ export function Footer() {
             <button ref={privacyButtonRef} type="button" onClick={() => setPrivacyOpen(true)}>
               {t('footer.privacy')}
             </button>
+            <span className="footer-copy">{t('footer.copyright')}</span>
           </nav>
         </div>
       </footer>

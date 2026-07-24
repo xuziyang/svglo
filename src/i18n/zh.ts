@@ -110,6 +110,7 @@ export const zh: Messages = {
     privacyBody:
       'SVGlo 没有图片上传接口，也不会存储你的图片或生成结果。转换由浏览器中的 WebAssembly 完成，下载文件同样在本地生成。',
     privacy: '隐私',
+    copyright: '© 2026 SVGlo. 保留所有权利。',
     close: '关闭',
   },
 };
