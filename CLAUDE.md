@@ -41,11 +41,12 @@ Requires Rust + `wasm-pack`. Day-to-day frontend work does not need them.
 
 ### Production SEO env
 
-```sh
-SITE_URL=https://your-domain.com npm run build   # absolute canonical / hreflang / sitemap
-```
+Canonical, hreflang, Open Graph, `sitemap.xml`, and `robots.txt` default to
+`https://svglo.com`. Override only when needed:
 
-Without `SITE_URL`, those stay root-relative (OK for previews).
+```sh
+SITE_URL=https://preview.example.com npm run build
+```
 
 ## Architecture
 
@@ -124,6 +125,7 @@ Hosting helpers: `public/_redirects` (CF Pages/Netlify) and `vercel.json` send `
 |---|---|
 | Build command | `npm run build` |
 | Output directory | `dist` |
-| Env `SITE_URL` | `https://your-domain.com` (no trailing slash) |
+| Env `SITE_URL` | optional; defaults to `https://svglo.com` |
 
-No Rust step in CI — wasm is vendored.
+No Rust step in CI — wasm is vendored. Build emits `/robots.txt` and
+`/sitemap.xml` with absolute URLs for both `/` and `/zh-cn/`.

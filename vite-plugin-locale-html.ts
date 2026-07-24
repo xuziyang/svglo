@@ -14,12 +14,35 @@ import {
   type Messages,
 } from './src/i18n/index';
 
+/** Production origin used for canonical / hreflang / sitemap / robots. */
+export const DEFAULT_SITE_URL = 'https://svglo.com';
+
+/**
+ * Resolve the public site origin.
+ * - SITE_URL / VITE_SITE_URL win when set (no trailing slash)
+ * - empty string → fall back to DEFAULT_SITE_URL so production SEO tags stay absolute
+ * - set SITE_URL= (or relative) only if you intentionally want root-relative URLs
+ */
 function siteOrigin(): string {
-  return (process.env.SITE_URL || process.env.VITE_SITE_URL || '').replace(/\/$/, '');
+  const raw = process.env.SITE_URL ?? process.env.VITE_SITE_URL;
+  if (raw === undefined) return DEFAULT_SITE_URL;
+  const trimmed = raw.replace(/\/$/, '');
+  return trimmed || DEFAULT_SITE_URL;
 }
 
 function abs(origin: string, pathname: string): string {
-  return origin ? `${origin}${pathname}` : pathname;
+  if (!origin) return pathname;
+  // localePath('/') is `/`; avoid `https://host//`
+  if (pathname === '/') return `${origin}/`;
+  return `${origin}${pathname}`;
+}
+
+function escapeXml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 function escapeHtml(s: string): string {
@@ -226,22 +249,24 @@ function buildLegacyRedirectHtml(targetPath: string, origin = siteOrigin()): str
 `;
 }
 
-function buildSitemap(origin: string): string {
-  const base = origin || 'https://example.com';
-  const href = (locale: Locale) => {
-    const p = localePath(locale);
-    // localePath('/') is `/`; avoid double slash when joining with base
-    return `${base.replace(/\/$/, '')}${p === '/' ? '/' : p}`;
-  };
+function buildSitemap(origin: string, lastmod = new Date().toISOString().slice(0, 10)): string {
+  const base = origin || DEFAULT_SITE_URL;
+  const href = (locale: Locale) => abs(base.replace(/\/$/, ''), localePath(locale));
+  // Homepage-style landing pages: index both locales; default language slightly higher priority.
+  const priorityOf = (locale: Locale) => (locale === DEFAULT_LOCALE ? '1.0' : '0.9');
+
   const urls = LOCALES.map((l) => {
-    const loc = href(l);
+    const loc = escapeXml(href(l));
     const alt = LOCALES.map(
       (a) =>
-        `    <xhtml:link rel="alternate" hreflang="${hreflangOf(a)}" href="${href(a)}"/>`,
+        `    <xhtml:link rel="alternate" hreflang="${hreflangOf(a)}" href="${escapeXml(href(a))}"/>`,
     ).join('\n');
-    const xDefault = `    <xhtml:link rel="alternate" hreflang="x-default" href="${href(DEFAULT_LOCALE)}"/>`;
+    const xDefault = `    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(href(DEFAULT_LOCALE))}"/>`;
     return `  <url>
     <loc>${loc}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>${priorityOf(l)}</priority>
 ${alt}
 ${xDefault}
   </url>`;
@@ -253,6 +278,13 @@ ${xDefault}
 ${urls}
 </urlset>
 `;
+}
+
+function buildRobots(origin: string): string {
+  const base = (origin || DEFAULT_SITE_URL).replace(/\/$/, '');
+  // Keep this minimal: allow everything indexable. Legacy /en and /zh shells
+  // already carry <meta name="robots" content="noindex"> and 301 at the host.
+  return `User-agent: *\nAllow: /\n\nSitemap: ${base}/sitemap.xml\n`;
 }
 
 function localeFromReqUrl(url: string | undefined): Locale {
@@ -370,30 +402,11 @@ export function localeHtmlPlugin(): Plugin {
         'utf8',
       );
 
-      // robots.txt — keep legacy prefixes out of the index
-      const sitemapHref = origin ? `${origin}/sitemap.xml` : '/sitemap.xml';
-      fs.writeFileSync(
-        path.join(outDir, 'robots.txt'),
-        [
-          'User-agent: *',
-          'Allow: /',
-          'Disallow: /en/',
-          'Disallow: /en',
-          'Disallow: /zh/',
-          'Disallow: /zh',
-          '',
-          `Sitemap: ${sitemapHref}`,
-          '',
-        ].join('\n'),
-        'utf8',
-      );
-
-      // sitemap.xml (absolute URLs when SITE_URL is set)
+      // robots.txt + sitemap.xml (absolute URLs via DEFAULT_SITE_URL / SITE_URL)
+      fs.writeFileSync(path.join(outDir, 'robots.txt'), buildRobots(origin), 'utf8');
       fs.writeFileSync(path.join(outDir, 'sitemap.xml'), buildSitemap(origin), 'utf8');
 
-      // Helpful build log
-      const where = origin || '(relative; set SITE_URL for absolute canonical/sitemap)';
-      console.log(`\n  locale HTML: / (en) /zh-cn/   site: ${where}\n`);
+      console.log(`\n  locale HTML: / (en) /zh-cn/   site: ${origin}\n`);
     },
   };
 }

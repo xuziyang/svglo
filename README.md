@@ -67,13 +67,12 @@ dist/
 | Build command | `npm run build` |
 | Build output directory | `dist` |
 | Root directory | `/` (repo root) |
-| Env var `SITE_URL` | `https://your-domain.com` (no trailing slash) |
-
-`SITE_URL` makes `canonical`, `hreflang`, Open Graph, and `sitemap.xml` use absolute URLs. Without it, paths stay root-relative (fine for previews, weaker for production SEO).
+| Env var `SITE_URL` | optional; defaults to `https://svglo.com` |
 
 - wasm deps are vendored in-repo (`vendor/`), so CI needs no Rust step
 - `public/_redirects` sends legacy `/en` → `/`, `/zh` → `/zh-cn/`, and normalizes `/zh-cn` → `/zh-cn/` (Cloudflare Pages / Netlify)
 - `vercel.json` does the same on Vercel
+- Build always emits absolute `canonical` / `hreflang` / Open Graph URLs, plus `/robots.txt` and `/sitemap.xml`
 
 ### Internationalization & SEO
 
@@ -82,6 +81,7 @@ Supported locales: **English** (`/`, default) and **Simplified Chinese** (`/zh-c
 - Build emits **separate static HTML** per locale (not an empty SPA shell). Crawlers see the correct `lang`, `<title>`, meta description, `canonical`, `hreflang`, and a text SEO shell inside `#root` without running JS
 - English is unprefixed at the site root; Chinese lives under `/zh-cn/`
 - Legacy `/en/` permanently redirects to `/`; legacy `/zh/` permanently redirects to `/zh-cn/`
+- `robots.txt` allows all pages and points at the sitemap; `sitemap.xml` lists both locales with `xhtml:link` hreflang alternates, `lastmod`, and priority
 - Header language switch performs a real navigation to the other locale’s HTML (correct share-preview meta)
 - Copy lives in typed catalogs under `src/i18n/` (`en.ts`, `zh.ts`); the Vite plugin `vite-plugin-locale-html.ts` reads the same catalogs at build time
 - To add a language: new catalog + `Locale` union + `LOCALES` / `catalogs` / `LOCALE_PATH_SEGMENT` in `src/i18n/index.ts`, then rebuild
