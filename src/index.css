@@ -53,6 +53,11 @@
   box-sizing: border-box;
 }
 
+/* Author `display` rules beat the UA `[hidden]{display:none}`; restore it. */
+[hidden] {
+  display: none !important;
+}
+
 html,
 body,
 #root {
@@ -723,9 +728,6 @@ summary:focus-visible,
   justify-content: center;
   max-width: 100%;
   max-height: 72vh;
-}
-.pane[hidden] {
-  display: none;
 }
 .pane-before,
 .pane-after {
