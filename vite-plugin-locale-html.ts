@@ -7,6 +7,9 @@ import {
   DEFAULT_LOCALE,
   LOCALES,
   LOCALE_HTML_LANG,
+  LOCALE_PATH_SEGMENT,
+  getLocaleFromPath,
+  localePath,
   type Locale,
   type Messages,
 } from './src/i18n/index';
@@ -35,17 +38,20 @@ function ogLocaleOf(locale: Locale): string {
   return locale === 'zh' ? 'zh_CN' : 'en_US';
 }
 
+function localeHref(locale: Locale, origin = ''): string {
+  return abs(origin, localePath(locale));
+}
+
 /** Head tags that crawlers should see without running JS. */
 export function buildHeadTags(locale: Locale, origin = siteOrigin()): string {
   const m = catalogs[locale];
-  const canonicalPath = `/${locale}/`;
-  const canonical = abs(origin, canonicalPath);
+  const canonical = localeHref(locale, origin);
   const alternates = [
     ...LOCALES.map(
       (l) =>
-        `<link rel="alternate" hreflang="${hreflangOf(l)}" href="${escapeHtml(abs(origin, `/${l}/`))}" />`,
+        `<link rel="alternate" hreflang="${hreflangOf(l)}" href="${escapeHtml(localeHref(l, origin))}" />`,
     ),
-    `<link rel="alternate" hreflang="x-default" href="${escapeHtml(abs(origin, `/${DEFAULT_LOCALE}/`))}" />`,
+    `<link rel="alternate" hreflang="x-default" href="${escapeHtml(localeHref(DEFAULT_LOCALE, origin))}" />`,
   ];
 
   return [
@@ -75,7 +81,7 @@ export function buildSeoShell(locale: Locale, messages: Messages = catalogs[loca
   const langLinks = LOCALES.map((l) => {
     const label = l === 'zh' ? '中文' : 'English';
     const current = l === locale ? ' aria-current="page"' : '';
-    return `<a href="/${l}/"${current}>${label}</a>`;
+    return `<a href="${localePath(l)}"${current}>${label}</a>`;
   }).join(' · ');
 
   const steps = a.steps
@@ -138,7 +144,7 @@ ${faq}
         <p class="seo-shell-switch">${other
           .map((l) => {
             const label = l === 'zh' ? '中文版' : 'English version';
-            return `<a href="/${l}/">${escapeHtml(label)}</a>`;
+            return `<a href="${localePath(l)}">${escapeHtml(label)}</a>`;
           })
           .join(' · ')}</p>
       </main>
@@ -194,41 +200,27 @@ function applyLocaleToHtml(html: string, locale: Locale, origin = siteOrigin()):
   return out;
 }
 
-function buildRootRedirectHtml(origin = siteOrigin()): string {
-  const en = abs(origin, '/en/');
-  const zh = abs(origin, '/zh/');
+/** Tiny HTML that soft-redirects a legacy path to its canonical locale URL. */
+function buildLegacyRedirectHtml(targetPath: string, origin = siteOrigin()): string {
+  const target = abs(origin, targetPath);
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="robots" content="noindex" />
+    <link rel="canonical" href="${escapeHtml(target)}" />
+    <meta http-equiv="refresh" content="0;url=${escapeHtml(targetPath)}" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="alternate" hreflang="en" href="${escapeHtml(en)}" />
-    <link rel="alternate" hreflang="zh-CN" href="${escapeHtml(zh)}" />
-    <link rel="alternate" hreflang="x-default" href="${escapeHtml(en)}" />
     <title>SVGlo</title>
     <script>
       (function () {
-        var langs = navigator.languages && navigator.languages.length
-          ? navigator.languages
-          : [navigator.language];
-        var zh = false;
-        for (var i = 0; i < langs.length; i++) {
-          if (langs[i] && String(langs[i]).toLowerCase().indexOf('zh') === 0) {
-            zh = true;
-            break;
-          }
-        }
-        location.replace(zh ? '/zh/' : '/en/');
+        location.replace(${JSON.stringify(targetPath)} + location.search + location.hash);
       })();
     </script>
-    <meta http-equiv="refresh" content="0;url=/en/" />
   </head>
   <body>
-    <p>
-      <a href="/en/">English</a> · <a href="/zh/">中文</a>
-    </p>
+    <p><a href="${escapeHtml(targetPath)}">SVGlo</a></p>
   </body>
 </html>
 `;
@@ -236,13 +228,18 @@ function buildRootRedirectHtml(origin = siteOrigin()): string {
 
 function buildSitemap(origin: string): string {
   const base = origin || 'https://example.com';
+  const href = (locale: Locale) => {
+    const p = localePath(locale);
+    // localePath('/') is `/`; avoid double slash when joining with base
+    return `${base.replace(/\/$/, '')}${p === '/' ? '/' : p}`;
+  };
   const urls = LOCALES.map((l) => {
-    const loc = `${base.replace(/\/$/, '')}/${l}/`;
+    const loc = href(l);
     const alt = LOCALES.map(
       (a) =>
-        `    <xhtml:link rel="alternate" hreflang="${hreflangOf(a)}" href="${base.replace(/\/$/, '')}/${a}/"/>`,
+        `    <xhtml:link rel="alternate" hreflang="${hreflangOf(a)}" href="${href(a)}"/>`,
     ).join('\n');
-    const xDefault = `    <xhtml:link rel="alternate" hreflang="x-default" href="${base.replace(/\/$/, '')}/${DEFAULT_LOCALE}/"/>`;
+    const xDefault = `    <xhtml:link rel="alternate" hreflang="x-default" href="${href(DEFAULT_LOCALE)}"/>`;
     return `  <url>
     <loc>${loc}</loc>
 ${alt}
@@ -258,46 +255,59 @@ ${urls}
 `;
 }
 
-function localeFromReqUrl(url: string | undefined): Locale | null {
-  if (!url) return null;
+function localeFromReqUrl(url: string | undefined): Locale {
+  if (!url) return DEFAULT_LOCALE;
   const pathname = url.split('?')[0] ?? '';
-  const m = pathname.match(/^\/(en|zh)(?:\/|$)/);
-  return m ? (m[1] as Locale) : null;
+  return getLocaleFromPath(pathname);
 }
 
 /**
  * Emits per-locale static HTML (meta + SEO shell) for crawlers, while the
  * app remains a client-side SPA. Dev middleware serves the same shape.
+ *
+ * URL layout:
+ *   `/`        → English (default, unprefixed)
+ *   `/zh-cn/`  → Chinese
+ *   `/zh/`     → legacy redirect to `/zh-cn/`
+ *   `/en/`     → legacy redirect to `/`
  */
 export function localeHtmlPlugin(): Plugin {
   let outDir = 'dist';
-  let root = process.cwd();
 
   return {
     name: 'svglo-locale-html',
 
     configResolved(config) {
       outDir = path.resolve(config.root, config.build.outDir);
-      root = config.root;
     },
 
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const raw = req.url ?? '/';
         const pathname = raw.split('?')[0] ?? '/';
+        const qs = raw.includes('?') ? '?' + raw.split('?')[1] : '';
 
-        // Normalize /en → /en/, /zh → /zh/
-        if (pathname === '/en' || pathname === '/zh') {
+        // Legacy English prefix → unprefixed root
+        if (pathname === '/en' || pathname === '/en/') {
           res.statusCode = 302;
-          res.setHeader('Location', `${pathname}/${raw.includes('?') ? '?' + raw.split('?')[1] : ''}`);
+          res.setHeader('Location', `/${qs}`);
           res.end();
           return;
         }
 
-        // Root: tiny language picker (mirrors production)
-        if (pathname === '/' || pathname === '/index.html') {
-          res.setHeader('Content-Type', 'text/html; charset=utf-8');
-          res.end(buildRootRedirectHtml(siteOrigin()));
+        // Legacy /zh → /zh-cn/
+        if (pathname === '/zh' || pathname === '/zh/') {
+          res.statusCode = 302;
+          res.setHeader('Location', `/zh-cn/${qs}`);
+          res.end();
+          return;
+        }
+
+        // Normalize /zh-cn → /zh-cn/
+        if (pathname === '/zh-cn') {
+          res.statusCode = 302;
+          res.setHeader('Location', `/zh-cn/${qs}`);
+          res.end();
           return;
         }
 
@@ -309,15 +319,12 @@ export function localeHtmlPlugin(): Plugin {
       order: 'post',
       handler(html: string, ctx: IndexHtmlTransformContext) {
         // During build, ctx.path is the entry html path; during dev it's the request.
-        const fromReq = localeFromReqUrl(ctx.originalUrl ?? ctx.path);
-        const locale = fromReq ?? DEFAULT_LOCALE;
-        // Skip transforming into a locale page when building the root entry —
-        // writeBundle will emit en/zh and replace root. Still tag default for safety.
+        const locale = localeFromReqUrl(ctx.originalUrl ?? ctx.path);
         if (ctx.server) {
-          // Dev: only locale paths reach the SPA index (root handled in middleware).
+          // Dev: `/` is English; `/zh-cn/` is Chinese. Legacy prefixes redirected above.
           return applyLocaleToHtml(html, locale);
         }
-        // Build: leave a default-en shell; writeBundle clones per locale.
+        // Build: leave a default-en shell; closeBundle clones non-default locales.
         return applyLocaleToHtml(html, DEFAULT_LOCALE);
       },
     },
@@ -329,23 +336,55 @@ export function localeHtmlPlugin(): Plugin {
 
       const baseHtml = fs.readFileSync(builtIndex, 'utf8');
 
+      // Root = English (default locale, unprefixed)
+      fs.writeFileSync(
+        builtIndex,
+        applyLocaleToHtml(baseHtml, DEFAULT_LOCALE, origin),
+        'utf8',
+      );
+
+      // Non-default locales under their path segment (e.g. /zh-cn/)
       for (const locale of LOCALES) {
-        const dir = path.join(outDir, locale);
+        if (locale === DEFAULT_LOCALE) continue;
+        const segment = LOCALE_PATH_SEGMENT[locale];
+        if (!segment) continue;
+        const dir = path.join(outDir, segment);
         fs.mkdirSync(dir, { recursive: true });
-        const html = applyLocaleToHtml(baseHtml, locale, origin);
-        // baseHtml may already be en-transformed; applyLocaleToHtml is idempotent enough
-        // if we start from a clean asset-linked HTML. Re-read pristine by stripping prior SEO.
-        fs.writeFileSync(path.join(dir, 'index.html'), html, 'utf8');
+        fs.writeFileSync(
+          path.join(dir, 'index.html'),
+          applyLocaleToHtml(baseHtml, locale, origin),
+          'utf8',
+        );
       }
 
-      // Root becomes language redirect (noindex)
-      fs.writeFileSync(path.join(outDir, 'index.html'), buildRootRedirectHtml(origin), 'utf8');
+      // Legacy soft-redirect pages (hosts without rewrite rules still work)
+      const enDir = path.join(outDir, 'en');
+      fs.mkdirSync(enDir, { recursive: true });
+      fs.writeFileSync(path.join(enDir, 'index.html'), buildLegacyRedirectHtml('/', origin), 'utf8');
 
-      // robots.txt
+      const zhDir = path.join(outDir, 'zh');
+      fs.mkdirSync(zhDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(zhDir, 'index.html'),
+        buildLegacyRedirectHtml('/zh-cn/', origin),
+        'utf8',
+      );
+
+      // robots.txt — keep legacy prefixes out of the index
       const sitemapHref = origin ? `${origin}/sitemap.xml` : '/sitemap.xml';
       fs.writeFileSync(
         path.join(outDir, 'robots.txt'),
-        `User-agent: *\nAllow: /\nDisallow: /index.html\n\nSitemap: ${sitemapHref}\n`,
+        [
+          'User-agent: *',
+          'Allow: /',
+          'Disallow: /en/',
+          'Disallow: /en',
+          'Disallow: /zh/',
+          'Disallow: /zh',
+          '',
+          `Sitemap: ${sitemapHref}`,
+          '',
+        ].join('\n'),
         'utf8',
       );
 
@@ -354,7 +393,7 @@ export function localeHtmlPlugin(): Plugin {
 
       // Helpful build log
       const where = origin || '(relative; set SITE_URL for absolute canonical/sitemap)';
-      console.log(`\n  locale HTML: /en/ /zh/   site: ${where}\n`);
+      console.log(`\n  locale HTML: / (en) /zh-cn/   site: ${where}\n`);
     },
   };
 }

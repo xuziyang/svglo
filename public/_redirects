@@ -1,7 +1,11 @@
-# Language landing pages are real static files under /en/ and /zh/.
-# Bare /en and /zh normalize to trailing slash.
-/en   /en/   301
-/zh   /zh/   301
+# English is unprefixed at /. Chinese lives at /zh-cn/.
+# Legacy prefixes permanently redirect to the canonical paths.
+/en     /         301
+/en/    /         301
+/zh     /zh-cn/   301
+/zh/    /zh-cn/   301
 
-# Root is a tiny language redirect page (dist/index.html). No catch-all SPA
-# rewrite — that would shadow the per-locale index.html files.
+# Normalize bare /zh-cn to trailing slash so /zh-cn/index.html is served.
+/zh-cn  /zh-cn/   301
+
+# No catch-all SPA rewrite — that would shadow the per-locale index.html files.

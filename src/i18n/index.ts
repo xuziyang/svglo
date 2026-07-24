@@ -1,6 +1,5 @@
 import { en } from './en';
 import { zh } from './zh';
-import { articleContent } from './article';
 import type { Locale, MessageKey, Messages } from './types';
 
 export type { Locale, MessageKey, Messages } from './types';
@@ -23,27 +22,58 @@ export const LOCALE_HTML_LANG: Record<Locale, string> = {
   zh: 'zh-CN',
 };
 
-const LOCALE_RE = /^\/(en|zh)(?=\/|$)/;
+/**
+ * URL path segment for each locale.
+ * Default locale (en) is unprefixed (null). Chinese uses `zh-cn`.
+ */
+export const LOCALE_PATH_SEGMENT: Record<Locale, string | null> = {
+  en: null,
+  zh: 'zh-cn',
+};
 
-/** Extract locale from the first path segment, or null if absent/invalid. */
-export function getLocaleFromPath(pathname: string): Locale | null {
-  const m = pathname.match(LOCALE_RE);
-  return m ? (m[1] as Locale) : null;
+/** Path segments that resolve to a locale (includes legacy aliases). */
+const PATH_SEGMENT_TO_LOCALE: Record<string, Locale> = {
+  en: 'en', // legacy English prefix → normalized to `/`
+  'zh-cn': 'zh',
+  zh: 'zh', // legacy Chinese prefix → normalized to `/zh-cn/`
+};
+
+const LOCALE_SEGMENT_RE = /^\/(en|zh-cn|zh)(?=\/|$)/i;
+
+/**
+ * Resolve locale from the path.
+ * - `/zh-cn/...` → zh
+ * - `/zh/...` → zh (legacy; normalized away by ensureLocaleInUrl)
+ * - `/en/...` → en (legacy; normalized away by ensureLocaleInUrl)
+ * - everything else (including `/`) → default locale (en)
+ */
+export function getLocaleFromPath(pathname: string): Locale {
+  const m = pathname.match(LOCALE_SEGMENT_RE);
+  if (!m) return DEFAULT_LOCALE;
+  const segment = m[1].toLowerCase();
+  return PATH_SEGMENT_TO_LOCALE[segment] ?? DEFAULT_LOCALE;
 }
 
-/** Strip the leading /en or /zh segment (keeps trailing path). */
+/** Strip a leading locale segment when present (keeps trailing path). */
 export function stripLocaleFromPath(pathname: string): string {
-  const stripped = pathname.replace(LOCALE_RE, '');
+  const stripped = pathname.replace(LOCALE_SEGMENT_RE, '');
   return stripped.replace(/\/$/, '') || '';
 }
 
 /**
- * Build a locale-prefixed path. Bare locale paths always end with `/`
- * so static hosts serve `/{locale}/index.html` (e.g. `/en/`, `/zh/`).
+ * Build a locale URL path.
+ * Default locale (en) has no prefix: `/`, `/about`.
+ * Chinese uses `/zh-cn/`, `/zh-cn/about`.
  */
 export function localePath(locale: Locale, rest = '', search = '', hash = ''): string {
   const cleaned = rest.replace(/^\/+|\/+$/g, '');
-  const base = cleaned ? `/${locale}/${cleaned}` : `/${locale}/`;
+  const segment = LOCALE_PATH_SEGMENT[locale];
+  let base: string;
+  if (!segment) {
+    base = cleaned ? `/${cleaned}` : '/';
+  } else {
+    base = cleaned ? `/${segment}/${cleaned}` : `/${segment}/`;
+  }
   return `${base}${search}${hash}`;
 }
 
@@ -71,25 +101,21 @@ export function translate(messages: Messages, key: MessageKey): string {
 }
 
 /**
- * Ensure the URL has a valid locale prefix (with trailing slash).
- * Bare `/` redirects to the browser language. Safe before React mounts.
+ * Normalize the URL to the canonical locale form:
+ * - `/` → English
+ * - `/zh-cn/` → Chinese
+ * - `/zh/` (legacy) → `/zh-cn/`
+ * - `/en/` (legacy) → `/`
+ * Safe before React mounts.
  */
 export function ensureLocaleInUrl(): Locale {
   const { pathname, search, hash } = window.location;
-  const existing = getLocaleFromPath(pathname);
-
-  if (existing) {
-    const rest = stripLocaleFromPath(pathname);
-    const canonical = localePath(existing, rest, search, hash);
-    const current = `${pathname}${search}${hash}`;
-    if (current !== canonical) {
-      window.history.replaceState(null, '', canonical);
-    }
-    return existing;
-  }
-
-  const locale = detectBrowserLocale();
+  const locale = getLocaleFromPath(pathname);
   const rest = stripLocaleFromPath(pathname);
-  window.history.replaceState(null, '', localePath(locale, rest, search, hash));
+  const canonical = localePath(locale, rest, search, hash);
+  const current = `${pathname}${search}${hash}`;
+  if (current !== canonical) {
+    window.history.replaceState(null, '', canonical);
+  }
   return locale;
 }

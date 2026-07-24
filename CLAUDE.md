@@ -12,8 +12,8 @@ Stack: React 18 + Vite 5 + TypeScript. Deploy target: static hosts (Cloudflare P
 
 ```sh
 npm install
-npm run dev          # http://localhost:5173  (root redirects by browser language)
-npm run build        # production → dist/  (emits /en/ and /zh/ HTML)
+npm run dev          # http://localhost:5173  (/ = English, /zh-cn/ = Chinese)
+npm run build        # production → dist/  (emits / and /zh-cn/ HTML)
 npm run preview      # serve dist/
 npm run typecheck    # tsc --noEmit
 ```
@@ -83,7 +83,7 @@ Presets live in `src/lib/presets.ts` as `id` + `config` only. Display names/desc
 
 ## i18n & SEO (non-obvious)
 
-Locales: **`en`**, **`zh`**. Paths always use a trailing slash: `/en/`, `/zh/`.
+Locales: **`en`** (default, unprefixed), **`zh`**. Paths: `/` (English), `/zh-cn/` (Chinese).
 
 | Piece | Role |
 |---|---|
@@ -94,9 +94,10 @@ Locales: **`en`**, **`zh`**. Paths always use a trailing slash: `/en/`, `/zh/`.
 **Build output** (do not add a catch-all SPA rewrite — it would shadow these files):
 
 ```text
-dist/index.html      # language redirect, noindex
-dist/en/index.html   # English title/description/hreflang + SEO text shell in #root
-dist/zh/index.html   # Chinese equivalent
+dist/index.html         # English title/description/hreflang + SEO text shell in #root
+dist/zh-cn/index.html   # Chinese equivalent
+dist/en/index.html      # legacy soft redirect → / (also 301 via _redirects)
+dist/zh/index.html      # legacy soft redirect → /zh-cn/ (also 301 via _redirects)
 dist/sitemap.xml
 dist/robots.txt
 ```
@@ -105,11 +106,11 @@ Crawlers see real localized HTML without JS. React mounts and replaces the SEO s
 
 Language switch in the header does a **full navigation** (`location.assign`) to the other locale’s HTML so share-preview meta is correct. Do not change it back to `pushState`-only without rethinking SEO.
 
-To add a locale: extend `Locale` in `types.ts`, add a catalog that matches `Messages`, register in `LOCALES` + `catalogs`, rebuild. The Vite plugin picks up `LOCALES` automatically.
+To add a locale: extend `Locale` in `types.ts`, add a catalog that matches `Messages`, register in `LOCALES` + `catalogs` + `LOCALE_PATH_SEGMENT`, rebuild. The Vite plugin picks up `LOCALES` automatically. Default locale stays unprefixed via `localePath()`.
 
-Dev server: middleware on `/` serves the redirect page; `/en` and `/zh` 302 to trailing-slash forms; locale paths get the SPA entry with SEO head injected via `transformIndexHtml`.
+Dev server: `/` is English; `/zh-cn/` is Chinese; `/en` → `/`; `/zh` → `/zh-cn/`; bare `/zh-cn` → `/zh-cn/`. SEO head injected via `transformIndexHtml`.
 
-Hosting helpers: `public/_redirects` (CF Pages/Netlify) and `vercel.json` only normalize `/en`→`/en/` and `/zh`→`/zh/`.
+Hosting helpers: `public/_redirects` (CF Pages/Netlify) and `vercel.json` send `/en`→`/`, `/zh`→`/zh-cn/`, `/zh-cn`→`/zh-cn/`.
 
 ## Vite / wasm gotchas
 

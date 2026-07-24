@@ -51,9 +51,10 @@ npm run typecheck # type check
 
 ```text
 dist/
-  index.html          # language redirect (noindex)
-  en/index.html       # English — title, description, hreflang, SEO shell in source HTML
-  zh/index.html       # Chinese — same shape
+  index.html             # English — title, description, hreflang, SEO shell in source HTML
+  zh-cn/index.html       # Chinese — same shape
+  en/index.html          # legacy soft redirect → /
+  zh/index.html          # legacy soft redirect → /zh-cn/
   sitemap.xml
   robots.txt
   assets/...
@@ -71,18 +72,19 @@ dist/
 `SITE_URL` makes `canonical`, `hreflang`, Open Graph, and `sitemap.xml` use absolute URLs. Without it, paths stay root-relative (fine for previews, weaker for production SEO).
 
 - wasm deps are vendored in-repo (`vendor/`), so CI needs no Rust step
-- `public/_redirects` normalizes `/en` → `/en/` and `/zh` → `/zh/` (Cloudflare Pages / Netlify)
+- `public/_redirects` sends legacy `/en` → `/`, `/zh` → `/zh-cn/`, and normalizes `/zh-cn` → `/zh-cn/` (Cloudflare Pages / Netlify)
 - `vercel.json` does the same on Vercel
 
 ### Internationalization & SEO
 
-Supported locales: **English** (`/en/`) and **Simplified Chinese** (`/zh/`).
+Supported locales: **English** (`/`, default) and **Simplified Chinese** (`/zh-cn/`).
 
 - Build emits **separate static HTML** per locale (not an empty SPA shell). Crawlers see the correct `lang`, `<title>`, meta description, `canonical`, `hreflang`, and a text SEO shell inside `#root` without running JS
-- Visiting `/` serves a tiny redirect page (browser language → `/en/` or `/zh/`)
+- English is unprefixed at the site root; Chinese lives under `/zh-cn/`
+- Legacy `/en/` permanently redirects to `/`; legacy `/zh/` permanently redirects to `/zh-cn/`
 - Header language switch performs a real navigation to the other locale’s HTML (correct share-preview meta)
 - Copy lives in typed catalogs under `src/i18n/` (`en.ts`, `zh.ts`); the Vite plugin `vite-plugin-locale-html.ts` reads the same catalogs at build time
-- To add a language: new catalog + `Locale` union + `LOCALES` / `catalogs` in `src/i18n/index.ts`, then rebuild
+- To add a language: new catalog + `Locale` union + `LOCALES` / `catalogs` / `LOCALE_PATH_SEGMENT` in `src/i18n/index.ts`, then rebuild
 
 ## Key integration points
 

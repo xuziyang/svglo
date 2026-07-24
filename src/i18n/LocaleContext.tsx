@@ -106,12 +106,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const onPop = () => {
-      const fromPath = getLocaleFromPath(window.location.pathname);
-      if (fromPath) {
-        setLocaleState(fromPath);
-      } else {
-        setLocaleState(ensureLocaleInUrl());
-      }
+      setLocaleState(getLocaleFromPath(window.location.pathname));
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
