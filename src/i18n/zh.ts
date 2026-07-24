@@ -14,8 +14,8 @@ export const zh: Messages = {
   hero: {
     titleBefore: '把图片变成',
     titleAccent: 'SVG 矢量图',
-    lead: '在浏览器中本地完成转换，无需上传，无需注册。',
-    featLocal: '完全本地处理，图片不离开浏览器',
+    lead: '数秒完成图片转 SVG，无需注册、无水印。',
+    featLocal: '精准矢量描边，数秒出图',
     featModes: '彩色 / 黑白 / 像素画多种模式',
     featParams: '聚类与曲线拟合参数可调',
     featExport: '导出干净紧凑的 SVG',
@@ -23,7 +23,7 @@ export const zh: Messages = {
   dropzone: {
     title: '拖拽图片到此处，或点击选择文件',
     formats: '支持 PNG / JPG / WebP / GIF / BMP · 也可直接 Ctrl+V 粘贴',
-    hint: '所有处理在你的浏览器本地完成，图片不会上传到任何服务器。',
+    hint: '拖入图片，数秒即可得到干净的 SVG。',
     aria: '上传图片',
     unsupported: '暂不支持该图片格式，请使用 PNG / JPG / WebP / GIF / BMP。',
   },

@@ -14,8 +14,8 @@ export const en: Messages = {
   hero: {
     titleBefore: 'Turn images into',
     titleAccent: 'SVG vectors',
-    lead: 'Convert locally in your browser — no upload, no signup.',
-    featLocal: 'Fully local — your image never leaves the browser',
+    lead: 'Convert images to SVG in seconds — no signup, no watermark.',
+    featLocal: 'Accurate vector traces in seconds',
     featModes: 'Color, B&W, and pixel-art modes',
     featParams: 'Tunable clustering and curve-fitting params',
     featExport: 'Export clean, compact SVG',
@@ -23,7 +23,7 @@ export const en: Messages = {
   dropzone: {
     title: 'Drop an image here, or click to browse',
     formats: 'PNG / JPG / WebP / GIF / BMP · or paste with Ctrl+V',
-    hint: 'Everything runs locally in your browser — images are never uploaded.',
+    hint: 'Drop an image and get a clean SVG in seconds.',
     aria: 'Upload image',
     unsupported: 'Unsupported image format. Please use PNG / JPG / WebP / GIF / BMP.',
   },

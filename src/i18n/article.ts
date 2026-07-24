@@ -30,7 +30,7 @@ export interface ArticleContent {
 export const articleContent: Record<Locale, ArticleContent> = {
   en: {
     intro:
-      'SVGLO is a free SVG converter that turns PNG, JPG, JPEG, and WebP images into clean, scalable vector graphics right in your browser. Everything runs locally on your device — no upload, no signup, no watermark — so you can convert image to SVG privately and download a production-ready file in seconds. Whether you need a quick PNG to SVG converter for a logo or a reliable JPG to SVG converter for a scanned sketch, the whole process takes just a few clicks.',
+      'SVGLO is a free SVG converter that turns PNG, JPG, JPEG, and WebP images into clean, scalable vector graphics. Convert an image to SVG and download a production-ready file in seconds — no watermark, no signup. Whether you need a quick PNG to SVG converter for a logo or a reliable JPG to SVG converter for a scanned sketch, the whole process takes just a few clicks.',
     stepsTitle: 'How to convert an image to SVG',
     steps: [
       {
@@ -52,11 +52,11 @@ export const articleContent: Record<Locale, ArticleContent> = {
     sections: [
       {
         id: 'features',
-        title: 'Fast, private, and precise',
+        title: 'Fast and precise',
         paragraphs: [
-          'Unlike server-based tools, this free SVG converter never sends your image anywhere. The tracing engine (visioncortex VTracer) runs as WebAssembly in the browser, so results appear almost instantly and work even on spotty connections. Because the file stays on your device, it is safe for client work and confidential assets — a genuine SVG converter free of the privacy trade-offs that come with uploading.',
+          'The tracing engine (visioncortex VTracer) generates clean vector paths in moments, so results appear almost instantly as you fine-tune the settings. It is a genuine SVG converter built for everyday work — fast, accurate, and free of the clutter that comes with bulky desktop software.',
           'You keep full control over the output. Adjust color precision to balance fidelity against file size, filter out tiny speckles to remove noise, and choose between spline, polygon, or pixel curve-fitting to match the look you want. The result is a compact, well-structured SVG that is easy to edit in any vector tool, from Figma and Illustrator to a plain text editor.',
-          'That combination — local processing, tunable quality, and no cost — is what makes this image to SVG converter a practical everyday tool rather than a one-off novelty. There are no daily caps, no queued jobs, and no account to create before you can start.',
+          'That combination — fast results, tunable quality, and no cost — is what makes this image to SVG converter a practical everyday tool rather than a one-off novelty. There are no daily caps and no account to create before you can start.',
         ],
       },
       {
@@ -84,12 +84,20 @@ export const articleContent: Record<Locale, ArticleContent> = {
           'Because SVG is text-based, converted files are easy to style with CSS, animate, or edit by hand. That makes this a practical picture to SVG converter for developers who need lightweight, resolution-independent graphics for websites and apps, and for marketers who want a crisp logo at every breakpoint.',
         ],
       },
+      {
+        id: 'tips',
+        title: 'Tips for cleaner vector traces',
+        paragraphs: [
+          'Source quality drives the result more than any setting. Use the sharpest, highest-resolution original you can — a crisp logo or line drawing traces into far fewer, cleaner paths than a blurry photo. If you are working from a screenshot, capture it at 2x or higher.',
+          'Start from a preset that matches your artwork, then refine from there. “Default” handles most icons and illustrations; “B&W Line Art” is ideal for scans and sketches; “Poster” keeps flat colors vibrant; “Photo” merges similar tones for smoother gradients. Small moves on color precision and speckle filtering usually fix whatever is left.',
+        ],
+      },
     ],
     faqTitle: 'Frequently asked questions',
     faq: [
       {
         q: 'Is this SVG converter really free?',
-        a: 'Yes. SVGLO is completely free, with no watermark, no signup, and no limits on how many images you convert. You can rely on it as your go-to PNG to SVG converter free of charge, forever.',
+        a: 'Yes. SVGLO is completely free, with no watermark and no signup. You can rely on it as your go-to PNG to SVG converter free of charge, forever.',
       },
       {
         q: 'How do I convert JPG or JPEG to SVG?',
@@ -100,18 +108,18 @@ export const articleContent: Record<Locale, ArticleContent> = {
         a: 'Export or screenshot the PDF page as a PNG or JPG first, then convert that image to SVG here. It is a quick workaround that covers most PDF to SVG converter needs without extra software.',
       },
       {
-        q: 'Are my images uploaded to a server?',
-        a: 'No. All processing happens locally in your browser via WebAssembly, so your images never leave your device — ideal for confidential or client work.',
-      },
-      {
         q: 'What is the difference between PNG and SVG?',
         a: 'PNG is a raster format made of pixels, so it loses quality when enlarged. SVG is a vector format made of paths, so it scales to any size and stays crisp — which is exactly why so many people convert PNG to SVG in the first place.',
+      },
+      {
+        q: 'Can I turn the SVG back into PNG or JPG?',
+        a: 'The converter outputs SVG. To get a PNG or JPG from that SVG, open it in any vector editor — Figma, Illustrator, Inkscape — and export, or use your editor’s built-in raster export. Because the SVG is clean, structured markup, exporting a crisp bitmap at any size is straightforward.',
       },
     ],
   },
   zh: {
     intro:
-      'SVGLO 是一款免费的 SVG 转换器，可在浏览器中把 PNG、JPG、JPEG、WebP 等图片转换为干净、可无限放大的矢量图。所有处理都在本地完成，无需上传、无需注册、无水印，保护隐私的同时几秒内即可导出可用的 SVG 文件。',
+      'SVGLO 是一款免费的 SVG 转换器，可把 PNG、JPG、JPEG、WebP 等图片转换为干净、可无限放大的矢量图。无需注册、无水印，几秒内即可导出可用的 SVG 文件。',
     stepsTitle: '如何把图片转换为 SVG',
     steps: [
       {
@@ -133,9 +141,9 @@ export const articleContent: Record<Locale, ArticleContent> = {
     sections: [
       {
         id: 'features',
-        title: '快速、私密、精准',
+        title: '快速、精准',
         paragraphs: [
-          '与依赖服务器的工具不同，这款免费 SVG 转换器不会把图片发送到任何地方。矢量化引擎（visioncortex VTracer）以 WebAssembly 在浏览器中运行，结果几乎即时呈现，网络不佳时也能正常使用。文件始终留在本地，处理客户或机密素材也更安心。',
+          '这款免费 SVG 转换器内置矢量化引擎（visioncortex VTracer），几乎即时生成干净的矢量路径，边调参数边看结果。它面向真实工作流而生——快速、精准，没有臃肿桌面软件那样的负担。',
           '你可以完全掌控输出：调整颜色精度在保真度和文件体积之间取舍；提高斑点过滤去除噪点；在样条、多边形、像素三种拟合模式间切换，得到想要的效果。最终生成结构清晰、体积紧凑、便于在任何矢量软件中继续编辑的 SVG。',
         ],
       },
@@ -155,6 +163,14 @@ export const articleContent: Record<Locale, ArticleContent> = {
           '由于 SVG 本质是文本，转换后的文件很容易用 CSS 控制样式、制作动画，或直接手动编辑。因此对需要轻量、分辨率无关图形的开发者来说，这也是一款实用的图片转 SVG 工具。',
         ],
       },
+      {
+        id: 'tips',
+        title: '让矢量图更干净的小技巧',
+        paragraphs: [
+          '原图质量比任何参数都重要。请尽量使用最清晰、分辨率最高的素材——边缘锐利的 Logo 或线条稿，矢量化后路径更少、更干净；模糊照片则容易产生杂乱轮廓。若来自截图，建议按 2 倍或更高倍率截取。',
+          '先从贴合素材的预设入手，再做微调。“通用”适合大多数图标与插画；“黑白线条稿”适合扫描件与手绘；“海报”保留扁平色彩的鲜活；“照片”会合并相近色调，让渐变更平滑。多数情况下，微调颜色精度与斑点过滤即可解决剩余问题。',
+        ],
+      },
     ],
     faqTitle: '常见问题',
     faq: [
@@ -167,12 +183,12 @@ export const articleContent: Record<Locale, ArticleContent> = {
         a: '请先把 PDF 页面导出或截图为 PNG / JPG，再在这里转换为 SVG。目前暂不支持直接导入 PDF。',
       },
       {
-        q: '图片会被上传到服务器吗？',
-        a: '不会。所有处理都通过 WebAssembly 在你的浏览器本地完成，图片不会离开设备。',
-      },
-      {
         q: 'PNG 和 SVG 有什么区别？',
         a: 'PNG 是由像素组成的位图，放大会失真；SVG 是由路径构成的矢量图，可任意缩放且始终清晰。',
+      },
+      {
+        q: '可以把生成的 SVG 再转回 PNG 或 JPG 吗？',
+        a: '本转换器输出 SVG。若要由 SVG 得到 PNG 或 JPG，可在任意矢量软件（Figma、Illustrator、Inkscape）中打开并导出，或使用编辑器自带的位图导出功能。由于生成的 SVG 结构清晰，导出任意尺寸的清晰位图都很方便。',
       },
     ],
   },
