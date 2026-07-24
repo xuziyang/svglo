@@ -2,9 +2,9 @@ import type { Messages } from './types';
 
 export const zh: Messages = {
   meta: {
-    title: 'SVG 转换器 - PNG、JPG、PDF 图片转 SVG | SVGLO',
+    title: 'SVG 转换器 - PNG、JPG 图片转 SVG | SVGLO',
     description:
-      '免费在线将 PNG、JPG、JPEG、PDF 等图片转换为 SVG。无水印、无需安装、无需注册。快速高质量的 SVG 转换器，数秒内获得精确矢量结果。',
+      '免费在线将 PNG、JPG、JPEG、WebP 等图片转换为 SVG。图片仅在浏览器本地处理，无水印、无需安装、无需注册。',
   },
   header: {
     tagline: '图片转 SVG',
@@ -26,6 +26,11 @@ export const zh: Messages = {
     hint: '拖入图片，数秒即可得到干净的 SVG。',
     aria: '上传图片',
     unsupported: '暂不支持该图片格式，请使用 PNG / JPG / WebP / GIF / BMP。',
+    tooLarge: '图片文件不能超过 25 MB，请压缩后重试。',
+    tooManyPixels: '图片尺寸过大，请使用不超过 4000 万像素的图片。',
+    unreadable: '无法读取这张图片，请确认文件完整后重试。',
+    tryExample: '暂时没有图片？',
+    exampleName: '试用示例图片',
   },
   presets: {
     default: {
@@ -92,8 +97,19 @@ export const zh: Messages = {
     download: '下载 SVG',
     vectorizing: '正在矢量化…',
     failed: '转换失败',
+    failedHint: '可以重试当前图片，或换一张尺寸更小、边缘更清晰的图片。',
+    retry: '重新转换',
+    chooseAnother: '换一张图片',
     empty: '上传图片后将在此显示对比预览。',
     size: '尺寸',
     originalAlt: '原图',
+  },
+  footer: {
+    privacyTitle: '隐私说明',
+    privacySummary: '图片仅在你的浏览器中处理，不会上传到服务器。',
+    privacyBody:
+      'SVGlo 没有图片上传接口，也不会存储你的图片或生成结果。转换由浏览器中的 WebAssembly 完成，下载文件同样在本地生成。',
+    privacy: '隐私',
+    close: '关闭',
   },
 };

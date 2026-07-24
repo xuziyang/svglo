@@ -1,26 +1,64 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useT } from '../i18n/LocaleContext';
 
 interface DropzoneProps {
   onImage: (file: File) => void;
+  onExample: () => void;
 }
 
-const ACCEPTED = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp'];
+const ACCEPTED = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp', 'image/x-ms-bmp'];
+const ACCEPTED_EXTENSIONS = /\.(png|jpe?g|webp|gif|bmp)$/i;
+const MAX_FILE_BYTES = 25 * 1024 * 1024;
+const MAX_IMAGE_PIXELS = 40_000_000;
 
-export function Dropzone({ onImage }: DropzoneProps) {
+function readImageDimensions(file: File) {
+  return new Promise<{ width: number; height: number }>((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: image.naturalWidth, height: image.naturalHeight });
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Unreadable image'));
+    };
+    image.src = url;
+  });
+}
+
+export function Dropzone({ onImage, onExample }: DropzoneProps) {
   const t = useT();
   const [dragging, setDragging] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const depthRef = useRef(0);
+  const errorId = 'dropzone-error';
 
   const handleFiles = useCallback(
-    (files: FileList | null) => {
+    async (files: FileList | File[] | null) => {
       if (!files || files.length === 0) return;
       const file = files[0];
-      if (!ACCEPTED.includes(file.type)) {
-        alert(t('dropzone.unsupported'));
+      const supported = ACCEPTED.includes(file.type) || ACCEPTED_EXTENSIONS.test(file.name);
+      if (!supported) {
+        setValidationError(t('dropzone.unsupported'));
         return;
       }
+      if (file.size > MAX_FILE_BYTES) {
+        setValidationError(t('dropzone.tooLarge'));
+        return;
+      }
+      try {
+        const { width, height } = await readImageDimensions(file);
+        if (width * height > MAX_IMAGE_PIXELS) {
+          setValidationError(t('dropzone.tooManyPixels'));
+          return;
+        }
+      } catch {
+        setValidationError(t('dropzone.unreadable'));
+        return;
+      }
+      setValidationError(null);
       onImage(file);
     },
     [onImage, t],
@@ -31,34 +69,39 @@ export function Dropzone({ onImage }: DropzoneProps) {
       e.preventDefault();
       depthRef.current = 0;
       setDragging(false);
-      handleFiles(e.dataTransfer.files);
+      void handleFiles(e.dataTransfer.files);
     },
     [handleFiles],
   );
 
-  const onPaste = useCallback(
-    (e: React.ClipboardEvent) => {
-      const items = e.clipboardData?.items;
-      if (!items) return;
-      for (const item of items) {
-        if (item.type.startsWith('image/')) {
-          const file = item.getAsFile();
-          if (file) {
-            onImage(file);
-            e.preventDefault();
-            return;
-          }
+  useEffect(() => {
+    const onPaste = (event: ClipboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.matches('input, textarea, [contenteditable="true"]')) return;
+      for (const item of event.clipboardData?.items ?? []) {
+        if (!item.type.startsWith('image/')) continue;
+        const file = item.getAsFile();
+        if (file) {
+          event.preventDefault();
+          void handleFiles([file]);
+          return;
         }
       }
-    },
-    [onImage],
-  );
+    };
+    window.addEventListener('paste', onPaste);
+    return () => window.removeEventListener('paste', onPaste);
+  }, [handleFiles]);
 
   return (
     <div
       className={`dropzone ${dragging ? 'is-dragging' : ''}`}
       tabIndex={0}
       onClick={() => inputRef.current?.click()}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return;
+        e.preventDefault();
+        inputRef.current?.click();
+      }}
       onDragEnter={(e) => {
         e.preventDefault();
         depthRef.current++;
@@ -71,16 +114,19 @@ export function Dropzone({ onImage }: DropzoneProps) {
       }}
       onDragOver={(e) => e.preventDefault()}
       onDrop={onDrop}
-      onPaste={onPaste}
       role="button"
       aria-label={t('dropzone.aria')}
+      aria-describedby={validationError ? errorId : undefined}
     >
       <input
         ref={inputRef}
         type="file"
         accept={ACCEPTED.join(',')}
         hidden
-        onChange={(e) => handleFiles(e.target.files)}
+        onChange={(e) => {
+          void handleFiles(e.target.files);
+          e.currentTarget.value = '';
+        }}
       />
       <div className="dropzone-icon" aria-hidden>
         <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -91,6 +137,24 @@ export function Dropzone({ onImage }: DropzoneProps) {
       <h2>{t('dropzone.title')}</h2>
       <p>{t('dropzone.formats')}</p>
       <p className="dropzone-hint">{t('dropzone.hint')}</p>
+      {validationError && (
+        <p className="dropzone-error" id={errorId} role="alert">
+          {validationError}
+        </p>
+      )}
+      <div className="dropzone-example">
+        <span>{t('dropzone.tryExample')}</span>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setValidationError(null);
+            onExample();
+          }}
+        >
+          {t('dropzone.exampleName')}
+        </button>
+      </div>
     </div>
   );
 }

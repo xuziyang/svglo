@@ -88,9 +88,9 @@ export function buildSeoShell(locale: Locale, messages: Messages = catalogs[loca
   const sections = a.sections
     .map(
       (sec) =>
-        `        <section aria-labelledby="article-${sec.id}">\n          <h3 id="article-${sec.id}">${escapeHtml(sec.title)}</h3>\n${sec.paragraphs
-          .map((p) => `          <p>${escapeHtml(p)}</p>`)
-          .join('\n')}\n        </section>`,
+        `        <section class="article-copy-section" aria-labelledby="article-${sec.id}">\n          <h3 id="article-${sec.id}">${escapeHtml(sec.title)}</h3>\n          <div class="article-copy-body">\n${sec.paragraphs
+          .map((p) => `            <p>${escapeHtml(p)}</p>`)
+          .join('\n')}\n          </div>\n        </section>`,
     )
     .join('\n');
 
@@ -125,8 +125,10 @@ export function buildSeoShell(locale: Locale, messages: Messages = catalogs[loca
 ${steps}
             </ol>
           </section>
-          <h2>${escapeHtml(a.featuresTitle)}</h2>
-          <p class="article-lead">${escapeHtml(a.featuresLead)}</p>
+          <div class="article-heading">
+            <h2>${escapeHtml(a.featuresTitle)}</h2>
+            <p class="article-lead">${escapeHtml(a.featuresLead)}</p>
+          </div>
 ${sections}
           <section aria-labelledby="article-faq-title">
             <h2 id="article-faq-title">${escapeHtml(a.faqTitle)}</h2>

@@ -16,6 +16,8 @@ interface PreviewPaneProps {
   progress: number;
   svgString: string | null;
   error: string | null;
+  onRetry: () => void;
+  onReset: () => void;
   onDownload: () => void;
   onCopy: () => void;
   copied: boolean;
@@ -33,6 +35,8 @@ export function PreviewPane(props: PreviewPaneProps) {
     progress,
     svgString,
     error,
+    onRetry,
+    onReset,
     onDownload,
     onCopy,
     copied,
@@ -120,6 +124,15 @@ export function PreviewPane(props: PreviewPaneProps) {
             <div className="error-card">
               <strong>{t('preview.failed')}</strong>
               <p>{error}</p>
+              <p className="error-hint">{t('preview.failedHint')}</p>
+              <div className="error-actions">
+                <button type="button" className="btn btn-primary" onClick={onRetry}>
+                  {t('preview.retry')}
+                </button>
+                <button type="button" className="btn btn-ghost" onClick={onReset}>
+                  {t('preview.chooseAnother')}
+                </button>
+              </div>
             </div>
           </div>
         )}

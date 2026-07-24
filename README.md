@@ -99,4 +99,4 @@ See the upstream [parameter docs](../vtracer/README.md) for meanings and use cas
 ## License
 
 - Core engine `vtracer`: MIT / Apache-2.0
-- This frontend project: your choice (defaults to MIT)
+- This frontend project: MIT — see [`LICENSE`](LICENSE)

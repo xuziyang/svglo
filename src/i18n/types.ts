@@ -30,6 +30,11 @@ export interface Messages {
     hint: string;
     aria: string;
     unsupported: string;
+    tooLarge: string;
+    tooManyPixels: string;
+    unreadable: string;
+    tryExample: string;
+    exampleName: string;
   };
   presets: {
     default: PresetMessages;
@@ -81,9 +86,19 @@ export interface Messages {
     download: string;
     vectorizing: string;
     failed: string;
+    failedHint: string;
+    retry: string;
+    chooseAnother: string;
     empty: string;
     size: string;
     originalAlt: string;
+  };
+  footer: {
+    privacyTitle: string;
+    privacySummary: string;
+    privacyBody: string;
+    privacy: string;
+    close: string;
   };
 }
 

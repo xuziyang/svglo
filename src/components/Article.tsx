@@ -22,15 +22,19 @@ export function Article() {
         </ol>
       </section>
 
-      <h2 className="article-features-title">{a.featuresTitle}</h2>
-      <p className="article-lead">{a.featuresLead}</p>
+      <div className="article-heading">
+        <h2 className="article-features-title">{a.featuresTitle}</h2>
+        <p className="article-lead">{a.featuresLead}</p>
+      </div>
 
       {a.sections.map((sec) => (
-        <section key={sec.id} aria-labelledby={`article-${sec.id}`}>
+        <section className="article-copy-section" key={sec.id} aria-labelledby={`article-${sec.id}`}>
           <h3 id={`article-${sec.id}`}>{sec.title}</h3>
-          {sec.paragraphs.map((p, i) => (
-            <p key={i}>{p}</p>
-          ))}
+          <div className="article-copy-body">
+            {sec.paragraphs.map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+          </div>
         </section>
       ))}
 

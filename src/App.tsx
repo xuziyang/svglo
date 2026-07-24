@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Header } from './components/Header';
+import { Footer } from './components/Footer';
 import { Dropzone } from './components/Dropzone';
 import { Article } from './components/Article';
 import { ControlPanel } from './components/ControlPanel';
@@ -91,6 +92,62 @@ export default function App() {
     setImageDims(null);
   }, [cancel]);
 
+  const handleExample = useCallback(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 720;
+    canvas.height = 480;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.fillStyle = '#eef2ff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.roundRect(60, 52, 600, 376, 32);
+    ctx.fill();
+
+    ctx.fillStyle = '#6366f1';
+    ctx.beginPath();
+    ctx.arc(220, 224, 112, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(248, 188, 34, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#312e81';
+    ctx.beginPath();
+    ctx.moveTo(120, 304);
+    ctx.lineTo(196, 202);
+    ctx.lineTo(250, 260);
+    ctx.lineTo(292, 218);
+    ctx.lineTo(336, 304);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#171b26';
+    ctx.font = '700 64px system-ui, sans-serif';
+    ctx.fillText('SVGLO', 376, 224);
+    ctx.fillStyle = '#6366f1';
+    ctx.font = '700 19px system-ui, sans-serif';
+    ctx.letterSpacing = '2px';
+    ctx.fillText('LOCAL  •  PRIVATE', 380, 264);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      handleImage(new File([blob], 'svglo-example.png', { type: 'image/png' }));
+    }, 'image/png');
+  }, [handleImage]);
+
+  const handleRetry = useCallback(() => {
+    const canvas = canvasRef.current;
+    const svg = svgRef.current;
+    if (!canvas || !svg || !hasImageRef.current) return;
+    convert(canvas, svg, config);
+  }, [config, convert]);
+
   const handleDownload = useCallback(() => {
     if (!svgString) return;
     const blob = new Blob([svgString], { type: 'image/svg+xml' });
@@ -162,7 +219,7 @@ export default function App() {
                   </li>
                 </ul>
               </div>
-              <Dropzone onImage={handleImage} />
+              <Dropzone onImage={handleImage} onExample={handleExample} />
             </div>
             <Article />
           </>
@@ -185,6 +242,8 @@ export default function App() {
               progress={progress}
               svgString={svgString}
               error={error}
+              onRetry={handleRetry}
+              onReset={handleReset}
               onDownload={handleDownload}
               onCopy={handleCopy}
               copied={copied}
@@ -192,6 +251,7 @@ export default function App() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

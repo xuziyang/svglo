@@ -2,9 +2,9 @@ import type { Messages } from './types';
 
 export const en: Messages = {
   meta: {
-    title: 'SVG Converter - PNG, JPG, PDF & Image to SVG | SVGLO',
+    title: 'SVG Converter - PNG, JPG & Image to SVG | SVGLO',
     description:
-      'Convert PNG, JPG, JPEG, PDF and other images to SVG online for free. No watermark, no installation, and no signup required. Fast, high-quality SVG converter with accurate vector results in seconds.',
+      'Convert PNG, JPG, JPEG, and WebP images to SVG online for free. Images stay in your browser—no upload, watermark, installation, or signup.',
   },
   header: {
     tagline: 'Image to SVG',
@@ -26,6 +26,11 @@ export const en: Messages = {
     hint: 'Drop an image and get a clean SVG in seconds.',
     aria: 'Upload image',
     unsupported: 'Unsupported image format. Please use PNG / JPG / WebP / GIF / BMP.',
+    tooLarge: 'Images must be 25 MB or smaller. Compress the file and try again.',
+    tooManyPixels: 'This image is too large. Please use an image under 40 megapixels.',
+    unreadable: 'This image could not be read. Check the file and try again.',
+    tryExample: 'No image handy?',
+    exampleName: 'Try an example',
   },
   presets: {
     default: {
@@ -92,8 +97,19 @@ export const en: Messages = {
     download: 'Download SVG',
     vectorizing: 'Vectorizing…',
     failed: 'Conversion failed',
+    failedHint: 'Retry this image, or choose a smaller image with clearer edges.',
+    retry: 'Try again',
+    chooseAnother: 'Choose another',
     empty: 'Upload an image to see the comparison preview here.',
     size: 'Size',
     originalAlt: 'Original',
+  },
+  footer: {
+    privacyTitle: 'Privacy',
+    privacySummary: 'Images are processed in your browser and never uploaded.',
+    privacyBody:
+      'SVGlo has no image upload endpoint and does not store your images or results. Conversion runs locally through WebAssembly, and downloads are generated on your device.',
+    privacy: 'Privacy',
+    close: 'Close',
   },
 };
