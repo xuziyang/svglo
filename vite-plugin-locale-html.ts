@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Plugin, IndexHtmlTransformContext } from 'vite';
 import {
+  articleContent,
   catalogs,
   DEFAULT_LOCALE,
   LOCALES,
@@ -69,12 +70,36 @@ export function buildHeadTags(locale: Locale, origin = siteOrigin()): string {
 /** Static shell inside #root — visible to no-JS crawlers, replaced when React mounts. */
 export function buildSeoShell(locale: Locale, messages: Messages = catalogs[locale]): string {
   const m = messages;
+  const a = articleContent[locale];
   const other = LOCALES.filter((l) => l !== locale);
   const langLinks = LOCALES.map((l) => {
     const label = l === 'zh' ? '中文' : 'English';
     const current = l === locale ? ' aria-current="page"' : '';
     return `<a href="/${l}/"${current}>${label}</a>`;
   }).join(' · ');
+
+  const steps = a.steps
+    .map(
+      (s) =>
+        `          <li>\n            <h3>${escapeHtml(s.title)}</h3>\n            <p>${escapeHtml(s.body)}</p>\n          </li>`,
+    )
+    .join('\n');
+
+  const sections = a.sections
+    .map(
+      (sec) =>
+        `        <section aria-labelledby="article-${sec.id}">\n          <h3 id="article-${sec.id}">${escapeHtml(sec.title)}</h3>\n${sec.paragraphs
+          .map((p) => `          <p>${escapeHtml(p)}</p>`)
+          .join('\n')}\n        </section>`,
+    )
+    .join('\n');
+
+  const faq = a.faq
+    .map(
+      (f) =>
+        `        <details>\n          <summary><h3>${escapeHtml(f.q)}</h3></summary>\n          <p>${escapeHtml(f.a)}</p>\n        </details>`,
+    )
+    .join('\n');
 
   return `<div class="seo-shell">
       <header class="seo-shell-header">
@@ -92,6 +117,22 @@ export function buildSeoShell(locale: Locale, messages: Messages = catalogs[loca
           <li>${escapeHtml(m.hero.featExport)}</li>
         </ul>
         <p>${escapeHtml(m.dropzone.hint)}</p>
+        <article class="seo-shell-article">
+          <p class="article-intro">${escapeHtml(a.intro)}</p>
+          <section aria-labelledby="article-steps-title">
+            <h2 id="article-steps-title">${escapeHtml(a.stepsTitle)}</h2>
+            <ol>
+${steps}
+            </ol>
+          </section>
+          <h2>${escapeHtml(a.featuresTitle)}</h2>
+          <p class="article-lead">${escapeHtml(a.featuresLead)}</p>
+${sections}
+          <section aria-labelledby="article-faq-title">
+            <h2 id="article-faq-title">${escapeHtml(a.faqTitle)}</h2>
+${faq}
+          </section>
+        </article>
         <p class="seo-shell-switch">${other
           .map((l) => {
             const label = l === 'zh' ? '中文版' : 'English version';

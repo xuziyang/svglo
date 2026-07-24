@@ -1,10 +1,12 @@
 import { en } from './en';
 import { zh } from './zh';
+import { articleContent } from './article';
 import type { Locale, MessageKey, Messages } from './types';
 
 export type { Locale, MessageKey, Messages } from './types';
 export { en } from './en';
 export { zh } from './zh';
+export { articleContent } from './article';
 
 export const LOCALES: readonly Locale[] = ['en', 'zh'] as const;
 export const DEFAULT_LOCALE: Locale = 'en';
