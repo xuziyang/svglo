@@ -1,13 +1,19 @@
+import { LOCALE_LABELS, LOCALES, localePath, type Locale } from '../i18n';
+import { useLocale, useT } from '../i18n/LocaleContext';
+
 interface HeaderProps {
   hasImage: boolean;
   onReset: () => void;
 }
 
 export function Header({ hasImage, onReset }: HeaderProps) {
+  const t = useT();
+  const { locale, setLocale } = useLocale();
+
   return (
     <header className="header">
       <div className="header-inner">
-        <a className="brand" href="/">
+        <a className="brand" href={localePath(locale)}>
           <span className="brand-mark" aria-hidden>
             <svg viewBox="0 0 32 32" width="30" height="30">
               <defs>
@@ -42,15 +48,28 @@ export function Header({ hasImage, onReset }: HeaderProps) {
           </span>
           <span className="brand-text">
             <strong>SVGlo</strong>
-            <small>图片转 SVG</small>
+            <small>{t('header.tagline')}</small>
           </span>
         </a>
         <nav className="header-nav">
           {hasImage && (
             <button className="link-btn" onClick={onReset}>
-              换一张图
+              {t('header.newImage')}
             </button>
           )}
+          <div className="lang-switch" role="group" aria-label={t('header.langSwitch')}>
+            {LOCALES.map((l: Locale) => (
+              <button
+                key={l}
+                type="button"
+                className={`lang-btn ${locale === l ? 'is-active' : ''}`}
+                onClick={() => setLocale(l)}
+                aria-pressed={locale === l}
+              >
+                {LOCALE_LABELS[l]}
+              </button>
+            ))}
+          </div>
         </nav>
       </div>
     </header>

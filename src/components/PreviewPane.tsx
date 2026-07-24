@@ -1,5 +1,6 @@
 import { useMemo, type RefObject } from 'react';
 import type { ConvertStatus } from '../hooks/useVTracer';
+import { useT } from '../i18n/LocaleContext';
 import { Segmented } from './Segmented';
 
 export type PreviewView = 'before' | 'after' | 'compare';
@@ -37,6 +38,7 @@ export function PreviewPane(props: PreviewPaneProps) {
     copied,
   } = props;
 
+  const t = useT();
   const running = status === 'running';
   const viewBox = imageDims ? `0 0 ${imageDims.w} ${imageDims.h}` : undefined;
   const svgBytes = useMemo(
@@ -50,9 +52,9 @@ export function PreviewPane(props: PreviewPaneProps) {
         <Segmented
           value={view}
           options={[
-            { value: 'before', label: '原图' },
-            { value: 'after', label: '矢量' },
-            { value: 'compare', label: '对比' },
+            { value: 'before', label: t('preview.original') },
+            { value: 'after', label: t('preview.vector') },
+            { value: 'compare', label: t('preview.compare') },
           ]}
           onChange={(v) => onViewChange(v as PreviewView)}
         />
@@ -61,16 +63,16 @@ export function PreviewPane(props: PreviewPaneProps) {
             className="btn btn-ghost"
             onClick={onCopy}
             disabled={!svgString}
-            title="复制 SVG 源码到剪贴板"
+            title={t('preview.copyTitle')}
           >
-            {copied ? '已复制 ✓' : '复制 SVG'}
+            {copied ? t('preview.copied') : t('preview.copy')}
           </button>
           <button
             className="btn btn-primary"
             onClick={onDownload}
             disabled={!svgString}
           >
-            下载 SVG
+            {t('preview.download')}
           </button>
         </div>
       </div>
@@ -80,7 +82,7 @@ export function PreviewPane(props: PreviewPaneProps) {
         <canvas ref={canvasRef} id="vt-canvas" style={{ display: 'none' }} />
 
         <div className="pane pane-before" hidden={view !== 'before' && view !== 'compare'}>
-          {imageSrc && <img src={imageSrc} alt="原图" className="pane-img" />}
+          {imageSrc && <img src={imageSrc} alt={t('preview.originalAlt')} className="pane-img" />}
         </div>
 
         <div className="pane pane-after" hidden={view !== 'after' && view !== 'compare'}>
@@ -104,7 +106,7 @@ export function PreviewPane(props: PreviewPaneProps) {
           <div className="preview-overlay">
             <div className="progress-card">
               <div className="progress-label">
-                正在矢量化… {Math.round(progress)}%
+                {t('preview.vectorizing')} {Math.round(progress)}%
               </div>
               <div className="progress-bar">
                 <div className="progress-fill" style={{ width: `${progress}%` }} />
@@ -116,7 +118,7 @@ export function PreviewPane(props: PreviewPaneProps) {
         {status === 'error' && (
           <div className="preview-overlay">
             <div className="error-card">
-              <strong>转换失败</strong>
+              <strong>{t('preview.failed')}</strong>
               <p>{error}</p>
             </div>
           </div>
@@ -124,7 +126,7 @@ export function PreviewPane(props: PreviewPaneProps) {
 
         {!imageSrc && (
           <div className="preview-empty">
-            <p>上传图片后将在此显示对比预览。</p>
+            <p>{t('preview.empty')}</p>
           </div>
         )}
       </div>
@@ -132,7 +134,7 @@ export function PreviewPane(props: PreviewPaneProps) {
       {imageDims && (
         <div className="preview-meta">
           <span>
-            尺寸 {imageDims.w} × {imageDims.h}px
+            {t('preview.size')} {imageDims.w} × {imageDims.h}px
           </span>
           {svgString && (
             <span>SVG · {(svgBytes / 1024).toFixed(1)} KB</span>

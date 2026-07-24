@@ -4,10 +4,12 @@ import { Dropzone } from './components/Dropzone';
 import { ControlPanel } from './components/ControlPanel';
 import { PreviewPane, type PreviewView } from './components/PreviewPane';
 import { useVTracer } from './hooks/useVTracer';
+import { useT } from './i18n/LocaleContext';
 import { DEFAULT_CONFIG, PRESETS, type Preset } from './lib/presets';
 import type { VTracerConfig } from './lib/vtracer';
 
 export default function App() {
+  const t = useT();
   const { status, progress, svgString, error, convert, cancel } = useVTracer();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -59,13 +61,13 @@ export default function App() {
   // canvas (no need to re-decode the source image).
   useEffect(() => {
     if (!hasImageRef.current) return;
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       const canvas = canvasRef.current;
       const svg = svgRef.current;
       if (!canvas || !svg) return;
       convert(canvas, svg, config);
     }, 300);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [config, convert]);
 
   const handleImage = useCallback((file: File) => {
@@ -135,16 +137,15 @@ export default function App() {
           <div className="hero">
             <div className="hero-text">
               <h1>
-                把图片变成 <span className="accent">SVG 矢量图</span>
+                {t('hero.titleBefore')}{' '}
+                <span className="accent">{t('hero.titleAccent')}</span>
               </h1>
-              <p className="hero-lead">
-                在浏览器中本地完成转换，无需上传，无需注册。
-              </p>
+              <p className="hero-lead">{t('hero.lead')}</p>
               <ul className="hero-feats">
-                <li>🔒 完全本地处理，图片不离开浏览器</li>
-                <li>🎨 彩色 / 黑白 / 像素画多种模式</li>
-                <li>🎛️ 聚类与曲线拟合参数可调</li>
-                <li>⬇️ 导出干净紧凑的 SVG</li>
+                <li>{t('hero.featLocal')}</li>
+                <li>{t('hero.featModes')}</li>
+                <li>{t('hero.featParams')}</li>
+                <li>{t('hero.featExport')}</li>
               </ul>
             </div>
             <Dropzone onImage={handleImage} />

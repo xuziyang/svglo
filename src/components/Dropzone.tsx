@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { useT } from '../i18n/LocaleContext';
 
 interface DropzoneProps {
   onImage: (file: File) => void;
@@ -7,6 +8,7 @@ interface DropzoneProps {
 const ACCEPTED = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp'];
 
 export function Dropzone({ onImage }: DropzoneProps) {
+  const t = useT();
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const depthRef = useRef(0);
@@ -16,12 +18,12 @@ export function Dropzone({ onImage }: DropzoneProps) {
       if (!files || files.length === 0) return;
       const file = files[0];
       if (!ACCEPTED.includes(file.type)) {
-        alert('暂不支持该图片格式，请使用 PNG / JPG / WebP / GIF / BMP。');
+        alert(t('dropzone.unsupported'));
         return;
       }
       onImage(file);
     },
-    [onImage],
+    [onImage, t],
   );
 
   const onDrop = useCallback(
@@ -71,7 +73,7 @@ export function Dropzone({ onImage }: DropzoneProps) {
       onDrop={onDrop}
       onPaste={onPaste}
       role="button"
-      aria-label="上传图片"
+      aria-label={t('dropzone.aria')}
     >
       <input
         ref={inputRef}
@@ -86,9 +88,9 @@ export function Dropzone({ onImage }: DropzoneProps) {
           <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" strokeLinecap="round" />
         </svg>
       </div>
-      <h2>拖拽图片到此处，或点击选择文件</h2>
-      <p>支持 PNG / JPG / WebP / GIF / BMP · 也可直接 Ctrl+V 粘贴</p>
-      <p className="dropzone-hint">所有处理在你的浏览器本地完成，图片不会上传到任何服务器。</p>
+      <h2>{t('dropzone.title')}</h2>
+      <p>{t('dropzone.formats')}</p>
+      <p className="dropzone-hint">{t('dropzone.hint')}</p>
     </div>
   );
 }

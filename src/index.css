@@ -48,6 +48,57 @@ a:hover {
   text-decoration: underline;
 }
 
+/* Static SEO shell (no-JS / crawlers). React replaces #root on mount. */
+.seo-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  color: var(--text);
+}
+.seo-shell-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+  margin-bottom: 32px;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+.seo-shell-header strong {
+  color: var(--text);
+  font-size: 18px;
+}
+.seo-shell-langs {
+  margin-left: auto;
+  font-size: 13px;
+}
+.seo-shell-main h1 {
+  font-size: 36px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+}
+.seo-shell-main h1 span {
+  background: var(--accent-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.seo-shell-main p {
+  color: var(--text-muted);
+  line-height: 1.6;
+  font-size: 17px;
+}
+.seo-shell-main ul {
+  padding-left: 1.2em;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+.seo-shell-switch {
+  margin-top: 24px;
+  font-size: 14px;
+}
+
 .app {
   min-height: 100%;
   display: flex;
@@ -118,6 +169,38 @@ a:hover {
   background: var(--surface-2);
   color: var(--text);
   text-decoration: none;
+}
+
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 4px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.lang-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 5px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  line-height: 1;
+}
+.lang-btn:hover {
+  color: var(--text);
+}
+.lang-btn.is-active {
+  background: var(--surface);
+  color: var(--accent-strong);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ---------- Main layout ---------- */

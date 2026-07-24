@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
+import { useT } from '../i18n/LocaleContext';
+import type { MessageKey } from '../i18n';
 import type { ColorMode, Hierarchical, PathMode, VTracerConfig } from '../lib/vtracer';
-import { PRESETS, type Preset } from '../lib/presets';
+import { PRESETS, type Preset, type PresetId } from '../lib/presets';
 import { Segmented } from './Segmented';
 
 interface ControlPanelProps {
@@ -11,48 +13,62 @@ interface ControlPanelProps {
 }
 
 export function ControlPanel({ config, onChange, onPreset, activePresetId }: ControlPanelProps) {
+  const t = useT();
   const isColor = config.colormode === 'color';
   const isSpline = config.mode === 'spline';
+
+  const presetName = (id: PresetId) => t(`presets.${id}.name` as MessageKey);
+  const presetDesc = (id: PresetId) => t(`presets.${id}.description` as MessageKey);
 
   return (
     <aside className="panel">
       <section className="panel-section">
-        <h3>预设</h3>
+        <h3>{t('controls.presets')}</h3>
         <div className="preset-grid">
           {PRESETS.map((p) => (
             <button
               key={p.id}
               className={`preset-btn ${activePresetId === p.id ? 'is-active' : ''}`}
               onClick={() => onPreset(p)}
-              title={p.description}
+              title={presetDesc(p.id)}
             >
-              {p.name}
+              {presetName(p.id)}
             </button>
           ))}
         </div>
       </section>
 
       <section className="panel-section">
-        <h3>聚类</h3>
+        <h3>{t('controls.clustering')}</h3>
 
-        <Field label="颜色模式" hint={isColor ? '彩色图像' : '黑白二值'}>
+        <Field
+          label={t('controls.colorMode')}
+          hint={isColor ? t('controls.colorHint') : t('controls.binaryHint')}
+        >
           <Segmented
             value={config.colormode}
             options={[
-              { value: 'color', label: '彩色' },
-              { value: 'binary', label: '黑白' },
+              { value: 'color', label: t('controls.colorModeColor') },
+              { value: 'binary', label: t('controls.colorModeBinary') },
             ]}
             onChange={(v) => onChange({ colormode: v as ColorMode })}
           />
         </Field>
 
         {isColor && (
-          <Field label="层次策略" hint={config.hierarchical === 'stacked' ? '形状堆叠（更紧凑）' : '独立裁切（可单独编辑）'}>
+          <Field
+            label={t('controls.hierarchy')}
+            hint={
+              config.hierarchical === 'stacked'
+                ? t('controls.stackedHint')
+                : t('controls.cutoutHint')
+            }
+          >
             <Segmented
               value={config.hierarchical}
               options={[
-                { value: 'stacked', label: '堆叠' },
-                { value: 'cutout', label: '裁切' },
+                { value: 'stacked', label: t('controls.hierarchyStacked') },
+                { value: 'cutout', label: t('controls.hierarchyCutout') },
               ]}
               onChange={(v) => onChange({ hierarchical: v as Hierarchical })}
             />
@@ -60,8 +76,8 @@ export function ControlPanel({ config, onChange, onPreset, activePresetId }: Con
         )}
 
         <Slider
-          label="滤除斑点"
-          hint="丢弃小于 X² 像素的色块（清理噪点）"
+          label={t('controls.filterSpeckle')}
+          hint={t('controls.filterSpeckleHint')}
           value={config.filter_speckle}
           min={0}
           max={16}
@@ -72,8 +88,8 @@ export function ControlPanel({ config, onChange, onPreset, activePresetId }: Con
         {isColor && (
           <>
             <Slider
-              label="颜色精度"
-              hint="RGB 通道有效位数，越大颜色越多"
+              label={t('controls.colorPrecision')}
+              hint={t('controls.colorPrecisionHint')}
               value={config.color_precision}
               min={1}
               max={8}
@@ -81,8 +97,8 @@ export function ControlPanel({ config, onChange, onPreset, activePresetId }: Con
               onChange={(v) => onChange({ color_precision: v })}
             />
             <Slider
-              label="渐变步长"
-              hint="色层间颜色差异，0=对角聚类"
+              label={t('controls.gradientStep')}
+              hint={t('controls.gradientStepHint')}
               value={config.layer_difference}
               min={0}
               max={255}
@@ -94,15 +110,15 @@ export function ControlPanel({ config, onChange, onPreset, activePresetId }: Con
       </section>
 
       <section className="panel-section">
-        <h3>曲线拟合</h3>
+        <h3>{t('controls.curveFitting')}</h3>
 
-        <Field label="拟合模式">
+        <Field label={t('controls.mode')}>
           <Segmented
             value={config.mode}
             options={[
-              { value: 'spline', label: '样条' },
-              { value: 'polygon', label: '多边形' },
-              { value: 'none', label: '像素' },
+              { value: 'spline', label: t('controls.modeSpline') },
+              { value: 'polygon', label: t('controls.modePolygon') },
+              { value: 'none', label: t('controls.modePixel') },
             ]}
             onChange={(v) => onChange({ mode: v as PathMode })}
           />
@@ -111,8 +127,8 @@ export function ControlPanel({ config, onChange, onPreset, activePresetId }: Con
         {isSpline && (
           <>
             <Slider
-              label="拐角阈值"
-              hint="保留为拐角的最小角度，越大越锐利"
+              label={t('controls.cornerThreshold')}
+              hint={t('controls.cornerThresholdHint')}
               value={config.corner_threshold}
               min={0}
               max={180}
@@ -121,8 +137,8 @@ export function ControlPanel({ config, onChange, onPreset, activePresetId }: Con
               onChange={(v) => onChange({ corner_threshold: v })}
             />
             <Slider
-              label="线段长度"
-              hint="细分平滑直到线段短于此值"
+              label={t('controls.segmentLength')}
+              hint={t('controls.segmentLengthHint')}
               value={config.length_threshold}
               min={3.5}
               max={10}
@@ -130,8 +146,8 @@ export function ControlPanel({ config, onChange, onPreset, activePresetId }: Con
               onChange={(v) => onChange({ length_threshold: v })}
             />
             <Slider
-              label="拼接阈值"
-              hint="拼接样条的最小角度位移"
+              label={t('controls.spliceThreshold')}
+              hint={t('controls.spliceThresholdHint')}
               value={config.splice_threshold}
               min={0}
               max={180}
@@ -145,8 +161,8 @@ export function ControlPanel({ config, onChange, onPreset, activePresetId }: Con
 
       <section className="panel-section">
         <Slider
-          label="路径精度"
-          hint="SVG 坐标小数位数，影响文件体积"
+          label={t('controls.pathPrecision')}
+          hint={t('controls.pathPrecisionHint')}
           value={config.path_precision}
           min={0}
           max={16}

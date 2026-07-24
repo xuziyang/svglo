@@ -1,0 +1,7 @@
+# Language landing pages are real static files under /en/ and /zh/.
+# Bare /en and /zh normalize to trailing slash.
+/en   /en/   301
+/zh   /zh/   301
+
+# Root is a tiny language redirect page (dist/index.html). No catch-all SPA
+# rewrite — that would shadow the per-locale index.html files.

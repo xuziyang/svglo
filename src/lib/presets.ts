@@ -13,36 +13,28 @@ export const DEFAULT_CONFIG: VTracerConfig = {
   path_precision: 8,
 };
 
+export type PresetId = 'default' | 'bw' | 'poster' | 'photo' | 'pixel';
+
 export interface Preset {
-  id: string;
-  name: string;
-  description: string;
+  id: PresetId;
   config: VTracerConfig;
 }
 
 export const PRESETS: Preset[] = [
   {
     id: 'default',
-    name: '通用',
-    description: '适合大多数图标 / 插画',
     config: { ...DEFAULT_CONFIG },
   },
   {
     id: 'bw',
-    name: '黑白线稿',
-    description: '二值化，适合扫描文档 / 蓝图 / 线稿',
     config: { ...DEFAULT_CONFIG, colormode: 'binary' },
   },
   {
     id: 'poster',
-    name: '海报',
-    description: '扁平彩色插画，保留完整颜色',
     config: { ...DEFAULT_CONFIG, color_precision: 8 },
   },
   {
     id: 'photo',
-    name: '照片',
-    description: '连续色调，合并相近色层',
     config: {
       ...DEFAULT_CONFIG,
       filter_speckle: 10,
@@ -53,8 +45,6 @@ export const PRESETS: Preset[] = [
   },
   {
     id: 'pixel',
-    name: '像素画',
-    description: '不做曲线简化，保留像素方块',
     config: {
       ...DEFAULT_CONFIG,
       colormode: 'color',
