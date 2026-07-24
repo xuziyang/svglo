@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Header } from './components/Header';
 import { Dropzone } from './components/Dropzone';
+import { Article } from './components/Article';
 import { ControlPanel } from './components/ControlPanel';
 import { PreviewPane, type PreviewView } from './components/PreviewPane';
 import { useVTracer } from './hooks/useVTracer';
@@ -134,22 +135,37 @@ export default function App() {
 
       <main className="main">
         {!imageSrc ? (
-          <div className="hero">
-            <div className="hero-text">
-              <h1>
-                {t('hero.titleBefore')}{' '}
-                <span className="accent">{t('hero.titleAccent')}</span>
-              </h1>
-              <p className="hero-lead">{t('hero.lead')}</p>
-              <ul className="hero-feats">
-                <li>{t('hero.featLocal')}</li>
-                <li>{t('hero.featModes')}</li>
-                <li>{t('hero.featParams')}</li>
-                <li>{t('hero.featExport')}</li>
-              </ul>
+          <>
+            <div className="hero">
+              <div className="hero-text">
+                <h1>
+                  {t('hero.titleBefore')}{' '}
+                  <span className="accent">{t('hero.titleAccent')}</span>
+                </h1>
+                <p className="hero-lead">{t('hero.lead')}</p>
+                <ul className="hero-feats">
+                  <li>
+                    <FeatIcon d="M12 3l7 3v5c0 4.4-3 8.1-7 9.5C8 19.1 5 15.4 5 11V6l7-3z" />
+                    <span>{t('hero.featLocal')}</span>
+                  </li>
+                  <li>
+                    <FeatIcon d="M12 3a9 9 0 1 0 9 9h-4a5 5 0 1 1-5-5V3z" />
+                    <span>{t('hero.featModes')}</span>
+                  </li>
+                  <li>
+                    <FeatIcon d="M4 8h9M17 8h3M4 16h3M11 16h9M15 6v4M7 14v4" />
+                    <span>{t('hero.featParams')}</span>
+                  </li>
+                  <li>
+                    <FeatIcon d="M12 4v9M12 13l-4-4M12 13l4-4M5 19h14" />
+                    <span>{t('hero.featExport')}</span>
+                  </li>
+                </ul>
+              </div>
+              <Dropzone onImage={handleImage} />
             </div>
-            <Dropzone onImage={handleImage} />
-          </div>
+            <Article />
+          </>
         ) : (
           <div className="workspace">
             <ControlPanel
@@ -177,5 +193,24 @@ export default function App() {
         )}
       </main>
     </div>
+  );
+}
+
+function FeatIcon({ d }: { d: string }) {
+  return (
+    <svg
+      className="feat-icon"
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d={d} />
+    </svg>
   );
 }

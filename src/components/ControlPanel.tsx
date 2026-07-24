@@ -198,6 +198,7 @@ interface SliderProps {
 }
 
 function Slider({ label, hint, value, min, max, step, unit, onChange }: SliderProps) {
+  const fill = ((value - min) / (max - min)) * 100;
   return (
     <div className="field">
       <div className="field-head">
@@ -214,6 +215,7 @@ function Slider({ label, hint, value, min, max, step, unit, onChange }: SliderPr
         max={max}
         step={step}
         value={value}
+        style={{ ['--fill' as string]: `${fill}%` }}
         onChange={(e) => onChange(Number(e.target.value))}
       />
       {hint && <p className="field-hint">{hint}</p>}
