@@ -97,8 +97,6 @@ Locales: **`en`** (default, unprefixed), **`zh`**. Paths: `/` (English), `/zh-cn
 ```text
 dist/index.html         # English title/description/hreflang + SEO text shell in #root
 dist/zh-cn/index.html   # Chinese equivalent
-dist/en/index.html      # legacy soft redirect → / (also 301 via _redirects)
-dist/zh/index.html      # legacy soft redirect → /zh-cn/ (also 301 via _redirects)
 dist/sitemap.xml
 dist/robots.txt
 ```
@@ -109,9 +107,9 @@ Language switch in the header does a **full navigation** (`location.assign`) to 
 
 To add a locale: extend `Locale` in `types.ts`, add a catalog that matches `Messages`, register in `LOCALES` + `catalogs` + `LOCALE_PATH_SEGMENT`, rebuild. The Vite plugin picks up `LOCALES` automatically. Default locale stays unprefixed via `localePath()`.
 
-Dev server: `/` is English; `/zh-cn/` is Chinese; `/en` → `/`; `/zh` → `/zh-cn/`; bare `/zh-cn` → `/zh-cn/`. SEO head injected via `transformIndexHtml`.
+Dev server: `/` is English; `/zh-cn/` is Chinese; bare `/zh-cn` → `/zh-cn/`. SEO head injected via `transformIndexHtml`.
 
-Hosting helpers: `public/_redirects` (CF Pages/Netlify) and `vercel.json` send `/en`→`/`, `/zh`→`/zh-cn/`, `/zh-cn`→`/zh-cn/`.
+Hosting helpers: `public/_redirects` (CF Pages/Netlify) and `vercel.json` normalize `/zh-cn`→`/zh-cn/`.
 
 ## Vite / wasm gotchas
 

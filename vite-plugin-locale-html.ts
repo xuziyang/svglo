@@ -223,32 +223,6 @@ function applyLocaleToHtml(html: string, locale: Locale, origin = siteOrigin()):
   return out;
 }
 
-/** Tiny HTML that soft-redirects a legacy path to its canonical locale URL. */
-function buildLegacyRedirectHtml(targetPath: string, origin = siteOrigin()): string {
-  const target = abs(origin, targetPath);
-  return `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="robots" content="noindex" />
-    <link rel="canonical" href="${escapeHtml(target)}" />
-    <meta http-equiv="refresh" content="0;url=${escapeHtml(targetPath)}" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>SVGlo</title>
-    <script>
-      (function () {
-        location.replace(${JSON.stringify(targetPath)} + location.search + location.hash);
-      })();
-    </script>
-  </head>
-  <body>
-    <p><a href="${escapeHtml(targetPath)}">SVGlo</a></p>
-  </body>
-</html>
-`;
-}
-
 function buildSitemap(origin: string, lastmod = new Date().toISOString().slice(0, 10)): string {
   const base = origin || DEFAULT_SITE_URL;
   const href = (locale: Locale) => abs(base.replace(/\/$/, ''), localePath(locale));
@@ -282,8 +256,6 @@ ${urls}
 
 function buildRobots(origin: string): string {
   const base = (origin || DEFAULT_SITE_URL).replace(/\/$/, '');
-  // Keep this minimal: allow everything indexable. Legacy /en and /zh shells
-  // already carry <meta name="robots" content="noindex"> and 301 at the host.
   return `User-agent: *\nAllow: /\n\nSitemap: ${base}/sitemap.xml\n`;
 }
 
@@ -300,8 +272,6 @@ function localeFromReqUrl(url: string | undefined): Locale {
  * URL layout:
  *   `/`        → English (default, unprefixed)
  *   `/zh-cn/`  → Chinese
- *   `/zh/`     → legacy redirect to `/zh-cn/`
- *   `/en/`     → legacy redirect to `/`
  */
 export function localeHtmlPlugin(): Plugin {
   let outDir = 'dist';
@@ -318,22 +288,6 @@ export function localeHtmlPlugin(): Plugin {
         const raw = req.url ?? '/';
         const pathname = raw.split('?')[0] ?? '/';
         const qs = raw.includes('?') ? '?' + raw.split('?')[1] : '';
-
-        // Legacy English prefix → unprefixed root
-        if (pathname === '/en' || pathname === '/en/') {
-          res.statusCode = 302;
-          res.setHeader('Location', `/${qs}`);
-          res.end();
-          return;
-        }
-
-        // Legacy /zh → /zh-cn/
-        if (pathname === '/zh' || pathname === '/zh/') {
-          res.statusCode = 302;
-          res.setHeader('Location', `/zh-cn/${qs}`);
-          res.end();
-          return;
-        }
 
         // Normalize /zh-cn → /zh-cn/
         if (pathname === '/zh-cn') {
@@ -353,7 +307,7 @@ export function localeHtmlPlugin(): Plugin {
         // During build, ctx.path is the entry html path; during dev it's the request.
         const locale = localeFromReqUrl(ctx.originalUrl ?? ctx.path);
         if (ctx.server) {
-          // Dev: `/` is English; `/zh-cn/` is Chinese. Legacy prefixes redirected above.
+          // Dev: `/` is English; `/zh-cn/` is Chinese.
           return applyLocaleToHtml(html, locale);
         }
         // Build: leave a default-en shell; closeBundle clones non-default locales.
@@ -388,19 +342,6 @@ export function localeHtmlPlugin(): Plugin {
           'utf8',
         );
       }
-
-      // Legacy soft-redirect pages (hosts without rewrite rules still work)
-      const enDir = path.join(outDir, 'en');
-      fs.mkdirSync(enDir, { recursive: true });
-      fs.writeFileSync(path.join(enDir, 'index.html'), buildLegacyRedirectHtml('/', origin), 'utf8');
-
-      const zhDir = path.join(outDir, 'zh');
-      fs.mkdirSync(zhDir, { recursive: true });
-      fs.writeFileSync(
-        path.join(zhDir, 'index.html'),
-        buildLegacyRedirectHtml('/zh-cn/', origin),
-        'utf8',
-      );
 
       // robots.txt + sitemap.xml (absolute URLs via DEFAULT_SITE_URL / SITE_URL)
       fs.writeFileSync(path.join(outDir, 'robots.txt'), buildRobots(origin), 'utf8');

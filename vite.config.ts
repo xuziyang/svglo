@@ -13,6 +13,6 @@ export default defineConfig({
   build: {
     target: 'es2020',
   },
-  // SPA entry at / (English) and /zh-cn/; legacy /en/ and /zh/ redirect in the locale plugin.
+  // SPA entry at / (English) and /zh-cn/.
   appType: 'spa',
 });

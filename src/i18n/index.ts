@@ -31,20 +31,16 @@ export const LOCALE_PATH_SEGMENT: Record<Locale, string | null> = {
   zh: 'zh-cn',
 };
 
-/** Path segments that resolve to a locale (includes legacy aliases). */
+/** Reverse map: path segment → locale (only non-default locales). */
 const PATH_SEGMENT_TO_LOCALE: Record<string, Locale> = {
-  en: 'en', // legacy English prefix → normalized to `/`
   'zh-cn': 'zh',
-  zh: 'zh', // legacy Chinese prefix → normalized to `/zh-cn/`
 };
 
-const LOCALE_SEGMENT_RE = /^\/(en|zh-cn|zh)(?=\/|$)/i;
+const LOCALE_SEGMENT_RE = /^\/(zh-cn)(?=\/|$)/i;
 
 /**
  * Resolve locale from the path.
  * - `/zh-cn/...` → zh
- * - `/zh/...` → zh (legacy; normalized away by ensureLocaleInUrl)
- * - `/en/...` → en (legacy; normalized away by ensureLocaleInUrl)
  * - everything else (including `/`) → default locale (en)
  */
 export function getLocaleFromPath(pathname: string): Locale {
@@ -104,8 +100,6 @@ export function translate(messages: Messages, key: MessageKey): string {
  * Normalize the URL to the canonical locale form:
  * - `/` → English
  * - `/zh-cn/` → Chinese
- * - `/zh/` (legacy) → `/zh-cn/`
- * - `/en/` (legacy) → `/`
  * Safe before React mounts.
  */
 export function ensureLocaleInUrl(): Locale {
