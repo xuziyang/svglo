@@ -2,9 +2,9 @@ import type { Messages } from './types';
 
 export const zh: Messages = {
   meta: {
-    title: 'SVG 转换器 - PNG、JPG 图片转 SVG | SVGLO',
+    title: 'SVG 转换器 - 免费 PNG、JPG 图片转 SVG | SVGLO',
     description:
-      '免费在线将 PNG、JPG、JPEG、WebP 等图片转换为 SVG。图片仅在浏览器本地处理，无水印、无需安装、无需注册。',
+      '免费在线 SVG 转换器，支持将 PNG、JPG、JPEG、WebP 等图片转为矢量图。图片仅在浏览器本地处理，无水印、无需安装、无需注册。',
   },
   header: {
     tagline: '图片转 SVG',
@@ -12,9 +12,9 @@ export const zh: Messages = {
     langSwitch: '语言',
   },
   hero: {
-    titleBefore: '把图片变成',
-    titleAccent: 'SVG 矢量图',
-    lead: '数秒完成图片转 SVG，无需注册、无水印。',
+    titleBefore: '免费 SVG 转换器',
+    titleAccent: '支持 PNG、JPG 等图片',
+    lead: '在线 SVG 转换器，数秒把图片描成干净可缩放的矢量图——无需注册、无水印。',
     featLocal: '精准矢量描边，数秒出图',
     featModes: '彩色 / 黑白 / 像素画多种模式',
     featParams: '聚类与曲线拟合参数可调',

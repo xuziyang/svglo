@@ -2,9 +2,9 @@ import type { Messages } from './types';
 
 export const en: Messages = {
   meta: {
-    title: 'SVG Converter - PNG, JPG & Image to SVG | SVGLO',
+    title: 'SVG Converter - Free PNG, JPG & Image to SVG | SVGLO',
     description:
-      'Convert PNG, JPG, JPEG, and WebP images to SVG online for free. Images stay in your browser—no upload, watermark, installation, or signup.',
+      'Free online SVG converter for PNG, JPG, JPEG, and WebP. Trace images into clean vectors in your browser—no upload, watermark, installation, or signup.',
   },
   header: {
     tagline: 'Image to SVG',
@@ -12,9 +12,9 @@ export const en: Messages = {
     langSwitch: 'Language',
   },
   hero: {
-    titleBefore: 'Turn images into',
-    titleAccent: 'SVG vectors',
-    lead: 'Convert images to SVG in seconds — no signup, no watermark.',
+    titleBefore: 'Free SVG Converter',
+    titleAccent: 'for PNG, JPG & images',
+    lead: 'Online SVG converter that traces images into clean vectors in seconds — no signup, no watermark.',
     featLocal: 'Accurate vector traces in seconds',
     featModes: 'Color, B&W, and pixel-art modes',
     featParams: 'Tunable clustering and curve-fitting params',

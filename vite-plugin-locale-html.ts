@@ -65,10 +65,65 @@ function localeHref(locale: Locale, origin = ''): string {
   return abs(origin, localePath(locale));
 }
 
+const OG_IMAGE_PATH = '/og-image.png';
+const OG_IMAGE_WIDTH = 1200;
+const OG_IMAGE_HEIGHT = 630;
+const OG_IMAGE_ALT: Record<Locale, string> = {
+  en: 'SVGlo — free online SVG converter for PNG, JPG, and other images',
+  zh: 'SVGlo — 免费在线 SVG 转换器，支持 PNG、JPG 等图片',
+};
+
+/** JSON-LD for WebApplication + FAQPage (crawlers read this without JS). */
+export function buildJsonLd(locale: Locale, origin = siteOrigin()): string {
+  const m = catalogs[locale];
+  const a = articleContent[locale];
+  const canonical = localeHref(locale, origin);
+  const image = abs(origin, OG_IMAGE_PATH);
+
+  const webApp = {
+    '@type': 'WebApplication',
+    name: 'SVGlo',
+    url: canonical,
+    applicationCategory: 'DesignApplication',
+    operatingSystem: 'Any',
+    browserRequirements: 'Requires JavaScript and WebAssembly',
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD',
+    },
+    description: m.meta.description,
+    image,
+    inLanguage: LOCALE_HTML_LANG[locale],
+  };
+
+  const faqPage = {
+    '@type': 'FAQPage',
+    mainEntity: a.faq.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.a,
+      },
+    })),
+  };
+
+  const graph = {
+    '@context': 'https://schema.org',
+    '@graph': [webApp, faqPage],
+  };
+
+  // Escape </script> so FAQ copy cannot break out of the script tag.
+  const json = JSON.stringify(graph).replace(/</g, '\\u003c');
+  return `<script type="application/ld+json">${json}</script>`;
+}
+
 /** Head tags that crawlers should see without running JS. */
 export function buildHeadTags(locale: Locale, origin = siteOrigin()): string {
   const m = catalogs[locale];
   const canonical = localeHref(locale, origin);
+  const ogImage = abs(origin, OG_IMAGE_PATH);
   const alternates = [
     ...LOCALES.map(
       (l) =>
@@ -82,17 +137,24 @@ export function buildHeadTags(locale: Locale, origin = siteOrigin()): string {
     `<link rel="canonical" href="${escapeHtml(canonical)}" />`,
     ...alternates,
     `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="SVGlo" />`,
     `<meta property="og:title" content="${escapeHtml(m.meta.title)}" />`,
     `<meta property="og:description" content="${escapeHtml(m.meta.description)}" />`,
     `<meta property="og:url" content="${escapeHtml(canonical)}" />`,
+    `<meta property="og:image" content="${escapeHtml(ogImage)}" />`,
+    `<meta property="og:image:width" content="${OG_IMAGE_WIDTH}" />`,
+    `<meta property="og:image:height" content="${OG_IMAGE_HEIGHT}" />`,
+    `<meta property="og:image:alt" content="${escapeHtml(OG_IMAGE_ALT[locale])}" />`,
     `<meta property="og:locale" content="${ogLocaleOf(locale)}" />`,
     ...LOCALES.filter((l) => l !== locale).map(
       (l) =>
         `<meta property="og:locale:alternate" content="${ogLocaleOf(l)}" />`,
     ),
-    `<meta name="twitter:card" content="summary" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${escapeHtml(m.meta.title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(m.meta.description)}" />`,
+    `<meta name="twitter:image" content="${escapeHtml(ogImage)}" />`,
+    buildJsonLd(locale, origin),
   ].join('\n    ');
 }
 
@@ -189,6 +251,7 @@ function applyLocaleToHtml(html: string, locale: Locale, origin = siteOrigin()):
   out = out.replace(/\s*<link\s+rel="alternate"[^>]*>/gi, '');
   out = out.replace(/\s*<meta\s+property="og:[^"]*"[^>]*>/gi, '');
   out = out.replace(/\s*<meta\s+name="twitter:[^"]*"[^>]*>/gi, '');
+  out = out.replace(/\s*<script\s+type="application\/ld\+json">[\s\S]*?<\/script>/gi, '');
   out = out.replace(/\s*data-locale="[^"]*"/gi, '');
 
   // lang + data-locale on <html>
