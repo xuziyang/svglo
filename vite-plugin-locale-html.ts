@@ -322,6 +322,290 @@ function buildRobots(origin: string): string {
   return `User-agent: *\nAllow: /\n\nSitemap: ${base}/sitemap.xml\n`;
 }
 
+/**
+ * Standalone 404 page for static hosts (Cloudflare Pages / Netlify serve
+ * `/404.html` with HTTP 404 for unknown paths). Self-contained — no app JS —
+ * with bilingual copy and a tiny script that picks the UI language from the
+ * request path / browser preference.
+ */
+function buildNotFoundHtml(origin: string): string {
+  const base = (origin || DEFAULT_SITE_URL).replace(/\/$/, '');
+  const homeEn = abs(base, localePath('en'));
+  const homeZh = abs(base, localePath('zh'));
+  const en = catalogs.en.notFound;
+  const zh = catalogs.zh.notFound;
+
+  // Inline script: prefer path prefix (/zh-cn/...), then navigator.language.
+  // Keeps the page useful without shipping the full React bundle on 404s.
+  const bootScript = `(function(){
+  var path = location.pathname || '/';
+  var preferZh = /^\\/zh-cn(\\/|$)/i.test(path)
+    || ((navigator.language || '').toLowerCase().indexOf('zh') === 0);
+  var root = document.documentElement;
+  var en = document.getElementById('nf-en');
+  var zh = document.getElementById('nf-zh');
+  if (!en || !zh) return;
+  if (preferZh) {
+    root.lang = 'zh-CN';
+    en.hidden = true;
+    zh.hidden = false;
+    document.title = ${JSON.stringify(zh.metaTitle)};
+  } else {
+    root.lang = 'en';
+    en.hidden = false;
+    zh.hidden = true;
+    document.title = ${JSON.stringify(en.metaTitle)};
+  }
+})();`;
+
+  const panel = (locale: Locale, hidden: boolean) => {
+    const m = catalogs[locale].notFound;
+    const home = locale === 'zh' ? homeZh : homeEn;
+    const other = locale === 'zh' ? 'en' : 'zh';
+    const otherHome = other === 'zh' ? homeZh : homeEn;
+    const otherLabel = other === 'zh' ? '中文' : 'English';
+    const tagline = escapeHtml(catalogs[locale].header.tagline);
+    return `<section id="nf-${locale}" class="nf-panel"${hidden ? ' hidden' : ''}>
+      <header class="nf-header">
+        <a class="brand" href="${escapeHtml(home)}">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" width="30" height="30">
+              <defs>
+                <linearGradient id="nf-mark-bg-${locale}" x1="4" y1="2" x2="28" y2="30">
+                  <stop stop-color="#4f46e5" />
+                  <stop offset="0.55" stop-color="#6366f1" />
+                  <stop offset="1" stop-color="#8b5cf6" />
+                </linearGradient>
+                <linearGradient id="nf-mark-path-${locale}" x1="10" y1="8" x2="24" y2="24">
+                  <stop stop-color="#e0e7ff" />
+                  <stop offset="0.5" stop-color="#ffffff" />
+                  <stop offset="1" stop-color="#fde68a" />
+                </linearGradient>
+              </defs>
+              <rect width="32" height="32" rx="9" fill="url(#nf-mark-bg-${locale})" />
+              <rect x="1.2" y="1.2" width="29.6" height="14" rx="8" fill="#ffffff" opacity="0.08" />
+              <rect x="6.5" y="6.5" width="4" height="4" rx="1" fill="#c7d2fe" />
+              <rect x="11.5" y="6.5" width="4" height="4" rx="1" fill="#a5b4fc" opacity="0.95" />
+              <rect x="6.5" y="11.5" width="4" height="4" rx="1" fill="#e0e7ff" opacity="0.85" />
+              <path d="M22.8 9.2 C18.6 7.8 14.8 9.6 14.8 12.4 C14.8 15.8 22.4 15.2 22.4 19.4 C22.4 22.8 18.2 24.6 12.4 22.6" fill="none" stroke="url(#nf-mark-path-${locale})" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+              <circle cx="14.8" cy="12.4" r="1.35" fill="#ffffff" />
+              <circle cx="22.4" cy="19.4" r="1.35" fill="#ffffff" />
+              <circle cx="12.4" cy="22.6" r="1.45" fill="#fbbf24" />
+            </svg>
+          </span>
+          <span class="brand-text">
+            <strong>SVGlo</strong>
+            <small>${tagline}</small>
+          </span>
+        </a>
+        <nav class="nf-lang" aria-label="${escapeHtml(m.langSwitch)}">
+          <a href="${escapeHtml(otherHome)}" class="link-btn">${otherLabel}</a>
+        </nav>
+      </header>
+      <main class="nf-main">
+        <p class="nf-code" aria-hidden="true">${escapeHtml(m.code)}</p>
+        <h1>${escapeHtml(m.title)}</h1>
+        <p class="nf-lead">${escapeHtml(m.lead)}</p>
+        <p class="nf-actions">
+          <a class="nf-home" href="${escapeHtml(home)}">${escapeHtml(m.home)}</a>
+        </p>
+      </main>
+    </section>`;
+  };
+
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, follow" />
+    <meta name="description" content="${escapeHtml(en.metaDescription)}" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>${escapeHtml(en.metaTitle)}</title>
+    <style>
+      :root {
+        --bg: #f4f6fb;
+        --bg-grad:
+          radial-gradient(1000px 500px at 85% -10%, rgba(99, 102, 241, 0.10), transparent 60%),
+          radial-gradient(800px 480px at -10% 0%, rgba(139, 92, 246, 0.08), transparent 55%);
+        --surface: #ffffff;
+        --surface-2: #f8fafc;
+        --border: #e7eaf1;
+        --text: #171b26;
+        --text-muted: #5f6879;
+        --text-faint: #98a0b0;
+        --accent: #6366f1;
+        --accent-strong: #4f46e5;
+        --accent-grad: linear-gradient(135deg, #6366f1, #8b5cf6);
+        --radius: 14px;
+        --radius-sm: 9px;
+        --shadow-md: 0 6px 20px rgba(16, 24, 40, 0.08);
+        --ring: 0 0 0 3px rgba(99, 102, 241, 0.28);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+          'Microsoft YaHei', Roboto, Helvetica, Arial, sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0d1017;
+          --bg-grad:
+            radial-gradient(1000px 500px at 85% -10%, rgba(99, 102, 241, 0.16), transparent 60%),
+            radial-gradient(800px 480px at -10% 0%, rgba(139, 92, 246, 0.12), transparent 55%);
+          --surface: #161a23;
+          --surface-2: #1c2130;
+          --border: #262c3a;
+          --text: #e8ebf2;
+          --text-muted: #a6aebe;
+          --text-faint: #6b7488;
+          --accent: #818cf8;
+          --accent-strong: #a5b4fc;
+          --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.4);
+          --ring: 0 0 0 3px rgba(129, 140, 248, 0.35);
+        }
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        background-image: var(--bg-grad);
+        background-attachment: fixed;
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      a:focus-visible {
+        outline: none;
+        box-shadow: var(--ring);
+        border-radius: var(--radius-sm);
+      }
+      .nf-panel {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .nf-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        max-width: 960px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 20px 28px 0;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        color: var(--text);
+        text-decoration: none;
+      }
+      .brand:hover { text-decoration: none; }
+      .brand-mark { display: flex; }
+      .brand-text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.1;
+      }
+      .brand-text strong {
+        font-size: 17px;
+        letter-spacing: -0.01em;
+      }
+      .brand-text small {
+        font-size: 11px;
+        color: var(--text-muted);
+      }
+      .nf-lang .link-btn {
+        appearance: none;
+        display: inline-block;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        font-size: 14px;
+        padding: 8px 13px;
+        border-radius: var(--radius-sm);
+        text-decoration: none;
+        transition: background 0.14s, color 0.14s, border-color 0.14s;
+      }
+      .nf-lang .link-btn:hover {
+        background: var(--surface-2);
+        color: var(--text);
+        text-decoration: none;
+      }
+      .nf-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 48px 28px 72px;
+        max-width: 560px;
+        margin: 0 auto;
+      }
+      .nf-code {
+        margin: 0 0 8px;
+        font-size: clamp(64px, 14vw, 104px);
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        line-height: 1;
+        background: var(--accent-grad);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .nf-main h1 {
+        margin: 0 0 12px;
+        font-size: clamp(24px, 4vw, 32px);
+        letter-spacing: -0.02em;
+      }
+      .nf-lead {
+        margin: 0 0 28px;
+        font-size: 16px;
+        line-height: 1.6;
+        color: var(--text-muted);
+      }
+      .nf-actions { margin: 0; }
+      .nf-home {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 22px;
+        border-radius: 999px;
+        background: var(--accent-grad);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: var(--shadow-md);
+        transition: transform 0.14s ease, filter 0.14s ease;
+      }
+      .nf-home:hover {
+        text-decoration: none;
+        filter: brightness(1.05);
+        transform: translateY(-1px);
+      }
+      .nf-home:focus-visible {
+        outline: none;
+        box-shadow: var(--shadow-md), var(--ring);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .nf-home { transition: none; }
+        .nf-home:hover { transform: none; }
+      }
+    </style>
+  </head>
+  <body>
+    ${panel('en', false)}
+    ${panel('zh', true)}
+    <script>${bootScript}</script>
+  </body>
+</html>
+`;
+}
+
 function localeFromReqUrl(url: string | undefined): Locale {
   if (!url) return DEFAULT_LOCALE;
   const pathname = url.split('?')[0] ?? '';
@@ -347,6 +631,8 @@ export function localeHtmlPlugin(): Plugin {
     },
 
     configureServer(server) {
+      // Run before Vite's SPA HTML fallback so unknown paths are real 404s
+      // instead of index.html with status 200.
       server.middlewares.use((req, res, next) => {
         const raw = req.url ?? '/';
         const pathname = raw.split('?')[0] ?? '/';
@@ -360,7 +646,7 @@ export function localeHtmlPlugin(): Plugin {
           return;
         }
 
-        next();
+        serveDevNotFound(req, res, next, () => buildNotFoundHtml(siteOrigin()));
       });
     },
 
@@ -410,7 +696,62 @@ export function localeHtmlPlugin(): Plugin {
       fs.writeFileSync(path.join(outDir, 'robots.txt'), buildRobots(origin), 'utf8');
       fs.writeFileSync(path.join(outDir, 'sitemap.xml'), buildSitemap(origin), 'utf8');
 
-      console.log(`\n  locale HTML: / (en) /zh-cn/   site: ${origin}\n`);
+      // Static 404 for Cloudflare Pages / Netlify / most static hosts.
+      fs.writeFileSync(path.join(outDir, '404.html'), buildNotFoundHtml(origin), 'utf8');
+
+      console.log(`\n  locale HTML: / (en) /zh-cn/ + 404.html   site: ${origin}\n`);
+    },
+
+    configurePreviewServer(server) {
+      // Same as dev: intercept before SPA fallback so preview matches CF Pages.
+      server.middlewares.use((req, res, next) => {
+        const file = path.join(outDir, '404.html');
+        if (!fs.existsSync(file)) {
+          next();
+          return;
+        }
+        serveDevNotFound(req, res, next, () => fs.readFileSync(file, 'utf8'));
+      });
     },
   };
+}
+
+/** Paths the app intentionally serves (everything else is a 404 document). */
+function isKnownAppPath(pathname: string): boolean {
+  if (pathname === '/' || pathname === '/index.html') return true;
+  if (pathname === '/zh-cn' || pathname === '/zh-cn/' || pathname === '/zh-cn/index.html') {
+    return true;
+  }
+  if (pathname === '/404' || pathname === '/404.html') return true;
+  if (pathname === '/robots.txt' || pathname === '/sitemap.xml') return true;
+  // Static assets / source modules (have an extension, or Vite internals)
+  if (pathname.startsWith('/assets/')) return true;
+  if (pathname.startsWith('/@') || pathname.startsWith('/node_modules/')) return true;
+  if (pathname.startsWith('/src/') || pathname.startsWith('/vendor/')) return true;
+  if (/\.[a-zA-Z0-9]+$/.test(pathname)) return true;
+  return false;
+}
+
+function serveDevNotFound(
+  req: { url?: string; method?: string },
+  res: {
+    statusCode: number;
+    setHeader: (k: string, v: string) => void;
+    end: (body: string) => void;
+  },
+  next: () => void,
+  body: () => string,
+): void {
+  if (req.method && req.method !== 'GET' && req.method !== 'HEAD') {
+    next();
+    return;
+  }
+  const pathname = decodeURIComponent((req.url ?? '/').split('?')[0] ?? '/');
+  if (isKnownAppPath(pathname)) {
+    next();
+    return;
+  }
+  res.statusCode = 404;
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.end(body());
 }

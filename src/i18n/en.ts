@@ -113,4 +113,13 @@ export const en: Messages = {
     copyright: '© 2026 SVGlo. All rights reserved.',
     close: 'Close',
   },
+  notFound: {
+    metaTitle: 'Page not found | SVGlo',
+    metaDescription: 'This page does not exist. Return to SVGlo to convert PNG, JPG, and other images to SVG.',
+    code: '404',
+    title: 'Page not found',
+    lead: 'The link may be broken, or the page may have been moved. Head back home to convert an image to SVG.',
+    home: 'Back to home',
+    langSwitch: 'Language',
+  },
 };

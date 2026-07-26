@@ -55,6 +55,7 @@ npm run typecheck # type check
 dist/
   index.html             # English — title, description, hreflang, SEO shell in source HTML
   zh-cn/index.html       # Chinese — same shape
+  404.html               # bilingual static 404 (noindex); CF Pages / Netlify auto-serve
   sitemap.xml
   robots.txt
   assets/...
@@ -72,7 +73,8 @@ dist/
 - wasm deps are vendored in-repo (`vendor/`), so CI needs no Rust step
 - `public/_redirects` normalizes `/zh-cn` → `/zh-cn/` (Cloudflare Pages / Netlify)
 - `vercel.json` does the same on Vercel
-- Build always emits absolute `canonical` / `hreflang` / Open Graph URLs, plus `/robots.txt` and `/sitemap.xml`
+- Build always emits absolute `canonical` / `hreflang` / Open Graph URLs, plus `/robots.txt`, `/sitemap.xml`, and `/404.html`
+- Unknown paths are served as HTTP 404 via `404.html` (Cloudflare Pages / Netlify / Vercel auto-detect this file)
 
 ### Internationalization & SEO
 

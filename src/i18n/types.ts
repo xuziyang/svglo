@@ -101,6 +101,15 @@ export interface Messages {
     copyright: string;
     close: string;
   };
+  notFound: {
+    metaTitle: string;
+    metaDescription: string;
+    code: string;
+    title: string;
+    lead: string;
+    home: string;
+    langSwitch: string;
+  };
 }
 
 /** Dot-path keys into Messages, e.g. "header.tagline" */

@@ -97,6 +97,7 @@ Locales: **`en`** (default, unprefixed), **`zh`**. Paths: `/` (English), `/zh-cn
 ```text
 dist/index.html         # English title/description/hreflang + SEO text shell in #root
 dist/zh-cn/index.html   # Chinese equivalent
+dist/404.html           # bilingual static 404 (noindex); CF Pages / Netlify auto-serve
 dist/sitemap.xml
 dist/robots.txt
 ```
@@ -107,9 +108,9 @@ Language switch in the header does a **full navigation** (`location.assign`) to 
 
 To add a locale: extend `Locale` in `types.ts`, add a catalog that matches `Messages`, register in `LOCALES` + `catalogs` + `LOCALE_PATH_SEGMENT`, rebuild. The Vite plugin picks up `LOCALES` automatically. Default locale stays unprefixed via `localePath()`.
 
-Dev server: `/` is English; `/zh-cn/` is Chinese; bare `/zh-cn` → `/zh-cn/`. SEO head injected via `transformIndexHtml`.
+Dev server: `/` is English; `/zh-cn/` is Chinese; bare `/zh-cn` → `/zh-cn/`. SEO head injected via `transformIndexHtml`. Unknown paths return the bilingual `404.html` (also in preview).
 
-Hosting helpers: `public/_redirects` (CF Pages/Netlify) and `vercel.json` normalize `/zh-cn`→`/zh-cn/`.
+Hosting helpers: `public/_redirects` (CF Pages/Netlify) and `vercel.json` normalize `/zh-cn`→`/zh-cn/`. Static hosts auto-serve `dist/404.html` for missing paths.
 
 ## Vite / wasm gotchas
 

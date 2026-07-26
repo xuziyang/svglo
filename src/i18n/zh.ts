@@ -113,4 +113,13 @@ export const zh: Messages = {
     copyright: '© 2026 SVGlo. 保留所有权利。',
     close: '关闭',
   },
+  notFound: {
+    metaTitle: '页面未找到 | SVGlo',
+    metaDescription: '该页面不存在。返回 SVGlo，将 PNG、JPG 等图片转换为 SVG。',
+    code: '404',
+    title: '页面未找到',
+    lead: '链接可能已失效，或页面已移动。返回首页即可继续把图片转换成 SVG。',
+    home: '返回首页',
+    langSwitch: '语言',
+  },
 };
