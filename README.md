@@ -1,5 +1,7 @@
 # SVGlo
 
+**Live site: [https://svglo.com](https://svglo.com)**
+
 A pure front-end image-to-SVG tool powered by the [visioncortex VTracer](https://github.com/visioncortex/vtracer) engine. All conversion runs locally in the browser (WebAssembly) — images are never uploaded.
 
 ## Architecture
