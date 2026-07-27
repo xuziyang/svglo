@@ -121,5 +121,6 @@ export const zh: Messages = {
     lead: '链接可能已失效，或页面已移动。返回首页即可继续把图片转换成 SVG。',
     home: '返回首页',
     langSwitch: '语言',
+    langOther: 'English',
   },
 };

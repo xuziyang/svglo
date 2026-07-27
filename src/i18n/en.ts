@@ -121,5 +121,6 @@ export const en: Messages = {
     lead: 'The link may be broken, or the page may have been moved. Head back home to convert an image to SVG.',
     home: 'Back to home',
     langSwitch: 'Language',
+    langOther: '中文',
   },
 };

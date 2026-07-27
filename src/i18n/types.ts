@@ -109,6 +109,7 @@ export interface Messages {
     lead: string;
     home: string;
     langSwitch: string;
+    langOther: string;
   };
 }
 
