@@ -3,9 +3,10 @@ import { t } from '../i18n';
 interface HeaderProps {
   hasImage: boolean;
   onReset: () => void;
+  currentTool?: 'image-to-svg' | 'svg-to-jpg';
 }
 
-export function Header({ hasImage, onReset }: HeaderProps) {
+export function Header({ hasImage, onReset, currentTool = 'image-to-svg' }: HeaderProps) {
   return (
     <header className="header">
       <div className="header-inner">
@@ -44,13 +45,19 @@ export function Header({ hasImage, onReset }: HeaderProps) {
           </span>
           <span className="brand-text">
             <strong>SVGlo</strong>
-            <small>{t('header.tagline')}</small>
+            <small>{currentTool === 'svg-to-jpg' ? 'SVG to JPG' : t('header.tagline')}</small>
           </span>
         </a>
         <nav className="header-nav">
+          <a className={`link-btn tool-link ${currentTool === 'image-to-svg' ? 'is-active' : ''}`} href="/">
+            Image to SVG
+          </a>
+          <a className={`link-btn tool-link ${currentTool === 'svg-to-jpg' ? 'is-active' : ''}`} href="/svg-to-jpg/">
+            SVG to JPG
+          </a>
           {hasImage && (
             <button className="link-btn" onClick={onReset}>
-              {t('header.newImage')}
+              {currentTool === 'svg-to-jpg' ? 'New SVG' : t('header.newImage')}
             </button>
           )}
         </nav>

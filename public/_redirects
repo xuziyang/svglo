@@ -1,1 +1,2 @@
 # No catch-all rewrite: unknown paths should use the generated 404.html.
+/svg-to-jpg /svg-to-jpg/ 301

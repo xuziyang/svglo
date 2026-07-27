@@ -2,12 +2,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { Plugin } from 'vite';
 import { articleContent, en } from './src/i18n';
+import { svgToJpgArticle } from './src/i18n/svgToJpgArticle';
 
 export const DEFAULT_SITE_URL = 'https://svglo.com';
 
 const HAS_EXTENSION_RE = /\.[a-zA-Z0-9]+$/;
 const OG_IMAGE_PATH = '/og-image.png';
 const OG_IMAGE_ALT = 'SVGlo — free online SVG converter for PNG, JPG, and other images';
+const SVG_TO_JPG_PATH = '/svg-to-jpg/';
+const SVG_TO_JPG_TITLE = 'SVG to JPG Converter – Convert SVG to JPEG | SVGlo';
+const SVG_TO_JPG_DESCRIPTION =
+  'Convert SVG to JPG or JPEG online for free with SVGlo. Choose image size, quality, and background color, then download securely without uploads or signup.';
 
 function siteOrigin(): string {
   const raw = process.env.SITE_URL ?? process.env.VITE_SITE_URL;
@@ -24,6 +29,111 @@ function escapeMarkup(value: string): string {
 
 function canonicalUrl(origin = siteOrigin()): string {
   return `${origin}/`;
+}
+
+function buildSvgToJpgHeadTags(origin = siteOrigin()): string {
+  const canonical = `${origin}${SVG_TO_JPG_PATH}`;
+  const image = `${origin}${OG_IMAGE_PATH}`;
+  const application = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        name: 'SVG to JPG Converter by SVGlo',
+        url: canonical,
+        applicationCategory: 'DesignApplication',
+        operatingSystem: 'Any',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        description: SVG_TO_JPG_DESCRIPTION,
+        image,
+        inLanguage: 'en',
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: svgToJpgArticle.faq.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      },
+    ],
+  };
+  const jsonLd = JSON.stringify(application).replace(/</g, '\\u003c');
+
+  return [
+    `<meta name="description" content="${escapeMarkup(SVG_TO_JPG_DESCRIPTION)}" />`,
+    `<link rel="canonical" href="${escapeMarkup(canonical)}" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="SVGlo" />`,
+    `<meta property="og:title" content="${escapeMarkup(SVG_TO_JPG_TITLE)}" />`,
+    `<meta property="og:description" content="${escapeMarkup(SVG_TO_JPG_DESCRIPTION)}" />`,
+    `<meta property="og:url" content="${escapeMarkup(canonical)}" />`,
+    `<meta property="og:image" content="${escapeMarkup(image)}" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${escapeMarkup(SVG_TO_JPG_TITLE)}" />`,
+    `<meta name="twitter:description" content="${escapeMarkup(SVG_TO_JPG_DESCRIPTION)}" />`,
+    `<meta name="twitter:image" content="${escapeMarkup(image)}" />`,
+    `<script type="application/ld+json">${jsonLd}</script>`,
+  ].join('\n    ');
+}
+
+function buildSvgToJpgShell(): string {
+  const sections = svgToJpgArticle.sections
+    .map(
+      (section) =>
+        `        <section aria-labelledby="svg-jpg-${section.id}">
+          <h2 id="svg-jpg-${section.id}">${escapeMarkup(section.title)}</h2>
+${section.paragraphs.map((paragraph) => `          <p>${escapeMarkup(paragraph)}</p>`).join('\n')}
+        </section>`,
+    )
+    .join('\n');
+  const faq = svgToJpgArticle.faq
+    .map(
+      (item) =>
+        `        <details>
+          <summary><h3>${escapeMarkup(item.q)}</h3></summary>
+          <p>${escapeMarkup(item.a)}</p>
+        </details>`,
+    )
+    .join('\n');
+
+  return `<div class="seo-shell">
+      <header class="seo-shell-header">
+        <strong>SVGlo</strong>
+        <span> — SVG to JPG</span>
+      </header>
+      <main class="seo-shell-main">
+        <h1>SVG to JPG Converter <span>for clear, ready-to-share images</span></h1>
+        <p>${escapeMarkup(SVG_TO_JPG_DESCRIPTION)}</p>
+        <ul>
+          <li>Choose an SVG up to 10 MB</li>
+          <li>Set an exact pixel size and background color</li>
+          <li>Adjust JPG compression quality</li>
+          <li>Convert and download without uploading your file</li>
+        </ul>
+        <article class="seo-shell-article">
+          <p class="article-intro">${escapeMarkup(svgToJpgArticle.intro)}</p>
+${sections}
+          <section aria-labelledby="svg-jpg-faq-title">
+            <h2 id="svg-jpg-faq-title">SVG to JPG converter FAQ</h2>
+${faq}
+          </section>
+        </article>
+      </main>
+    </div>`;
+}
+
+function buildSvgToJpgHtml(homeHtml: string, origin = siteOrigin()): string {
+  let output = homeHtml.replace(
+    /<!-- seo-static-head -->[\s\S]*?<!-- \/seo-static-head -->/i,
+    `<!-- seo-static-head -->\n    ${buildSvgToJpgHeadTags(origin)}\n    <!-- /seo-static-head -->`,
+  );
+  output = output.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeMarkup(SVG_TO_JPG_TITLE)}</title>`);
+  output = output.replace(
+    /<!--seo-shell-->[\s\S]*?<!--\/seo-shell-->/,
+    `<!--seo-shell-->${buildSvgToJpgShell()}<!--/seo-shell-->`,
+  );
+  return output;
 }
 
 export function buildJsonLd(origin = siteOrigin()): string {
@@ -186,6 +296,12 @@ function buildSitemap(origin: string, lastmod = new Date().toISOString().slice(0
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
+  <url>
+    <loc>${escapeMarkup(`${origin}${SVG_TO_JPG_PATH}`)}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
 </urlset>
 `;
 }
@@ -271,6 +387,7 @@ function buildNotFoundHtml(origin: string): string {
 
 function isKnownAppPath(pathname: string): boolean {
   if (pathname === '/' || pathname === '/index.html') return true;
+  if (pathname === '/svg-to-jpg' || pathname === '/svg-to-jpg/' || pathname === '/svg-to-jpg/index.html') return true;
   if (pathname === '/404' || pathname === '/404.html') return true;
   if (pathname === '/robots.txt' || pathname === '/sitemap.xml') return true;
   if (pathname.startsWith('/assets/')) return true;
@@ -336,8 +453,15 @@ export function staticHtmlPlugin(): Plugin {
       fs.writeFileSync(path.join(outDir, 'robots.txt'), buildRobots(origin), 'utf8');
       fs.writeFileSync(path.join(outDir, 'sitemap.xml'), buildSitemap(origin), 'utf8');
       fs.writeFileSync(path.join(outDir, '404.html'), buildNotFoundHtml(origin), 'utf8');
+      const homeHtmlPath = path.join(outDir, 'index.html');
+      if (fs.existsSync(homeHtmlPath)) {
+        const svgToJpgDir = path.join(outDir, 'svg-to-jpg');
+        fs.mkdirSync(svgToJpgDir, { recursive: true });
+        const homeHtml = fs.readFileSync(homeHtmlPath, 'utf8');
+        fs.writeFileSync(path.join(svgToJpgDir, 'index.html'), buildSvgToJpgHtml(homeHtml, origin), 'utf8');
+      }
 
-      console.log(`\n  static HTML: / + 404.html   site: ${origin}\n`);
+      console.log(`\n  static HTML: / + ${SVG_TO_JPG_PATH} + 404.html   site: ${origin}\n`);
     },
 
     configurePreviewServer(server) {
