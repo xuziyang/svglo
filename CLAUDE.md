@@ -1,119 +1,200 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Repository guidance for coding agents working on SVGlo.
 
-## What this is
+## Project overview
 
-SVGlo is a pure front-end image→SVG converter. Conversion runs entirely in the browser via WebAssembly (visioncortex VTracer). There is **no backend** and no image upload.
+SVGlo is an English-only image-to-SVG converter built with React 18, Vite 5,
+TypeScript, and visioncortex VTracer.
 
-Stack: React 18 + Vite 5 + TypeScript. Deploy target: static hosts (Cloudflare Pages recommended).
+- The production output is a static site in `dist/`.
+- Image decoding and vectorization run locally in the browser.
+- Images are never uploaded to an application server.
+- The converter still requires JavaScript, Canvas, and WebAssembly; “static”
+  refers to hosting, not a JavaScript-free application.
+- The VTracer WebAssembly package is vendored in
+  `vendor/vtracer-webapp-pkg/`, so normal installs and builds do not require
+  Rust.
 
 ## Commands
 
 ```sh
 npm install
-npm run dev          # http://localhost:5173
-npm run build        # production → dist/ (single English static site)
-npm run preview      # serve dist/
-npm run typecheck    # tsc --noEmit
+npm run dev          # development server, normally http://localhost:5173
+npm run typecheck    # TypeScript validation
+npm run build        # production build → dist/
+npm run preview      # serve the production build locally
 ```
 
-Manual e2e smoke (Playwright with installed Google Chrome):
+There is no unit-test runner or lint script.
+
+Run the end-to-end smoke test after building:
 
 ```sh
 npm run build
-node e2e-test.mjs    # starts preview on :4174, converts built-in example, asserts SVG paths
+node e2e-test.mjs
 ```
 
-There is no unit-test runner and no lint script.
+The smoke test starts a preview server on port 4174, opens the system Google
+Chrome through Playwright, converts the built-in example image, verifies the
+English-only UI and removed `/zh-cn/` route, and asserts that SVG paths were
+generated. It requires Google Chrome to be installed.
 
-### Rebuild wasm (only when upstream vtracer changes)
+## Architecture
 
-The wasm package is **vendored** at `vendor/vtracer-webapp-pkg/` and referenced as `file:vendor/vtracer-webapp-pkg`. CI does not compile Rust.
-
-```sh
-cd ../vtracer/webapp
-wasm-pack build --target web --release
-cp -r ../vtracer/webapp/pkg/* vendor/vtracer-webapp-pkg/
+```text
+Static host
+  └─ English HTML + JS + CSS + WASM
+       └─ browser
+            ├─ select, drop, or paste a local raster image
+            ├─ decode it into a hidden canvas
+            ├─ VTracer writes paths into the working SVG
+            └─ serialize the SVG for download or clipboard copy
 ```
 
-Requires Rust + `wasm-pack`. Day-to-day frontend work does not need them.
+There is no React Router and no backend API. The UI has two states:
 
-### Production SEO env
+- Landing view: hero, local-image dropzone, and long-form article.
+- Workspace view: `ControlPanel` and `PreviewPane`.
 
-Canonical, Open Graph, `sitemap.xml`, and `robots.txt` default to
-`https://svglo.com`. Override only when needed:
+### Conversion pipeline
+
+1. `src/App.tsx` owns the image object URL, dimensions, converter config, and
+   preview state. It paints a newly selected image onto the canvas and
+   debounces config-triggered reconversion by 300 ms.
+2. `src/hooks/useVTracer.ts` wraps conversion in React state. Its monotonic
+   sequence ID ensures a newer run supersedes any in-flight run.
+3. `src/lib/vtracer.ts` is the only bridge to WebAssembly. It lazily
+   initializes the module, builds converter parameters, and processes
+   `tick()` calls in batches of roughly 25 ms.
+4. `src/components/PreviewPane.tsx` keeps the working canvas and SVG mounted.
+
+### DOM ownership constraint
+
+The working elements must keep the IDs `vt-canvas` and `vt-svg`; VTracer
+receives those IDs in its parameter JSON and looks up the nodes itself.
+
+WebAssembly owns the child paths inside `vt-svg`. Do not render React children
+into that SVG, and do not key or remount the canvas or SVG when settings
+change.
+
+### Parameter transforms
+
+`buildParams()` in `src/lib/vtracer.ts` mirrors the upstream VTracer web app.
+Do not pass all UI values through unchanged:
+
+| UI field | Value sent to WebAssembly |
+|---|---|
+| `filter_speckle` | squared to produce an area threshold |
+| `color_precision` | converted to loss with `8 - significantBits` |
+| `corner_threshold` | converted from degrees to radians |
+| `splice_threshold` | converted from degrees to radians |
+
+Presets in `src/lib/presets.ts` contain IDs and converter configs. Their names
+and descriptions come from the typed English catalog under `src/i18n/`.
+
+## English content and SEO
+
+| File | Responsibility |
+|---|---|
+| `src/i18n/en.ts` | Typed English UI copy |
+| `src/i18n/types.ts` | Copy schema and dot-path message keys |
+| `src/i18n/index.ts` | English `t()` lookup and content exports |
+| `src/i18n/article.ts` | English article and FAQ content |
+| `vite-plugin-static-html.ts` | Metadata, JSON-LD, SEO shell, sitemap, robots, and static 404 |
+
+The `src/i18n/` directory name is retained for organization, but the product
+does not have runtime locale state or a language switch.
+
+The Vite plugin injects real English metadata and a text content shell into
+`#root`. Crawlers and browsers without JavaScript therefore receive meaningful
+HTML; React replaces that shell when the application mounts.
+
+Expected build output:
+
+```text
+dist/
+  index.html
+  404.html
+  robots.txt
+  sitemap.xml
+  assets/
+```
+
+Unknown paths must remain real 404 responses. Do not add a catch-all SPA
+rewrite. In particular, `/zh-cn/` is no longer a valid route.
+
+The canonical origin defaults to `https://svglo.com`. Override it for a
+different production origin when building:
 
 ```sh
 SITE_URL=https://preview.example.com npm run build
 ```
 
-## Architecture
+`VITE_SITE_URL` is also supported, but `SITE_URL` is preferred for build
+configuration because the value is not used by browser code.
 
-```
-Browser
-  └─ static English HTML + JS/CSS/wasm
-       ├─ upload image → draw to hidden <canvas>
-       ├─ wasm reads canvas pixels, writes <path> into <svg> by id
-       └─ serialize SVG → download / copy
-```
+## Vite and WebAssembly constraints
 
-### Conversion pipeline (hot path)
+- Keep `optimizeDeps.exclude: ['vtracer-webapp']`; it allows the WASM `?url`
+  asset import to resolve correctly.
+- Keep the production target at `es2020` unless browser support requirements
+  are intentionally changed.
+- The vendored WASM package is referenced through the local
+  `file:vendor/vtracer-webapp-pkg` dependency.
+- Do not add server-side image processing or an upload endpoint unless the
+  product architecture is explicitly changed.
 
-1. **`src/lib/vtracer.ts`** — sole bridge to wasm. Lazy-inits once via `ensureWasm()`. Builds JSON params for `ColorImageConverter` / `BinaryImageConverter`, then runs a time-sliced `tick()` loop (~25ms batches) so the UI stays responsive. Progress is throttled to integer-percent changes.
-2. **`src/hooks/useVTracer.ts`** — React state around convert. Uses a monotonic sequence id so a newer `convert()` call supersedes in-flight work (rapid slider changes must not race).
-3. **`src/App.tsx`** — owns image URL, dims, config; debounces config→reconvert (300ms); paints the source image onto the working canvas on load.
-4. **`src/components/PreviewPane.tsx`** — always mounts the working `<canvas id="vt-canvas">` (hidden) and `<svg id="vt-svg">`. **React must never render children into that SVG** — wasm owns the path nodes imperatively. Never key/remount these elements on config change.
+## Updating the vendored WASM package
 
-### Parameter transforms (easy to break)
+This repository does not contain the Rust source checkout. Updating the
+vendored package requires a separate checkout of upstream VTracer and
+`wasm-pack`:
 
-User-facing units in `VTracerConfig` are **not** what wasm receives. `buildParams()` mirrors upstream `vtracer/webapp` `restart()`:
+```sh
+SVGLO_REPO=/absolute/path/to/svglo
+VTRACER_REPO=/absolute/path/to/vtracer
 
-| UI field | Sent to wasm |
-|---|---|
-| `filter_speckle` (side length) | squared → area threshold |
-| `color_precision` (significant bits 1–8) | `8 - bits` (“loss”) |
-| `corner_threshold` / `splice_threshold` (degrees) | radians |
-
-Presets live in `src/lib/presets.ts` as `id` + `config` only. Display names/descriptions come from the typed English copy catalog (`presets.${id}.*`).
-
-### UI shell
-
-- No React Router. One screen: hero+dropzone when no image; sidebar `ControlPanel` + `PreviewPane` when an image is loaded.
-- Styling is plain CSS in `src/index.css` (design tokens as CSS variables). No component library.
-
-## English copy & SEO (non-obvious)
-
-| Piece | Role |
-|---|---|
-| `src/i18n/{en,types,index}.ts` | Typed English UI copy and `t()` lookup |
-| `src/i18n/article.ts` | English article and FAQ content |
-| `vite-plugin-static-html.ts` | Build/dev plugin: metadata, SEO shell, sitemap, robots, and 404 |
-
-**Build output** (do not add a catch-all SPA rewrite; unknown paths should remain 404s):
-
-```text
-dist/index.html         # English title/description/social tags + SEO text shell
-dist/404.html           # English static 404 (noindex)
-dist/sitemap.xml
-dist/robots.txt
+cd "$VTRACER_REPO/webapp"
+wasm-pack build --target web --release
+cp -R pkg/. "$SVGLO_REPO/vendor/vtracer-webapp-pkg/"
 ```
 
-Crawlers see real English content without JS. React mounts and replaces the SEO shell inside `#root`. The dev and preview servers return the generated English 404 page for unknown routes.
+After copying the package, run:
 
-## Vite / wasm gotchas
+```sh
+cd "$SVGLO_REPO"
+npm install
+npm run typecheck
+npm run build
+node e2e-test.mjs
+```
 
-- `optimizeDeps.exclude: ['vtracer-webapp']` is required so the `?url` wasm asset resolves.
-- `build.target: 'es2020'`.
-- Canvas and SVG **must keep stable ids** `vt-canvas` / `vt-svg` — wasm looks them up by id from the params JSON.
+Review the vendored package diff before committing it, especially the generated
+JavaScript bindings, TypeScript declarations, `.wasm` binary, and package
+metadata.
 
-## Deploy (Cloudflare Pages)
+## Deployment
+
+Any static host can serve `dist/`. For Cloudflare Pages:
 
 | Setting | Value |
 |---|---|
 | Build command | `npm run build` |
 | Output directory | `dist` |
-| Env `SITE_URL` | optional; defaults to `https://svglo.com` |
+| Root directory | repository root |
+| `SITE_URL` | optional; defaults to `https://svglo.com` |
 
-No Rust step in CI — wasm is vendored. Build emits `/robots.txt` and a
-single-URL `/sitemap.xml` with absolute URLs.
+`public/_redirects` intentionally contains no SPA fallback. The generated
+`404.html` is the fallback document for hosts that support conventional static
+404 pages.
+
+## Completion checklist
+
+For changes that affect UI behavior, conversion, copy, SEO, or build output:
+
+1. Run `npm run typecheck`.
+2. Run `npm run build`.
+3. Check `git diff --check`.
+4. Run `node e2e-test.mjs` when Google Chrome is available.
+5. Confirm that unrelated user changes remain untouched.
