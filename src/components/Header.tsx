@@ -3,7 +3,7 @@ import { t } from '../i18n';
 interface HeaderProps {
   hasImage: boolean;
   onReset: () => void;
-  currentTool?: 'image-to-svg' | 'svg-to-jpg';
+  currentTool?: 'image-to-svg' | 'svg-to-jpg' | 'svg-to-png';
 }
 
 export function Header({ hasImage, onReset, currentTool = 'image-to-svg' }: HeaderProps) {
@@ -45,7 +45,13 @@ export function Header({ hasImage, onReset, currentTool = 'image-to-svg' }: Head
           </span>
           <span className="brand-text">
             <strong>SVGlo</strong>
-            <small>{currentTool === 'svg-to-jpg' ? 'SVG to JPG' : t('header.tagline')}</small>
+            <small>
+              {currentTool === 'svg-to-jpg'
+                ? 'SVG to JPG'
+                : currentTool === 'svg-to-png'
+                  ? 'SVG to PNG'
+                  : t('header.tagline')}
+            </small>
           </span>
         </a>
         <nav className="header-nav">
@@ -55,9 +61,12 @@ export function Header({ hasImage, onReset, currentTool = 'image-to-svg' }: Head
           <a className={`link-btn tool-link ${currentTool === 'svg-to-jpg' ? 'is-active' : ''}`} href="/svg-to-jpg/">
             SVG to JPG
           </a>
+          <a className={`link-btn tool-link ${currentTool === 'svg-to-png' ? 'is-active' : ''}`} href="/svg-to-png/">
+            SVG to PNG
+          </a>
           {hasImage && (
             <button className="link-btn" onClick={onReset}>
-              {currentTool === 'svg-to-jpg' ? 'New SVG' : t('header.newImage')}
+              {currentTool === 'image-to-svg' ? t('header.newImage') : 'New SVG'}
             </button>
           )}
         </nav>

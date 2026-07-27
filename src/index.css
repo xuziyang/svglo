@@ -1399,6 +1399,92 @@ summary:focus-visible,
 .quality-options button.is-active > small {
   color: var(--accent);
 }
+.png-background-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.png-background-options button {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color .14s ease, background .14s ease, color .14s ease;
+}
+.png-background-options button:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.png-background-options button.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+.background-swatch {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  background: #fff;
+}
+.background-swatch.is-transparent {
+  background: repeating-conic-gradient(#dfe3eb 0 25%, #fff 0 50%) 50% / 8px 8px;
+}
+.background-swatch.is-white {
+  background: #fff;
+}
+.background-swatch.is-dark {
+  background: #171b26;
+}
+.png-custom-color {
+  height: 36px;
+  margin-top: 9px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 3px 8px 3px 4px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  font: 600 10.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.png-custom-color input {
+  width: 31px;
+  height: 28px;
+  padding: 2px;
+  border: 0;
+  background: transparent;
+}
+.png-lossless-note {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 11px;
+  border: 1px solid color-mix(in srgb, var(--success) 22%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--success) 6%, var(--surface));
+}
+.png-lossless-note strong {
+  color: var(--text);
+  font-size: 11.5px;
+}
+.png-lossless-note span {
+  color: var(--text-faint);
+  font-size: 10px;
+}
 .color-field {
   display: flex;
   align-items: center;

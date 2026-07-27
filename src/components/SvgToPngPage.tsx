@@ -1,7 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Footer } from './Footer';
-import { Header } from './Header';
-import { SvgToJpgArticle } from './SvgToJpgArticle';
 import {
   formatFileSize,
   MAX_OUTPUT_EDGE,
@@ -9,46 +6,43 @@ import {
   readSvg,
   type SvgDocument,
 } from '../lib/svgRaster';
-const QUALITY_OPTIONS = [
-  { id: 'compact', label: 'Small file', value: 0.78 },
-  { id: 'balanced', label: 'Balanced', value: 0.9 },
-  { id: 'best', label: 'Best quality', value: 0.96 },
-] as const;
+import { Footer } from './Footer';
+import { Header } from './Header';
+import { SvgToPngArticle } from './SvgToPngArticle';
 
-type QualityMode = (typeof QUALITY_OPTIONS)[number]['id'];
-type EstimatedSizes = Partial<Record<QualityMode, number>>;
+type BackgroundMode = 'transparent' | 'white' | 'dark' | 'custom';
 
-function estimateJpgSize(canvas: HTMLCanvasElement, quality: number): Promise<number> {
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => blob ? resolve(blob.size) : reject(new Error('JPG size unavailable')),
-      'image/jpeg',
-      quality,
-    );
-  });
-}
-
-function OutputIcon() {
+function PngIcon() {
   return (
     <svg viewBox="0 0 54 54" width="54" height="54" fill="none" aria-hidden>
-      <rect x="4" y="4" width="35" height="35" rx="8" fill="currentColor" opacity=".1" />
-      <path d="M13 30 21 20l6 7 4-4 8 10" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="30" cy="15" r="3" fill="currentColor" />
+      <path d="M5 5h12v12H5zM17 17h12v12H17z" fill="currentColor" opacity=".12" />
+      <path d="M17 5h12v12H17zM5 17h12v12H5z" fill="currentColor" opacity=".24" />
+      <path d="M13 34h24l-8-10-5 6-4-4-7 8Z" fill="currentColor" />
+      <circle cx="18" cy="22" r="3" fill="currentColor" />
       <path d="M35 43h14M44 38l5 5-5 5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-export function SvgToJpgPage() {
+function pngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => blob ? resolve(blob) : reject(new Error('PNG unavailable')),
+      'image/png',
+    );
+  });
+}
+
+export function SvgToPngPage() {
   const [svg, setSvg] = useState<SvgDocument | null>(null);
   const [outputWidth, setOutputWidth] = useState(1600);
-  const [qualityMode, setQualityMode] = useState<QualityMode>('balanced');
-  const [background, setBackground] = useState('#ffffff');
+  const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>('transparent');
+  const [customColor, setCustomColor] = useState('#ffffff');
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rendering, setRendering] = useState(false);
   const [ready, setReady] = useState(false);
-  const [estimatedSizes, setEstimatedSizes] = useState<EstimatedSizes>({});
+  const [estimatedSize, setEstimatedSize] = useState<number>();
   const inputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const renderIdRef = useRef(0);
@@ -58,15 +52,20 @@ export function SvgToJpgPage() {
     () => svg ? Math.max(1, Math.round(outputWidth * (svg.height / svg.width))) : 0,
     [outputWidth, svg],
   );
-  const quality = QUALITY_OPTIONS.find((option) => option.id === qualityMode) ?? QUALITY_OPTIONS[1];
+  const background = backgroundMode === 'transparent'
+    ? null
+    : backgroundMode === 'white'
+      ? '#ffffff'
+      : backgroundMode === 'dark'
+        ? '#171b26'
+        : customColor;
 
   const loadFile = useCallback(async (file: File | undefined) => {
     if (!file) return;
     try {
       const next = await readSvg(file);
-      const naturalWidth = Math.round(next.width);
       setSvg(next);
-      setOutputWidth(Math.min(MAX_OUTPUT_EDGE, Math.max(1, naturalWidth)));
+      setOutputWidth(Math.min(MAX_OUTPUT_EDGE, Math.max(1, Math.round(next.width))));
       setError(null);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'This SVG could not be opened.');
@@ -76,29 +75,27 @@ export function SvgToJpgPage() {
   const loadExample = useCallback(() => {
     const markup = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800">
       <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs>
-      <rect x="90" y="90" width="1020" height="620" rx="76" fill="url(#g)"/>
-      <circle cx="340" cy="340" r="128" fill="#fff" opacity=".95"/>
-      <path d="m220 505 122-171 94 104 68-70 124 137Z" fill="#312e81"/>
-      <circle cx="406" cy="278" r="38" fill="#fbbf24"/>
-      <text x="690" y="355" fill="#fff" font-family="Arial,sans-serif" font-size="92" font-weight="700" text-anchor="middle">SVGLO</text>
-      <text x="690" y="420" fill="#e0e7ff" font-family="Arial,sans-serif" font-size="28" letter-spacing="8" text-anchor="middle">VECTOR → PIXEL</text>
+      <path d="M190 116h820a70 70 0 0 1 70 70v428a70 70 0 0 1-70 70H190a70 70 0 0 1-70-70V186a70 70 0 0 1 70-70Z" fill="url(#g)"/>
+      <circle cx="355" cy="350" r="125" fill="#fff" opacity=".96"/>
+      <path d="m228 518 128-177 94 105 72-74 124 146H228Z" fill="#312e81"/>
+      <circle cx="422" cy="287" r="38" fill="#fbbf24"/>
+      <text x="780" y="368" fill="#fff" font-family="Arial,sans-serif" font-size="90" font-weight="700" text-anchor="middle">PNG</text>
+      <text x="780" y="430" fill="#e0e7ff" font-family="Arial,sans-serif" font-size="25" letter-spacing="7" text-anchor="middle">LOSSLESS + CLEAR</text>
     </svg>`;
-    const next = parseSvg(markup, 'svglo-example.svg');
-    setSvg(next);
+    setSvg(parseSvg(markup, 'svglo-png-example.svg'));
     setOutputWidth(1200);
     setError(null);
   }, []);
 
   useEffect(() => {
-    document.title = 'SVG to JPG Converter – Convert SVG to JPEG | SVGlo';
-    const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
-    description?.setAttribute(
+    document.title = 'SVG to PNG Converter – Convert SVG to PNG Online | SVGlo';
+    document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
       'content',
-      'Convert SVG to JPG or JPEG online for free with SVGlo. Choose image size, quality, and background color, then download securely without uploads or signup.',
+      'Convert SVG to PNG online for free with SVGlo. Preserve transparency, set exact dimensions, preview the result, and download a lossless PNG without uploads.',
     );
     const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     const canonicalOrigin = canonical ? new URL(canonical.href).origin : window.location.origin;
-    const pageUrl = `${canonicalOrigin}/svg-to-jpg/`;
+    const pageUrl = `${canonicalOrigin}/svg-to-png/`;
     canonical?.setAttribute('href', pageUrl);
     document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute('content', pageUrl);
   }, []);
@@ -111,12 +108,11 @@ export function SvgToJpgPage() {
 
     const id = ++renderIdRef.current;
     const canvas = canvasRef.current;
-    const blob = new Blob([svg.markup], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(new Blob([svg.markup], { type: 'image/svg+xml' }));
     const image = new Image();
     setRendering(true);
     setReady(false);
-    setEstimatedSizes({});
+    setEstimatedSize(undefined);
 
     image.onload = () => {
       if (id !== renderIdRef.current) return;
@@ -127,8 +123,11 @@ export function SvgToJpgPage() {
         setError('Canvas is unavailable in this browser.');
         return;
       }
-      context.fillStyle = background;
-      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      if (background) {
+        context.fillStyle = background;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+      }
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
       setRendering(false);
       setReady(true);
@@ -152,64 +151,55 @@ export function SvgToJpgPage() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!ready || !canvas) return;
-
     const id = ++estimateIdRef.current;
-    const estimateAll = async () => {
-      const sizes: EstimatedSizes = {};
-      for (const option of QUALITY_OPTIONS) {
-        try {
-          sizes[option.id] = await estimateJpgSize(canvas, option.value);
-        } catch {
-          // A missing estimate should not prevent conversion or download.
-        }
-        if (id !== estimateIdRef.current) return;
-        setEstimatedSizes({ ...sizes });
-      }
-    };
-    void estimateAll();
+    void pngBlob(canvas).then((blob) => {
+      if (id === estimateIdRef.current) setEstimatedSize(blob.size);
+    }).catch(() => {
+      if (id === estimateIdRef.current) setEstimatedSize(undefined);
+    });
     return () => {
       estimateIdRef.current++;
     };
   }, [ready]);
 
-  const download = useCallback(() => {
-    if (!canvasRef.current || !svg || !ready) return;
-    canvasRef.current.toBlob((blob) => {
-      if (!blob) {
-        setError('The JPG could not be created. Try a smaller output size.');
-        return;
-      }
+  const download = useCallback(async () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !svg || !ready) return;
+    try {
+      const blob = await pngBlob(canvas);
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = `${svg.name}.jpg`;
+      anchor.download = `${svg.name}.png`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
-    }, 'image/jpeg', quality.value);
-  }, [quality, ready, svg]);
+    } catch {
+      setError('The PNG could not be created. Try a smaller output size.');
+    }
+  }, [ready, svg]);
 
   const reset = useCallback(() => {
     renderIdRef.current++;
     estimateIdRef.current++;
     setSvg(null);
     setReady(false);
-    setEstimatedSizes({});
+    setEstimatedSize(undefined);
     setError(null);
   }, []);
 
   const invalidSize = outputWidth < 1 || outputWidth > MAX_OUTPUT_EDGE || outputHeight > MAX_OUTPUT_EDGE;
 
   return (
-    <div className="app svg-jpg-app">
-      <Header hasImage={!!svg} onReset={reset} currentTool="svg-to-jpg" />
+    <div className="app svg-jpg-app svg-png-app">
+      <Header hasImage={!!svg} onReset={reset} currentTool="svg-to-png" />
       <main className="main svg-jpg-main">
         <section className="svg-jpg-hero">
           <div className="svg-jpg-heading">
-            <span className="tool-kicker">SVG → JPG</span>
-            <h1>SVG to JPG Converter <span>for clear, ready-to-share images.</span></h1>
-            <p>Convert SVG to JPG or JPEG online. Set the exact size, background, and compression—your file never leaves this browser.</p>
+            <span className="tool-kicker">SVG → PNG</span>
+            <h1>SVG to PNG Converter <span>with transparency kept intact.</span></h1>
+            <p>Convert SVG to PNG online at the exact size you need. Export clean, lossless pixels without uploading your file.</p>
           </div>
 
           {!svg ? (
@@ -243,18 +233,14 @@ export function SvgToJpgPage() {
                   event.currentTarget.value = '';
                 }}
               />
-              <div className="svg-jpg-drop-icon"><OutputIcon /></div>
+              <div className="svg-jpg-drop-icon"><PngIcon /></div>
               <h2>Drop your SVG here</h2>
               <p>or click to choose a file · up to 10 MB</p>
-              <button
-                className="example-link"
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  loadExample();
-                }}
-              >
-                Try the sample artwork
+              <button className="example-link" type="button" onClick={(event) => {
+                event.stopPropagation();
+                loadExample();
+              }}>
+                Try the transparent sample
               </button>
               {error && <p className="svg-jpg-error" role="alert">{error}</p>}
             </div>
@@ -265,22 +251,16 @@ export function SvgToJpgPage() {
                   <div className="file-type">SVG</div>
                   <div><strong>{svg.name}.svg</strong><span>{Math.round(svg.width)} × {Math.round(svg.height)}</span></div>
                   <button type="button" onClick={() => inputRef.current?.click()} aria-label="Replace SVG">Replace</button>
-                  <input
-                    ref={inputRef}
-                    type="file"
-                    accept=".svg,image/svg+xml"
-                    hidden
-                    onChange={(event) => {
-                      void loadFile(event.target.files?.[0]);
-                      event.currentTarget.value = '';
-                    }}
-                  />
+                  <input ref={inputRef} type="file" accept=".svg,image/svg+xml" hidden onChange={(event) => {
+                    void loadFile(event.target.files?.[0]);
+                    event.currentTarget.value = '';
+                  }} />
                 </div>
 
                 <div className="export-field">
-                  <label htmlFor="jpg-width">Output size</label>
+                  <label htmlFor="png-width">Output size</label>
                   <div className="dimension-row">
-                    <div><input id="jpg-width" type="number" min="1" max={MAX_OUTPUT_EDGE} value={outputWidth} onChange={(event) => setOutputWidth(Number(event.target.value))} /><span>W</span></div>
+                    <div><input id="png-width" type="number" min="1" max={MAX_OUTPUT_EDGE} value={outputWidth} onChange={(event) => setOutputWidth(Number(event.target.value))} /><span>W</span></div>
                     <span className="dimension-link" aria-label="Aspect ratio locked">⌁</span>
                     <div><input type="number" value={outputHeight || ''} readOnly aria-label="Output height" /><span>H</span></div>
                   </div>
@@ -288,55 +268,59 @@ export function SvgToJpgPage() {
                 </div>
 
                 <div className="export-field">
-                  <label id="jpg-quality-label">Image quality</label>
-                  <div className="quality-options" role="group" aria-labelledby="jpg-quality-label">
-                    {QUALITY_OPTIONS.map((option) => (
+                  <label id="png-background-label">Background</label>
+                  <div className="png-background-options" role="group" aria-labelledby="png-background-label">
+                    {([
+                      ['transparent', 'Transparent'],
+                      ['white', 'White'],
+                      ['dark', 'Dark'],
+                      ['custom', 'Custom'],
+                    ] as const).map(([id, label]) => (
                       <button
-                        key={option.id}
+                        key={id}
                         type="button"
-                        className={qualityMode === option.id ? 'is-active' : ''}
-                        aria-pressed={qualityMode === option.id}
-                        onClick={() => setQualityMode(option.id)}
+                        className={backgroundMode === id ? 'is-active' : ''}
+                        aria-pressed={backgroundMode === id}
+                        onClick={() => setBackgroundMode(id)}
                       >
-                        <span>{option.label}</span>
-                        <small>{formatFileSize(estimatedSizes[option.id])}</small>
+                        <i className={`background-swatch is-${id}`} style={id === 'custom' ? { background: customColor } : undefined} />
+                        {label}
                       </button>
                     ))}
                   </div>
+                  {backgroundMode === 'custom' && (
+                    <div className="png-custom-color">
+                      <input type="color" value={customColor} onChange={(event) => setCustomColor(event.target.value)} aria-label="Custom PNG background" />
+                      <span>{customColor.toUpperCase()}</span>
+                    </div>
+                  )}
                 </div>
 
-                <div className="export-field">
-                  <label htmlFor="jpg-background">Background color</label>
-                  <div className="color-field">
-                    <input id="jpg-background" type="color" value={background} onChange={(event) => setBackground(event.target.value)} />
-                    <input type="text" value={background.toUpperCase()} onChange={(event) => /^#[0-9a-f]{6}$/i.test(event.target.value) && setBackground(event.target.value)} aria-label="Background hex color" />
-                    {['#ffffff', '#f4f6fb', '#171b26'].map((color) => (
-                      <button key={color} type="button" style={{ background: color }} onClick={() => setBackground(color)} aria-label={`Use ${color} background`} />
-                    ))}
-                  </div>
+                <div className="png-lossless-note">
+                  <strong>Lossless PNG</strong>
+                  <span>No quality setting needed</span>
                 </div>
-
                 {invalidSize && <p className="svg-jpg-error" role="alert">Keep both dimensions between 1 and {MAX_OUTPUT_EDGE}px.</p>}
                 {error && <p className="svg-jpg-error" role="alert">{error}</p>}
-                <button className="download-jpg" type="button" disabled={!ready || rendering || invalidSize} onClick={download}>
-                  {rendering ? 'Rendering preview…' : `Download JPG${estimatedSizes[qualityMode] ? ` · ${formatFileSize(estimatedSizes[qualityMode])}` : ''}`}
+                <button className="download-jpg" type="button" disabled={!ready || rendering || invalidSize} onClick={() => void download()}>
+                  {rendering ? 'Rendering preview…' : `Download PNG${estimatedSize ? ` · ${formatFileSize(estimatedSize)}` : ''}`}
                   {!rendering && <span aria-hidden>↓</span>}
                 </button>
                 <p className="local-note"><span>✓</span> Processed locally. Nothing is uploaded.</p>
               </aside>
 
-              <section className="jpg-preview" aria-label="JPG preview">
+              <section className="jpg-preview" aria-label="PNG preview">
                 <div className="jpg-preview-bar">
-                  <div><span className="live-dot" /> JPG preview</div>
+                  <div><span className="live-dot" /> PNG preview</div>
                   <span>{outputWidth} × {outputHeight}px</span>
                 </div>
                 <div className="jpg-preview-stage">
-                  <canvas ref={canvasRef} aria-label="Rendered JPG preview" />
+                  <canvas ref={canvasRef} aria-label="Rendered PNG preview" />
                   {rendering && <div className="jpg-rendering">Rendering…</div>}
                 </div>
                 <div className="jpg-preview-caption">
-                  <span>Transparent areas become <i style={{ background }} /> {background.toUpperCase()}</span>
-                  <span>{quality.label} · {formatFileSize(estimatedSizes[qualityMode])}</span>
+                  <span>{background ? <>Background <i style={{ background }} /> {background.toUpperCase()}</> : 'Transparency preserved'}</span>
+                  <span>Lossless · {formatFileSize(estimatedSize)}</span>
                 </div>
               </section>
             </div>
@@ -345,10 +329,10 @@ export function SvgToJpgPage() {
 
         <section className="svg-jpg-explainer">
           <div><span>01</span><h2>Choose an SVG</h2><p>Drop in a logo, icon, illustration, or exported vector file.</p></div>
-          <div><span>02</span><h2>Convert SVG to JPG</h2><p>Pick a pixel size, quality level, and solid background for transparent areas.</p></div>
-          <div><span>03</span><h2>Download the JPG</h2><p>Get a browser-rendered JPEG ready for slides, stores, and social posts.</p></div>
+          <div><span>02</span><h2>Convert SVG to PNG</h2><p>Choose exact dimensions and keep transparency or add a background.</p></div>
+          <div><span>03</span><h2>Download the PNG</h2><p>Save a lossless pixel image ready for websites, apps, and documents.</p></div>
         </section>
-        <SvgToJpgArticle />
+        <SvgToPngArticle />
       </main>
       <Footer />
     </div>

@@ -3,6 +3,7 @@ import path from 'node:path';
 import type { Plugin } from 'vite';
 import { articleContent, en } from './src/i18n';
 import { svgToJpgArticle } from './src/i18n/svgToJpgArticle';
+import { svgToPngArticle } from './src/i18n/svgToPngArticle';
 
 export const DEFAULT_SITE_URL = 'https://svglo.com';
 
@@ -13,6 +14,10 @@ const SVG_TO_JPG_PATH = '/svg-to-jpg/';
 const SVG_TO_JPG_TITLE = 'SVG to JPG Converter – Convert SVG to JPEG | SVGlo';
 const SVG_TO_JPG_DESCRIPTION =
   'Convert SVG to JPG or JPEG online for free with SVGlo. Choose image size, quality, and background color, then download securely without uploads or signup.';
+const SVG_TO_PNG_PATH = '/svg-to-png/';
+const SVG_TO_PNG_TITLE = 'SVG to PNG Converter – Convert SVG to PNG Online | SVGlo';
+const SVG_TO_PNG_DESCRIPTION =
+  'Convert SVG to PNG online for free with SVGlo. Preserve transparency, set exact dimensions, preview the result, and download a lossless PNG without uploads.';
 
 function siteOrigin(): string {
   const raw = process.env.SITE_URL ?? process.env.VITE_SITE_URL;
@@ -132,6 +137,110 @@ function buildSvgToJpgHtml(homeHtml: string, origin = siteOrigin()): string {
   output = output.replace(
     /<!--seo-shell-->[\s\S]*?<!--\/seo-shell-->/,
     `<!--seo-shell-->${buildSvgToJpgShell()}<!--/seo-shell-->`,
+  );
+  return output;
+}
+
+function buildSvgToPngHeadTags(origin = siteOrigin()): string {
+  const canonical = `${origin}${SVG_TO_PNG_PATH}`;
+  const image = `${origin}${OG_IMAGE_PATH}`;
+  const graph = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        name: 'SVG to PNG Converter by SVGlo',
+        url: canonical,
+        applicationCategory: 'DesignApplication',
+        operatingSystem: 'Any',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+        description: SVG_TO_PNG_DESCRIPTION,
+        image,
+        inLanguage: 'en',
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: svgToPngArticle.faq.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      },
+    ],
+  };
+  const jsonLd = JSON.stringify(graph).replace(/</g, '\\u003c');
+  return [
+    `<meta name="description" content="${escapeMarkup(SVG_TO_PNG_DESCRIPTION)}" />`,
+    `<link rel="canonical" href="${escapeMarkup(canonical)}" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="SVGlo" />`,
+    `<meta property="og:title" content="${escapeMarkup(SVG_TO_PNG_TITLE)}" />`,
+    `<meta property="og:description" content="${escapeMarkup(SVG_TO_PNG_DESCRIPTION)}" />`,
+    `<meta property="og:url" content="${escapeMarkup(canonical)}" />`,
+    `<meta property="og:image" content="${escapeMarkup(image)}" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${escapeMarkup(SVG_TO_PNG_TITLE)}" />`,
+    `<meta name="twitter:description" content="${escapeMarkup(SVG_TO_PNG_DESCRIPTION)}" />`,
+    `<meta name="twitter:image" content="${escapeMarkup(image)}" />`,
+    `<script type="application/ld+json">${jsonLd}</script>`,
+  ].join('\n    ');
+}
+
+function buildSvgToPngShell(): string {
+  const sections = svgToPngArticle.sections
+    .map(
+      (section) =>
+        `        <section aria-labelledby="svg-png-${section.id}">
+          <h2 id="svg-png-${section.id}">${escapeMarkup(section.title)}</h2>
+${section.paragraphs.map((paragraph) => `          <p>${escapeMarkup(paragraph)}</p>`).join('\n')}
+        </section>`,
+    )
+    .join('\n');
+  const faq = svgToPngArticle.faq
+    .map(
+      (item) =>
+        `        <details>
+          <summary><h3>${escapeMarkup(item.q)}</h3></summary>
+          <p>${escapeMarkup(item.a)}</p>
+        </details>`,
+    )
+    .join('\n');
+
+  return `<div class="seo-shell">
+      <header class="seo-shell-header">
+        <strong>SVGlo</strong>
+        <span> — SVG to PNG</span>
+      </header>
+      <main class="seo-shell-main">
+        <h1>SVG to PNG Converter <span>with transparency kept intact</span></h1>
+        <p>${escapeMarkup(SVG_TO_PNG_DESCRIPTION)}</p>
+        <ul>
+          <li>Choose an SVG up to 10 MB</li>
+          <li>Set exact PNG dimensions</li>
+          <li>Preserve transparency or add a background</li>
+          <li>Download lossless PNG without uploading your file</li>
+        </ul>
+        <article class="seo-shell-article">
+          <p class="article-intro">${escapeMarkup(svgToPngArticle.intro)}</p>
+${sections}
+          <section aria-labelledby="svg-png-faq-title">
+            <h2 id="svg-png-faq-title">SVG to PNG converter FAQ</h2>
+${faq}
+          </section>
+        </article>
+      </main>
+    </div>`;
+}
+
+function buildSvgToPngHtml(homeHtml: string, origin = siteOrigin()): string {
+  let output = homeHtml.replace(
+    /<!-- seo-static-head -->[\s\S]*?<!-- \/seo-static-head -->/i,
+    `<!-- seo-static-head -->\n    ${buildSvgToPngHeadTags(origin)}\n    <!-- /seo-static-head -->`,
+  );
+  output = output.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeMarkup(SVG_TO_PNG_TITLE)}</title>`);
+  output = output.replace(
+    /<!--seo-shell-->[\s\S]*?<!--\/seo-shell-->/,
+    `<!--seo-shell-->${buildSvgToPngShell()}<!--/seo-shell-->`,
   );
   return output;
 }
@@ -302,6 +411,12 @@ function buildSitemap(origin: string, lastmod = new Date().toISOString().slice(0
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
+  <url>
+    <loc>${escapeMarkup(`${origin}${SVG_TO_PNG_PATH}`)}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
 </urlset>
 `;
 }
@@ -388,6 +503,7 @@ function buildNotFoundHtml(origin: string): string {
 function isKnownAppPath(pathname: string): boolean {
   if (pathname === '/' || pathname === '/index.html') return true;
   if (pathname === '/svg-to-jpg' || pathname === '/svg-to-jpg/' || pathname === '/svg-to-jpg/index.html') return true;
+  if (pathname === '/svg-to-png' || pathname === '/svg-to-png/' || pathname === '/svg-to-png/index.html') return true;
   if (pathname === '/404' || pathname === '/404.html') return true;
   if (pathname === '/robots.txt' || pathname === '/sitemap.xml') return true;
   if (pathname.startsWith('/assets/')) return true;
@@ -456,12 +572,15 @@ export function staticHtmlPlugin(): Plugin {
       const homeHtmlPath = path.join(outDir, 'index.html');
       if (fs.existsSync(homeHtmlPath)) {
         const svgToJpgDir = path.join(outDir, 'svg-to-jpg');
+        const svgToPngDir = path.join(outDir, 'svg-to-png');
         fs.mkdirSync(svgToJpgDir, { recursive: true });
+        fs.mkdirSync(svgToPngDir, { recursive: true });
         const homeHtml = fs.readFileSync(homeHtmlPath, 'utf8');
         fs.writeFileSync(path.join(svgToJpgDir, 'index.html'), buildSvgToJpgHtml(homeHtml, origin), 'utf8');
+        fs.writeFileSync(path.join(svgToPngDir, 'index.html'), buildSvgToPngHtml(homeHtml, origin), 'utf8');
       }
 
-      console.log(`\n  static HTML: / + ${SVG_TO_JPG_PATH} + 404.html   site: ${origin}\n`);
+      console.log(`\n  static HTML: / + ${SVG_TO_JPG_PATH} + ${SVG_TO_PNG_PATH} + 404.html   site: ${origin}\n`);
     },
 
     configurePreviewServer(server) {
