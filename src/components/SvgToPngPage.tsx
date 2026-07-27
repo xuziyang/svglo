@@ -8,6 +8,7 @@ import {
 } from '../lib/svgRaster';
 import { Footer } from './Footer';
 import { Header } from './Header';
+import { RelatedTools } from './RelatedTools';
 import { SvgToPngArticle } from './SvgToPngArticle';
 
 type BackgroundMode = 'transparent' | 'white' | 'dark' | 'custom';
@@ -333,6 +334,7 @@ export function SvgToPngPage() {
           <div><span>03</span><h2>Download the PNG</h2><p>Save a lossless pixel image ready for websites, apps, and documents.</p></div>
         </section>
         <SvgToPngArticle />
+        <RelatedTools current="svg-to-png" />
       </main>
       <Footer />
     </div>

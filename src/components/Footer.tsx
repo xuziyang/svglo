@@ -36,6 +36,9 @@ export function Footer() {
             </div>
           </div>
           <nav className="footer-links">
+            <a href="/">Image to SVG</a>
+            <a href="/svg-to-jpg/">SVG to JPG</a>
+            <a href="/svg-to-png/">SVG to PNG</a>
             <button ref={privacyButtonRef} type="button" onClick={() => setPrivacyOpen(true)}>
               {t('footer.privacy')}
             </button>

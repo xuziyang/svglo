@@ -13,7 +13,7 @@ const OG_IMAGE_ALT = 'SVGlo — free online SVG converter for PNG, JPG, and othe
 const SVG_TO_JPG_PATH = '/svg-to-jpg/';
 const SVG_TO_JPG_TITLE = 'SVG to JPG Converter – Convert SVG to JPEG | SVGlo';
 const SVG_TO_JPG_DESCRIPTION =
-  'Convert SVG to JPG or JPEG online for free with SVGlo. Choose image size, quality, and background color, then download securely without uploads or signup.';
+  "Use SVGlo's free SVG to JPG converter to set image size, quality, and background color. Convert SVG to JPEG privately in your browser with no uploads.";
 const SVG_TO_PNG_PATH = '/svg-to-png/';
 const SVG_TO_PNG_TITLE = 'SVG to PNG Converter – Convert SVG to PNG Online | SVGlo';
 const SVG_TO_PNG_DESCRIPTION =
@@ -34,6 +34,14 @@ function escapeMarkup(value: string): string {
 
 function canonicalUrl(origin = siteOrigin()): string {
   return `${origin}/`;
+}
+
+function buildStaticToolNav(): string {
+  return `<nav class="seo-shell-tools" aria-label="SVGlo image converters">
+        <a href="/">Image to SVG Converter</a>
+        <a href="/svg-to-jpg/">SVG to JPG Converter</a>
+        <a href="/svg-to-png/">SVG to PNG Converter</a>
+      </nav>`;
 }
 
 function buildSvgToJpgHeadTags(origin = siteOrigin()): string {
@@ -107,6 +115,7 @@ ${section.paragraphs.map((paragraph) => `          <p>${escapeMarkup(paragraph)}
         <strong>SVGlo</strong>
         <span> — SVG to JPG</span>
       </header>
+      ${buildStaticToolNav()}
       <main class="seo-shell-main">
         <h1>SVG to JPG Converter <span>for clear, ready-to-share images</span></h1>
         <p>${escapeMarkup(SVG_TO_JPG_DESCRIPTION)}</p>
@@ -211,6 +220,7 @@ ${section.paragraphs.map((paragraph) => `          <p>${escapeMarkup(paragraph)}
         <strong>SVGlo</strong>
         <span> — SVG to PNG</span>
       </header>
+      ${buildStaticToolNav()}
       <main class="seo-shell-main">
         <h1>SVG to PNG Converter <span>with transparency kept intact</span></h1>
         <p>${escapeMarkup(SVG_TO_PNG_DESCRIPTION)}</p>
@@ -338,6 +348,7 @@ export function buildSeoShell(): string {
         <strong>SVGlo</strong>
         <span> — ${escapeMarkup(en.header.tagline)}</span>
       </header>
+      ${buildStaticToolNav()}
       <main class="seo-shell-main">
         <h1>${escapeMarkup(en.hero.titleBefore)} <span>${escapeMarkup(en.hero.titleAccent)}</span></h1>
         <p>${escapeMarkup(en.hero.lead)}</p>

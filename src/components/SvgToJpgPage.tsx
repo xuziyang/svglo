@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { SvgToJpgArticle } from './SvgToJpgArticle';
+import { RelatedTools } from './RelatedTools';
 import {
   formatFileSize,
   MAX_OUTPUT_EDGE,
@@ -94,7 +95,7 @@ export function SvgToJpgPage() {
     const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     description?.setAttribute(
       'content',
-      'Convert SVG to JPG or JPEG online for free with SVGlo. Choose image size, quality, and background color, then download securely without uploads or signup.',
+      "Use SVGlo's free SVG to JPG converter to set image size, quality, and background color. Convert SVG to JPEG privately in your browser with no uploads.",
     );
     const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     const canonicalOrigin = canonical ? new URL(canonical.href).origin : window.location.origin;
@@ -349,6 +350,7 @@ export function SvgToJpgPage() {
           <div><span>03</span><h2>Download the JPG</h2><p>Get a browser-rendered JPEG ready for slides, stores, and social posts.</p></div>
         </section>
         <SvgToJpgArticle />
+        <RelatedTools current="svg-to-jpg" />
       </main>
       <Footer />
     </div>
