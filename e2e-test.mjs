@@ -1,17 +1,12 @@
 import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
-import { createRequire } from 'node:module';
-const require = createRequire(import.meta.url);
-const path = require('node:path');
 
-const SAMPLE = path.resolve('../vtracer/docs/assets/samples/angel-luciano-LATYeZyw88c-unsplash-s.jpg');
 const PORT = '4174';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const server = spawn('npm', ['run', 'preview', '--', '--port', PORT], {
   cwd: process.cwd(),
-  shell: true,
   stdio: 'ignore',
 });
 
@@ -25,7 +20,12 @@ const server = spawn('npm', ['run', 'preview', '--', '--port', PORT], {
     await sleep(300);
   }
 
-  const browser = await chromium.launch({ channel: 'msedge', headless: true });
+  const removedLocaleResponse = await fetch(`http://localhost:${PORT}/zh-cn/`);
+  if (removedLocaleResponse.status !== 404) {
+    throw new Error(`Expected /zh-cn/ to return 404, got ${removedLocaleResponse.status}`);
+  }
+
+  const browser = await chromium.launch({ channel: 'chrome', headless: true });
   const page = await browser.newPage();
 
   const errors = [];
@@ -36,8 +36,8 @@ const server = spawn('npm', ['run', 'preview', '--', '--port', PORT], {
 
   await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'domcontentloaded' });
 
-  // Upload the sample image through the hidden file input.
-  await page.setInputFiles('input[type="file"]', SAMPLE);
+  // Use the built-in raster fixture so the smoke test is self-contained.
+  await page.click('.dropzone-example button');
 
   // Wait for the Download button to become enabled (= svgString is set).
   await page.waitForSelector('button.btn-primary:not([disabled])', { timeout: 45000 });
@@ -49,16 +49,23 @@ const server = spawn('npm', ['run', 'preview', '--', '--port', PORT], {
       hasViewBox: svg ? svg.getAttribute('viewBox') : null,
       outerSnippet: svg ? svg.outerHTML.slice(0, 240) : null,
       meta: document.querySelector('.preview-meta')?.textContent?.trim() ?? null,
+      documentLang: document.documentElement.lang,
+      hasLanguageSwitch: document.querySelector('.lang-switch') !== null,
     };
   });
 
-  console.log(JSON.stringify({ ok: result.pathCount > 0, ...result, consoleErrors: errors }, null, 2));
+  const ok =
+    result.pathCount > 0
+    && result.documentLang === 'en'
+    && !result.hasLanguageSwitch
+    && errors.length === 0;
+  console.log(JSON.stringify({ ok, ...result, consoleErrors: errors }, null, 2));
 
   await page.screenshot({ path: 'e2e-screenshot.png', fullPage: false });
 
   await browser.close();
   server.kill();
-  process.exit(result.pathCount > 0 ? 0 : 1);
+  process.exit(ok ? 0 : 1);
 })().catch((e) => {
   console.error('TEST FAILED:', e);
   server.kill();

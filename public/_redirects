@@ -1,5 +1,1 @@
-# English is unprefixed at /. Chinese lives at /zh-cn/.
-# Normalize bare /zh-cn to trailing slash so /zh-cn/index.html is served.
-/zh-cn  /zh-cn/   301
-
-# No catch-all SPA rewrite — that would shadow the per-locale index.html files.
+# No catch-all rewrite: unknown paths should use the generated 404.html.

@@ -9,7 +9,6 @@ export const en: Messages = {
   header: {
     tagline: 'Image to SVG',
     newImage: 'New image',
-    langSwitch: 'Language',
   },
   hero: {
     titleBefore: 'Free SVG Converter',
@@ -120,7 +119,5 @@ export const en: Messages = {
     title: 'Page not found',
     lead: 'The link may be broken, or the page may have been moved. Head back home to convert an image to SVG.',
     home: 'Back to home',
-    langSwitch: 'Language',
-    langOther: '中文',
   },
 };

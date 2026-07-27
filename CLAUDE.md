@@ -12,17 +12,17 @@ Stack: React 18 + Vite 5 + TypeScript. Deploy target: static hosts (Cloudflare P
 
 ```sh
 npm install
-npm run dev          # http://localhost:5173  (/ = English, /zh-cn/ = Chinese)
-npm run build        # production → dist/  (emits / and /zh-cn/ HTML)
+npm run dev          # http://localhost:5173
+npm run build        # production → dist/ (single English static site)
 npm run preview      # serve dist/
 npm run typecheck    # tsc --noEmit
 ```
 
-Manual e2e smoke (Playwright; needs a sample image at `../vtracer/docs/assets/samples/...`):
+Manual e2e smoke (Playwright with installed Google Chrome):
 
 ```sh
 npm run build
-node e2e-test.mjs    # starts preview on :4174, uploads sample, asserts SVG paths
+node e2e-test.mjs    # starts preview on :4174, converts built-in example, asserts SVG paths
 ```
 
 There is no unit-test runner and no lint script.
@@ -41,7 +41,7 @@ Requires Rust + `wasm-pack`. Day-to-day frontend work does not need them.
 
 ### Production SEO env
 
-Canonical, hreflang, Open Graph, `sitemap.xml`, and `robots.txt` default to
+Canonical, Open Graph, `sitemap.xml`, and `robots.txt` default to
 `https://svglo.com`. Override only when needed:
 
 ```sh
@@ -52,7 +52,7 @@ SITE_URL=https://preview.example.com npm run build
 
 ```
 Browser
-  └─ static HTML per locale + shared JS/CSS/wasm
+  └─ static English HTML + JS/CSS/wasm
        ├─ upload image → draw to hidden <canvas>
        ├─ wasm reads canvas pixels, writes <path> into <svg> by id
        └─ serialize SVG → download / copy
@@ -75,42 +75,31 @@ User-facing units in `VTracerConfig` are **not** what wasm receives. `buildParam
 | `color_precision` (significant bits 1–8) | `8 - bits` (“loss”) |
 | `corner_threshold` / `splice_threshold` (degrees) | radians |
 
-Presets live in `src/lib/presets.ts` as `id` + `config` only. Display names/descriptions come from i18n (`presets.${id}.*`).
+Presets live in `src/lib/presets.ts` as `id` + `config` only. Display names/descriptions come from the typed English copy catalog (`presets.${id}.*`).
 
 ### UI shell
 
 - No React Router. One screen: hero+dropzone when no image; sidebar `ControlPanel` + `PreviewPane` when an image is loaded.
 - Styling is plain CSS in `src/index.css` (design tokens as CSS variables). No component library.
 
-## i18n & SEO (non-obvious)
-
-Locales: **`en`** (default, unprefixed), **`zh`**. Paths: `/` (English), `/zh-cn/` (Chinese).
+## English copy & SEO (non-obvious)
 
 | Piece | Role |
 |---|---|
-| `src/i18n/{en,zh,types,index}.ts` | Typed message catalogs + path helpers |
-| `src/i18n/LocaleContext.tsx` | Provider, `useT()`, language switch |
-| `vite-plugin-locale-html.ts` | Build/dev plugin: per-locale static HTML |
+| `src/i18n/{en,types,index}.ts` | Typed English UI copy and `t()` lookup |
+| `src/i18n/article.ts` | English article and FAQ content |
+| `vite-plugin-static-html.ts` | Build/dev plugin: metadata, SEO shell, sitemap, robots, and 404 |
 
-**Build output** (do not add a catch-all SPA rewrite — it would shadow these files):
+**Build output** (do not add a catch-all SPA rewrite; unknown paths should remain 404s):
 
 ```text
-dist/index.html         # English title/description/hreflang + SEO text shell in #root
-dist/zh-cn/index.html   # Chinese equivalent
-dist/404.html           # bilingual static 404 (noindex); CF Pages / Netlify auto-serve
+dist/index.html         # English title/description/social tags + SEO text shell
+dist/404.html           # English static 404 (noindex)
 dist/sitemap.xml
 dist/robots.txt
 ```
 
-Crawlers see real localized HTML without JS. React mounts and replaces the SEO shell inside `#root`.
-
-Language switch in the header does a **full navigation** (`location.assign`) to the other locale’s HTML so share-preview meta is correct. Do not change it back to `pushState`-only without rethinking SEO.
-
-To add a locale: extend `Locale` in `types.ts`, add a catalog that matches `Messages`, register in `LOCALES` + `catalogs` + `LOCALE_PATH_SEGMENT`, rebuild. The Vite plugin picks up `LOCALES` automatically. Default locale stays unprefixed via `localePath()`.
-
-Dev server: `/` is English; `/zh-cn/` is Chinese; bare `/zh-cn` → `/zh-cn/`. SEO head injected via `transformIndexHtml`. Unknown paths return the bilingual `404.html` (also in preview).
-
-Hosting helpers: `public/_redirects` (CF Pages/Netlify) and `vercel.json` normalize `/zh-cn`→`/zh-cn/`. Static hosts auto-serve `dist/404.html` for missing paths.
+Crawlers see real English content without JS. React mounts and replaces the SEO shell inside `#root`. The dev and preview servers return the generated English 404 page for unknown routes.
 
 ## Vite / wasm gotchas
 
@@ -126,5 +115,5 @@ Hosting helpers: `public/_redirects` (CF Pages/Netlify) and `vercel.json` normal
 | Output directory | `dist` |
 | Env `SITE_URL` | optional; defaults to `https://svglo.com` |
 
-No Rust step in CI — wasm is vendored. Build emits `/robots.txt` and
-`/sitemap.xml` with absolute URLs for both `/` and `/zh-cn/`.
+No Rust step in CI — wasm is vendored. Build emits `/robots.txt` and a
+single-URL `/sitemap.xml` with absolute URLs.

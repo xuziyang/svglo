@@ -136,10 +136,6 @@ summary:focus-visible,
   color: var(--text);
   font-size: 18px;
 }
-.seo-shell-langs {
-  margin-left: auto;
-  font-size: 13px;
-}
 .seo-shell-main h1 {
   font-size: 36px;
   line-height: 1.2;
@@ -161,10 +157,6 @@ summary:focus-visible,
   padding-left: 1.2em;
   color: var(--text-muted);
   line-height: 1.7;
-}
-.seo-shell-switch {
-  margin-top: 24px;
-  font-size: 14px;
 }
 
 .app {
@@ -245,39 +237,6 @@ summary:focus-visible,
   border-color: var(--border);
   color: var(--text);
   text-decoration: none;
-}
-
-.lang-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  margin-left: 4px;
-  padding: 3px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-}
-.lang-btn {
-  appearance: none;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  padding: 5px 11px;
-  border-radius: 999px;
-  cursor: pointer;
-  line-height: 1;
-  transition: color 0.12s, background 0.12s, box-shadow 0.12s;
-}
-.lang-btn:hover {
-  color: var(--text);
-}
-.lang-btn.is-active {
-  background: var(--surface);
-  color: var(--accent-strong);
-  box-shadow: var(--shadow-sm);
 }
 
 /* ---------- Main layout ---------- */

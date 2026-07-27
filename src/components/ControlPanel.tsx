@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
-import { useT } from '../i18n/LocaleContext';
-import type { MessageKey } from '../i18n';
+import { t, type MessageKey } from '../i18n';
 import type { ColorMode, Hierarchical, PathMode, VTracerConfig } from '../lib/vtracer';
 import { PRESETS, type Preset, type PresetId } from '../lib/presets';
 import { Segmented } from './Segmented';
@@ -13,7 +12,6 @@ interface ControlPanelProps {
 }
 
 export function ControlPanel({ config, onChange, onPreset, activePresetId }: ControlPanelProps) {
-  const t = useT();
   const isColor = config.colormode === 'color';
   const isSpline = config.mode === 'spline';
 

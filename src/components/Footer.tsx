@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { useT } from '../i18n/LocaleContext';
+import { t } from '../i18n';
 
 export function Footer() {
-  const t = useT();
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const privacyButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);

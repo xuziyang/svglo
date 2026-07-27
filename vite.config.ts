@@ -1,10 +1,10 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { localeHtmlPlugin } from './vite-plugin-locale-html';
+import { staticHtmlPlugin } from './vite-plugin-static-html';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), localeHtmlPlugin()],
+  plugins: [react(), staticHtmlPlugin()],
   // The wasm-pack output uses top-level wasm features; keep it out of
   // esbuild's dep pre-bundling so the `?url` asset import resolves cleanly.
   optimizeDeps: {
@@ -13,6 +13,6 @@ export default defineConfig({
   build: {
     target: 'es2020',
   },
-  // SPA entry at / (English) and /zh-cn/.
+  // Single English entry point; all processing remains client-side.
   appType: 'spa',
 });

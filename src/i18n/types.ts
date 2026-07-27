@@ -1,5 +1,3 @@
-export type Locale = 'en' | 'zh';
-
 export interface PresetMessages {
   name: string;
   description: string;
@@ -13,7 +11,6 @@ export interface Messages {
   header: {
     tagline: string;
     newImage: string;
-    langSwitch: string;
   };
   hero: {
     titleBefore: string;
@@ -108,8 +105,6 @@ export interface Messages {
     title: string;
     lead: string;
     home: string;
-    langSwitch: string;
-    langOther: string;
   };
 }
 

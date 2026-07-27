@@ -1,6 +1,6 @@
 import { useMemo, type RefObject } from 'react';
 import type { ConvertStatus } from '../hooks/useVTracer';
-import { useT } from '../i18n/LocaleContext';
+import { t } from '../i18n';
 import { Segmented } from './Segmented';
 
 export type PreviewView = 'before' | 'after' | 'compare';
@@ -42,7 +42,6 @@ export function PreviewPane(props: PreviewPaneProps) {
     copied,
   } = props;
 
-  const t = useT();
   const running = status === 'running';
   const viewBox = imageDims ? `0 0 ${imageDims.w} ${imageDims.h}` : undefined;
   const svgBytes = useMemo(

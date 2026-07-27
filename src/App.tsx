@@ -6,12 +6,11 @@ import { Article } from './components/Article';
 import { ControlPanel } from './components/ControlPanel';
 import { PreviewPane, type PreviewView } from './components/PreviewPane';
 import { useVTracer } from './hooks/useVTracer';
-import { useT } from './i18n/LocaleContext';
+import { t } from './i18n';
 import { DEFAULT_CONFIG, PRESETS, type Preset } from './lib/presets';
 import type { VTracerConfig } from './lib/vtracer';
 
 export default function App() {
-  const t = useT();
   const { status, progress, svgString, error, convert, cancel } = useVTracer();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);

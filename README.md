@@ -53,9 +53,8 @@ npm run typecheck # type check
 
 ```text
 dist/
-  index.html             # English — title, description, hreflang, SEO shell in source HTML
-  zh-cn/index.html       # Chinese — same shape
-  404.html               # bilingual static 404 (noindex); CF Pages / Netlify auto-serve
+  index.html             # English title, description, social tags, and SEO text shell
+  404.html               # English static 404 (noindex); static hosts auto-serve it
   sitemap.xml
   robots.txt
   assets/...
@@ -71,21 +70,17 @@ dist/
 | Env var `SITE_URL` | optional; defaults to `https://svglo.com` |
 
 - wasm deps are vendored in-repo (`vendor/`), so CI needs no Rust step
-- `public/_redirects` normalizes `/zh-cn` → `/zh-cn/` (Cloudflare Pages / Netlify)
-- `vercel.json` does the same on Vercel
-- Build always emits absolute `canonical` / `hreflang` / Open Graph URLs, plus `/robots.txt`, `/sitemap.xml`, and `/404.html`
+- Build always emits absolute canonical and Open Graph URLs, plus `/robots.txt`, `/sitemap.xml`, and `/404.html`
 - Unknown paths are served as HTTP 404 via `404.html` (Cloudflare Pages / Netlify / Vercel auto-detect this file)
 
-### Internationalization & SEO
+### English content & SEO
 
-Supported locales: **English** (`/`, default) and **Simplified Chinese** (`/zh-cn/`).
+SVGlo has one English page at `/`.
 
-- Build emits **separate static HTML** per locale (not an empty SPA shell). Crawlers see the correct `lang`, `<title>`, meta description, `canonical`, `hreflang`, and a text SEO shell inside `#root` without running JS
-- English is unprefixed at the site root; Chinese lives under `/zh-cn/`
-- `robots.txt` allows all pages and points at the sitemap; `sitemap.xml` lists both locales with `xhtml:link` hreflang alternates, `lastmod`, and priority
-- Header language switch performs a real navigation to the other locale’s HTML (correct share-preview meta)
-- Copy lives in typed catalogs under `src/i18n/` (`en.ts`, `zh.ts`); the Vite plugin `vite-plugin-locale-html.ts` reads the same catalogs at build time
-- To add a language: new catalog + `Locale` union + `LOCALES` / `catalogs` / `LOCALE_PATH_SEGMENT` in `src/i18n/index.ts`, then rebuild
+- The build emits real English metadata and a text SEO shell inside `#root`, so crawlers and no-JavaScript clients do not receive an empty page
+- `robots.txt` allows the homepage and points at the single-URL sitemap
+- Typed UI copy lives in `src/i18n/en.ts`; long-form article and FAQ copy lives in `src/i18n/article.ts`
+- `vite-plugin-static-html.ts` injects metadata and the SEO shell, and emits the sitemap, robots file, and English 404 page
 
 ## Key integration points
 

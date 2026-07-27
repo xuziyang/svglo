@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useT } from '../i18n/LocaleContext';
+import { t } from '../i18n';
 
 interface DropzoneProps {
   onImage: (file: File) => void;
@@ -28,7 +28,6 @@ function readImageDimensions(file: File) {
 }
 
 export function Dropzone({ onImage, onExample }: DropzoneProps) {
-  const t = useT();
   const [dragging, setDragging] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);

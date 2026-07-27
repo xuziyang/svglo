@@ -1,10 +1,8 @@
 import { articleContent } from '../i18n/article';
-import { useLocale } from '../i18n/LocaleContext';
 
 /** Long-form SEO article shown under the hero/dropzone on the landing view. */
 export function Article() {
-  const { locale } = useLocale();
-  const a = articleContent[locale];
+  const a = articleContent;
 
   return (
     <article className="article">
