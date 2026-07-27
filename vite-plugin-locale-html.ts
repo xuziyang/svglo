@@ -17,17 +17,30 @@ import {
 /** Production origin used for canonical / hreflang / sitemap / robots. */
 export const DEFAULT_SITE_URL = 'https://svglo.com';
 
+/** True when the path looks like a static asset (has any file extension). */
+const HAS_EXTENSION_RE = /\.[a-zA-Z0-9]+$/;
+
 /**
- * Resolve the public site origin.
+ * Resolve the public site origin (cached for the build / dev session).
  * - SITE_URL / VITE_SITE_URL win when set (no trailing slash)
  * - empty string → fall back to DEFAULT_SITE_URL so production SEO tags stay absolute
  * - set SITE_URL= (or relative) only if you intentionally want root-relative URLs
  */
-function siteOrigin(): string {
-  const raw = process.env.SITE_URL ?? process.env.VITE_SITE_URL;
-  if (raw === undefined) return DEFAULT_SITE_URL;
-  const trimmed = raw.replace(/\/$/, '');
-  return trimmed || DEFAULT_SITE_URL;
+function makeSiteOrigin() {
+  return (): string => {
+    const raw = process.env.SITE_URL ?? process.env.VITE_SITE_URL;
+    if (raw === undefined) return DEFAULT_SITE_URL;
+    const trimmed = raw.trim().replace(/\/+$/, '');
+    return trimmed || DEFAULT_SITE_URL;
+  };
+}
+
+const getSiteOrigin = makeSiteOrigin();
+
+/** Strip trailing slash from any origin or fall back to DEFAULT_SITE_URL. */
+function normalizedOrigin(origin: string | null | undefined): string {
+  const base = origin || DEFAULT_SITE_URL;
+  return base.replace(/\/+$/, '') || DEFAULT_SITE_URL;
 }
 
 function abs(origin: string, pathname: string): string {
@@ -37,7 +50,8 @@ function abs(origin: string, pathname: string): string {
   return `${origin}${pathname}`;
 }
 
-function escapeXml(s: string): string {
+/** Escape &, <, >, " — safe for HTML attributes and XML text. */
+function escapeMarkup(s: string): string {
   return s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -45,13 +59,8 @@ function escapeXml(s: string): string {
     .replace(/"/g, '&quot;');
 }
 
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+// Back-compat alias used in HTML-attribute interpolation paths.
+const escapeHtml = escapeMarkup;
 
 function hreflangOf(locale: Locale): string {
   return locale === 'zh' ? 'zh-CN' : locale;
@@ -74,7 +83,7 @@ const OG_IMAGE_ALT: Record<Locale, string> = {
 };
 
 /** JSON-LD for WebApplication + FAQPage (crawlers read this without JS). */
-export function buildJsonLd(locale: Locale, origin = siteOrigin()): string {
+export function buildJsonLd(locale: Locale, origin = getSiteOrigin()): string {
   const m = catalogs[locale];
   const a = articleContent[locale];
   const canonical = localeHref(locale, origin);
@@ -120,7 +129,7 @@ export function buildJsonLd(locale: Locale, origin = siteOrigin()): string {
 }
 
 /** Head tags that crawlers should see without running JS. */
-export function buildHeadTags(locale: Locale, origin = siteOrigin()): string {
+export function buildHeadTags(locale: Locale, origin = getSiteOrigin()): string {
   const m = catalogs[locale];
   const canonical = localeHref(locale, origin);
   const ogImage = abs(origin, OG_IMAGE_PATH);
@@ -236,7 +245,7 @@ ${faq}
     </div>`;
 }
 
-function applyLocaleToHtml(html: string, locale: Locale, origin = siteOrigin()): string {
+function applyLocaleToHtml(html: string, locale: Locale, origin = getSiteOrigin()): string {
   const m = catalogs[locale];
   const lang = LOCALE_HTML_LANG[locale];
   const headTags = buildHeadTags(locale, origin);
@@ -287,18 +296,18 @@ function applyLocaleToHtml(html: string, locale: Locale, origin = siteOrigin()):
 }
 
 function buildSitemap(origin: string, lastmod = new Date().toISOString().slice(0, 10)): string {
-  const base = origin || DEFAULT_SITE_URL;
-  const href = (locale: Locale) => abs(base.replace(/\/$/, ''), localePath(locale));
+  const base = normalizedOrigin(origin);
+  const href = (locale: Locale) => abs(base, localePath(locale));
   // Homepage-style landing pages: index both locales; default language slightly higher priority.
   const priorityOf = (locale: Locale) => (locale === DEFAULT_LOCALE ? '1.0' : '0.9');
 
   const urls = LOCALES.map((l) => {
-    const loc = escapeXml(href(l));
+    const loc = escapeMarkup(href(l));
     const alt = LOCALES.map(
       (a) =>
-        `    <xhtml:link rel="alternate" hreflang="${hreflangOf(a)}" href="${escapeXml(href(a))}"/>`,
+        `    <xhtml:link rel="alternate" hreflang="${hreflangOf(a)}" href="${escapeMarkup(href(a))}"/>`,
     ).join('\n');
-    const xDefault = `    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(href(DEFAULT_LOCALE))}"/>`;
+    const xDefault = `    <xhtml:link rel="alternate" hreflang="x-default" href="${escapeMarkup(href(DEFAULT_LOCALE))}"/>`;
     return `  <url>
     <loc>${loc}</loc>
     <lastmod>${lastmod}</lastmod>
@@ -318,7 +327,7 @@ ${urls}
 }
 
 function buildRobots(origin: string): string {
-  const base = (origin || DEFAULT_SITE_URL).replace(/\/$/, '');
+  const base = normalizedOrigin(origin);
   return `User-agent: *\nAllow: /\n\nSitemap: ${base}/sitemap.xml\n`;
 }
 
@@ -329,9 +338,10 @@ function buildRobots(origin: string): string {
  * request path / browser preference.
  */
 function buildNotFoundHtml(origin: string): string {
-  const base = (origin || DEFAULT_SITE_URL).replace(/\/$/, '');
-  const homeEn = abs(base, localePath('en'));
-  const homeZh = abs(base, localePath('zh'));
+  const base = normalizedOrigin(origin);
+  const homeByLocale = Object.fromEntries(
+    LOCALES.map((l) => [l, abs(base, localePath(l))] as const),
+  ) as Record<Locale, string>;
   const en = catalogs.en.notFound;
   const zh = catalogs.zh.notFound;
 
@@ -360,14 +370,11 @@ function buildNotFoundHtml(origin: string): string {
 
   const panel = (locale: Locale, hidden: boolean) => {
     const m = catalogs[locale].notFound;
-    const home = locale === 'zh' ? homeZh : homeEn;
-    const other = locale === 'zh' ? 'en' : 'zh';
-    const otherHome = other === 'zh' ? homeZh : homeEn;
-    const otherLabel = other === 'zh' ? '中文' : 'English';
+    const otherLocale: Locale = locale === 'zh' ? 'en' : 'zh';
     const tagline = escapeHtml(catalogs[locale].header.tagline);
     return `<section id="nf-${locale}" class="nf-panel"${hidden ? ' hidden' : ''}>
       <header class="nf-header">
-        <a class="brand" href="${escapeHtml(home)}">
+        <a class="brand" href="${escapeHtml(homeByLocale[locale])}">
           <span class="brand-mark" aria-hidden="true">
             <svg viewBox="0 0 32 32" width="30" height="30">
               <defs>
@@ -399,7 +406,7 @@ function buildNotFoundHtml(origin: string): string {
           </span>
         </a>
         <nav class="nf-lang" aria-label="${escapeHtml(m.langSwitch)}">
-          <a href="${escapeHtml(otherHome)}" class="link-btn">${otherLabel}</a>
+          <a href="${escapeHtml(homeByLocale[otherLocale])}" class="link-btn">${escapeHtml(m.langOther)}</a>
         </nav>
       </header>
       <main class="nf-main">
@@ -407,7 +414,7 @@ function buildNotFoundHtml(origin: string): string {
         <h1>${escapeHtml(m.title)}</h1>
         <p class="nf-lead">${escapeHtml(m.lead)}</p>
         <p class="nf-actions">
-          <a class="nf-home" href="${escapeHtml(home)}">${escapeHtml(m.home)}</a>
+          <a class="nf-home" href="${escapeHtml(homeByLocale[locale])}">${escapeHtml(m.home)}</a>
         </p>
       </main>
     </section>`;
@@ -598,12 +605,23 @@ function buildNotFoundHtml(origin: string): string {
     </style>
   </head>
   <body>
-    ${panel('en', false)}
-    ${panel('zh', true)}
+    ${LOCALES.map((l) => panel(l, l !== DEFAULT_LOCALE)).join('\n    ')}
     <script>${bootScript}</script>
   </body>
 </html>
 `;
+}
+
+// Memoize the 404 page per origin — origin is stable for the dev/preview
+// session, so the ~11KB of HTML/CSS/JSON work happens at most once per session.
+const notFoundMemo = new Map<string, string>();
+function buildNotFoundHtmlCached(origin: string): string {
+  const key = normalizedOrigin(origin);
+  const cached = notFoundMemo.get(key);
+  if (cached) return cached;
+  const html = buildNotFoundHtml(key);
+  notFoundMemo.set(key, html);
+  return html;
 }
 
 function localeFromReqUrl(url: string | undefined): Locale {
@@ -634,19 +652,18 @@ export function localeHtmlPlugin(): Plugin {
       // Run before Vite's SPA HTML fallback so unknown paths are real 404s
       // instead of index.html with status 200.
       server.middlewares.use((req, res, next) => {
-        const raw = req.url ?? '/';
-        const pathname = raw.split('?')[0] ?? '/';
-        const qs = raw.includes('?') ? '?' + raw.split('?')[1] : '';
+        const [rawPathname = '/', rawQuery = ''] = (req.url ?? '/').split('?');
+        const qs = rawQuery ? `?${rawQuery}` : '';
 
         // Normalize /zh-cn → /zh-cn/
-        if (pathname === '/zh-cn') {
+        if (rawPathname === '/zh-cn') {
           res.statusCode = 302;
           res.setHeader('Location', `/zh-cn/${qs}`);
           res.end();
           return;
         }
 
-        serveDevNotFound(req, res, next, () => buildNotFoundHtml(siteOrigin()));
+        serveDevNotFound(req, res, next, () => buildNotFoundHtmlCached(getSiteOrigin()));
       });
     },
 
@@ -665,7 +682,7 @@ export function localeHtmlPlugin(): Plugin {
     },
 
     closeBundle() {
-      const origin = siteOrigin();
+      const origin = getSiteOrigin();
       const builtIndex = path.join(outDir, 'index.html');
       if (!fs.existsSync(builtIndex)) return;
 
@@ -697,20 +714,24 @@ export function localeHtmlPlugin(): Plugin {
       fs.writeFileSync(path.join(outDir, 'sitemap.xml'), buildSitemap(origin), 'utf8');
 
       // Static 404 for Cloudflare Pages / Netlify / most static hosts.
-      fs.writeFileSync(path.join(outDir, '404.html'), buildNotFoundHtml(origin), 'utf8');
+      fs.writeFileSync(path.join(outDir, '404.html'), buildNotFoundHtmlCached(origin), 'utf8');
 
       console.log(`\n  locale HTML: / (en) /zh-cn/ + 404.html   site: ${origin}\n`);
     },
 
     configurePreviewServer(server) {
       // Same as dev: intercept before SPA fallback so preview matches CF Pages.
+      // Cache the 404 file body — the file is static for the preview's lifetime.
+      const file = path.join(outDir, '404.html');
+      const exists = fs.existsSync(file);
+      let body = '';
+      if (exists) body = fs.readFileSync(file, 'utf8');
       server.middlewares.use((req, res, next) => {
-        const file = path.join(outDir, '404.html');
-        if (!fs.existsSync(file)) {
+        if (!exists) {
           next();
           return;
         }
-        serveDevNotFound(req, res, next, () => fs.readFileSync(file, 'utf8'));
+        serveDevNotFound(req, res, next, () => body);
       });
     },
   };
@@ -728,7 +749,7 @@ function isKnownAppPath(pathname: string): boolean {
   if (pathname.startsWith('/assets/')) return true;
   if (pathname.startsWith('/@') || pathname.startsWith('/node_modules/')) return true;
   if (pathname.startsWith('/src/') || pathname.startsWith('/vendor/')) return true;
-  if (/\.[a-zA-Z0-9]+$/.test(pathname)) return true;
+  if (HAS_EXTENSION_RE.test(pathname)) return true;
   return false;
 }
 
