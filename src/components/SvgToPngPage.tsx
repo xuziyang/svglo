@@ -307,7 +307,6 @@ export function SvgToPngPage() {
                   {rendering ? 'Rendering preview…' : `Download PNG${estimatedSize ? ` · ${formatFileSize(estimatedSize)}` : ''}`}
                   {!rendering && <span aria-hidden>↓</span>}
                 </button>
-                <p className="local-note"><span>✓</span> Processed locally. Nothing is uploaded.</p>
               </aside>
 
               <section className="jpg-preview" aria-label="PNG preview">

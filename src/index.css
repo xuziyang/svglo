@@ -1560,17 +1560,6 @@ summary:focus-visible,
   opacity: .5;
   cursor: wait;
 }
-.local-note {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin: 11px 0 0;
-  color: var(--text-faint);
-  font-size: 10.5px;
-}
-.local-note span {
-  color: var(--success);
-}
 .jpg-preview {
   min-width: 0;
   display: flex;
