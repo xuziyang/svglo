@@ -11,6 +11,10 @@ export interface Messages {
   header: {
     tagline: string;
     newImage: string;
+    imageToSvg: string;
+    svgToJpg: string;
+    svgToPng: string;
+    language: string;
   };
   hero: {
     titleBefore: string;
@@ -97,6 +101,9 @@ export interface Messages {
     privacy: string;
     copyright: string;
     close: string;
+    imageToSvg: string;
+    svgToJpg: string;
+    svgToPng: string;
   };
   notFound: {
     metaTitle: string;

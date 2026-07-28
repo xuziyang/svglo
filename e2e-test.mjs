@@ -2,12 +2,14 @@ import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 
 const PORT = '4174';
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const server = spawn('npm', ['run', 'preview', '--', '--port', PORT], {
+const server = spawn(npmCommand, ['run', 'preview', '--', '--port', PORT], {
   cwd: process.cwd(),
   stdio: 'ignore',
+  shell: process.platform === 'win32',
 });
 
 (async () => {
@@ -20,9 +22,9 @@ const server = spawn('npm', ['run', 'preview', '--', '--port', PORT], {
     await sleep(300);
   }
 
-  const removedLocaleResponse = await fetch(`http://localhost:${PORT}/zh-cn/`);
-  if (removedLocaleResponse.status !== 404) {
-    throw new Error(`Expected /zh-cn/ to return 404, got ${removedLocaleResponse.status}`);
+  const chineseLocaleResponse = await fetch(`http://localhost:${PORT}/zh-cn/`);
+  if (!chineseLocaleResponse.ok) {
+    throw new Error(`Expected /zh-cn/ to load, got ${chineseLocaleResponse.status}`);
   }
 
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
@@ -57,15 +59,30 @@ const server = spawn('npm', ['run', 'preview', '--', '--port', PORT], {
   const ok =
     result.pathCount > 0
     && result.documentLang === 'en'
-    && !result.hasLanguageSwitch
+    && result.hasLanguageSwitch
     && errors.length === 0;
-  console.log(JSON.stringify({ ok, ...result, consoleErrors: errors }, null, 2));
+
+  await page.goto(`http://localhost:${PORT}/zh-cn/`, { waitUntil: 'domcontentloaded' });
+  const chineseResult = await page.evaluate(() => ({
+    documentLang: document.documentElement.lang,
+    title: document.title,
+    heading: document.querySelector('h1')?.textContent?.trim() ?? null,
+    languageSwitch: document.querySelector('.lang-switch')?.textContent?.trim() ?? null,
+    canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href') ?? null,
+  }));
+  const chineseOk =
+    chineseResult.documentLang === 'zh-CN'
+    && chineseResult.heading?.includes('免费 SVG 转换器')
+    && chineseResult.languageSwitch === 'English'
+    && chineseResult.canonical?.endsWith('/zh-cn/');
+
+  console.log(JSON.stringify({ ok: ok && chineseOk, english: result, chinese: chineseResult, consoleErrors: errors }, null, 2));
 
   await page.screenshot({ path: 'e2e-screenshot.png', fullPage: false });
 
   await browser.close();
   server.kill();
-  process.exit(ok ? 0 : 1);
+  process.exit(ok && chineseOk ? 0 : 1);
 })().catch((e) => {
   console.error('TEST FAILED:', e);
   server.kill();

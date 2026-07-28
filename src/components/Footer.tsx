@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { t } from '../i18n';
+import { homePath, t } from '../i18n';
 
 export function Footer() {
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -36,9 +36,9 @@ export function Footer() {
             </div>
           </div>
           <nav className="footer-links">
-            <a href="/">Image to SVG</a>
-            <a href="/svg-to-jpg/">SVG to JPG</a>
-            <a href="/svg-to-png/">SVG to PNG</a>
+            <a href={homePath()}>{t('footer.imageToSvg')}</a>
+            <a href="/svg-to-jpg/">{t('footer.svgToJpg')}</a>
+            <a href="/svg-to-png/">{t('footer.svgToPng')}</a>
             <button ref={privacyButtonRef} type="button" onClick={() => setPrivacyOpen(true)}>
               {t('footer.privacy')}
             </button>

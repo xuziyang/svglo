@@ -1,8 +1,8 @@
-import { articleContent } from '../i18n/article';
+import { activeArticleContent } from '../i18n';
 
 /** Long-form SEO article shown under the hero/dropzone on the landing view. */
 export function Article() {
-  const a = articleContent;
+  const a = activeArticleContent();
 
   return (
     <article className="article">

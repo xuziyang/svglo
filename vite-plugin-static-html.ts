@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Plugin } from 'vite';
-import { articleContent, en } from './src/i18n';
+import { articleContent, en, zhCN, zhCNArticleContent } from './src/i18n';
 import { svgToJpgArticle } from './src/i18n/svgToJpgArticle';
 import { svgToPngArticle } from './src/i18n/svgToPngArticle';
 
@@ -18,6 +18,7 @@ const SVG_TO_PNG_PATH = '/svg-to-png/';
 const SVG_TO_PNG_TITLE = 'SVG to PNG Converter – Convert SVG to PNG Online | SVGlo';
 const SVG_TO_PNG_DESCRIPTION =
   'Convert SVG to PNG online for free with SVGlo. Preserve transparency, set exact dimensions, preview the result, and download a lossless PNG without uploads.';
+const ZH_CN_PATH = '/zh-cn/';
 
 function siteOrigin(): string {
   const raw = process.env.SITE_URL ?? process.env.VITE_SITE_URL;
@@ -295,11 +296,15 @@ export function buildJsonLd(origin = siteOrigin()): string {
 
 export function buildHeadTags(origin = siteOrigin()): string {
   const canonical = canonicalUrl(origin);
+  const zhCanonical = `${origin}${ZH_CN_PATH}`;
   const image = `${origin}${OG_IMAGE_PATH}`;
 
   return [
     `<meta name="description" content="${escapeMarkup(en.meta.description)}" />`,
     `<link rel="canonical" href="${escapeMarkup(canonical)}" />`,
+    `<link rel="alternate" hreflang="en" href="${escapeMarkup(canonical)}" />`,
+    `<link rel="alternate" hreflang="zh-CN" href="${escapeMarkup(zhCanonical)}" />`,
+    `<link rel="alternate" hreflang="x-default" href="${escapeMarkup(canonical)}" />`,
     `<meta property="og:type" content="website" />`,
     `<meta property="og:site_name" content="SVGlo" />`,
     `<meta property="og:title" content="${escapeMarkup(en.meta.title)}" />`,
@@ -315,6 +320,61 @@ export function buildHeadTags(origin = siteOrigin()): string {
     `<meta name="twitter:description" content="${escapeMarkup(en.meta.description)}" />`,
     `<meta name="twitter:image" content="${escapeMarkup(image)}" />`,
     buildJsonLd(origin),
+  ].join('\n    ');
+}
+
+function buildZhCNHeadTags(origin = siteOrigin()): string {
+  const canonical = `${origin}${ZH_CN_PATH}`;
+  const englishCanonical = canonicalUrl(origin);
+  const image = `${origin}${OG_IMAGE_PATH}`;
+  const graph = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        name: 'SVGlo 在线 SVG 转换器',
+        url: canonical,
+        applicationCategory: 'DesignApplication',
+        operatingSystem: 'Any',
+        browserRequirements: '需要 JavaScript 和 WebAssembly',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'CNY' },
+        description: zhCN.meta.description,
+        image,
+        inLanguage: 'zh-CN',
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: zhCNArticleContent.faq.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      },
+    ],
+  };
+  const jsonLd = JSON.stringify(graph).replace(/</g, '\\u003c');
+
+  return [
+    `<meta name="description" content="${escapeMarkup(zhCN.meta.description)}" />`,
+    `<link rel="canonical" href="${escapeMarkup(canonical)}" />`,
+    `<link rel="alternate" hreflang="en" href="${escapeMarkup(englishCanonical)}" />`,
+    `<link rel="alternate" hreflang="zh-CN" href="${escapeMarkup(canonical)}" />`,
+    `<link rel="alternate" hreflang="x-default" href="${escapeMarkup(englishCanonical)}" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="SVGlo" />`,
+    `<meta property="og:title" content="${escapeMarkup(zhCN.meta.title)}" />`,
+    `<meta property="og:description" content="${escapeMarkup(zhCN.meta.description)}" />`,
+    `<meta property="og:url" content="${escapeMarkup(canonical)}" />`,
+    `<meta property="og:image" content="${escapeMarkup(image)}" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta property="og:image:alt" content="SVGlo 免费在线 SVG 转换器" />`,
+    `<meta property="og:locale" content="zh_CN" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${escapeMarkup(zhCN.meta.title)}" />`,
+    `<meta name="twitter:description" content="${escapeMarkup(zhCN.meta.description)}" />`,
+    `<meta name="twitter:image" content="${escapeMarkup(image)}" />`,
+    `<script type="application/ld+json">${jsonLd}</script>`,
   ].join('\n    ');
 }
 
@@ -381,6 +441,88 @@ ${faq}
     </div>`;
 }
 
+function buildZhCNSeoShell(): string {
+  const steps = zhCNArticleContent.steps
+    .map(
+      (step) =>
+        `          <li>\n            <h3>${escapeMarkup(step.title)}</h3>\n            <p>${escapeMarkup(step.body)}</p>\n          </li>`,
+    )
+    .join('\n');
+  const sections = zhCNArticleContent.sections
+    .map(
+      (section) =>
+        `        <section class="article-copy-section" aria-labelledby="article-${section.id}">\n          <h3 id="article-${section.id}">${escapeMarkup(section.title)}</h3>\n          <div class="article-copy-body">\n${section.paragraphs
+          .map((paragraph) => `            <p>${escapeMarkup(paragraph)}</p>`)
+          .join('\n')}\n          </div>\n        </section>`,
+    )
+    .join('\n');
+  const faq = zhCNArticleContent.faq
+    .map(
+      (item) =>
+        `        <details>\n          <summary><h3>${escapeMarkup(item.q)}</h3></summary>\n          <p>${escapeMarkup(item.a)}</p>\n        </details>`,
+    )
+    .join('\n');
+
+  return `<div class="seo-shell">
+      <header class="seo-shell-header">
+        <strong>SVGlo</strong>
+        <span> — ${escapeMarkup(zhCN.header.tagline)}</span>
+      </header>
+      <nav class="seo-shell-tools" aria-label="SVGlo 图片转换工具">
+        <a href="/zh-cn/">图片转 SVG</a>
+        <a href="/svg-to-jpg/">SVG 转 JPG</a>
+        <a href="/svg-to-png/">SVG 转 PNG</a>
+        <a href="/" lang="en">English</a>
+      </nav>
+      <main class="seo-shell-main">
+        <h1>${escapeMarkup(zhCN.hero.titleBefore)} <span>${escapeMarkup(zhCN.hero.titleAccent)}</span></h1>
+        <p>${escapeMarkup(zhCN.hero.lead)}</p>
+        <ul>
+          <li>${escapeMarkup(zhCN.hero.featLocal)}</li>
+          <li>${escapeMarkup(zhCN.hero.featModes)}</li>
+          <li>${escapeMarkup(zhCN.hero.featParams)}</li>
+          <li>${escapeMarkup(zhCN.hero.featExport)}</li>
+        </ul>
+        <p>${escapeMarkup(zhCN.dropzone.hint)}</p>
+        <article class="seo-shell-article">
+          <p class="article-intro">${escapeMarkup(zhCNArticleContent.intro)}</p>
+          <section aria-labelledby="article-steps-title">
+            <h2 id="article-steps-title">${escapeMarkup(zhCNArticleContent.stepsTitle)}</h2>
+            <ol>
+${steps}
+            </ol>
+          </section>
+          <div class="article-heading">
+            <h2>${escapeMarkup(zhCNArticleContent.featuresTitle)}</h2>
+            <p class="article-lead">${escapeMarkup(zhCNArticleContent.featuresLead)}</p>
+          </div>
+${sections}
+          <section aria-labelledby="article-faq-title">
+            <h2 id="article-faq-title">${escapeMarkup(zhCNArticleContent.faqTitle)}</h2>
+${faq}
+          </section>
+        </article>
+      </main>
+    </div>`;
+}
+
+function buildZhCNHtml(homeHtml: string, origin = siteOrigin()): string {
+  let output = homeHtml.replace(
+    /<!-- seo-static-head -->[\s\S]*?<!-- \/seo-static-head -->/i,
+    `<!-- seo-static-head -->\n    ${buildZhCNHeadTags(origin)}\n    <!-- /seo-static-head -->`,
+  );
+  output = output.replace(/<html\b([^>]*)>/i, (_match, attrs: string) => {
+    const cleaned = attrs.replace(/\s*lang="[^"]*"/i, '');
+    return `<html lang="zh-CN"${cleaned}>`;
+  });
+  output = output.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeMarkup(zhCN.meta.title)}</title>`);
+  output = output.replace(
+    /<!--seo-shell-->[\s\S]*?<!--\/seo-shell-->/,
+    `<!--seo-shell-->${buildZhCNSeoShell()}<!--/seo-shell-->`,
+  );
+  return output;
+}
+
 function applyStaticHtml(html: string, origin = siteOrigin()): string {
   let output = html;
   output = output.replace(/\s*<!-- seo-static-head -->[\s\S]*?<!-- \/seo-static-head -->/gi, '');
@@ -415,6 +557,12 @@ function buildSitemap(origin: string, lastmod = new Date().toISOString().slice(0
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${escapeMarkup(`${origin}${ZH_CN_PATH}`)}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>${escapeMarkup(`${origin}${SVG_TO_JPG_PATH}`)}</loc>
@@ -513,6 +661,7 @@ function buildNotFoundHtml(origin: string): string {
 
 function isKnownAppPath(pathname: string): boolean {
   if (pathname === '/' || pathname === '/index.html') return true;
+  if (pathname === '/zh-cn' || pathname === '/zh-cn/' || pathname === '/zh-cn/index.html') return true;
   if (pathname === '/svg-to-jpg' || pathname === '/svg-to-jpg/' || pathname === '/svg-to-jpg/index.html') return true;
   if (pathname === '/svg-to-png' || pathname === '/svg-to-png/' || pathname === '/svg-to-png/index.html') return true;
   if (pathname === '/404' || pathname === '/404.html') return true;
@@ -584,14 +733,17 @@ export function staticHtmlPlugin(): Plugin {
       if (fs.existsSync(homeHtmlPath)) {
         const svgToJpgDir = path.join(outDir, 'svg-to-jpg');
         const svgToPngDir = path.join(outDir, 'svg-to-png');
+        const zhCNDir = path.join(outDir, 'zh-cn');
         fs.mkdirSync(svgToJpgDir, { recursive: true });
         fs.mkdirSync(svgToPngDir, { recursive: true });
+        fs.mkdirSync(zhCNDir, { recursive: true });
         const homeHtml = fs.readFileSync(homeHtmlPath, 'utf8');
         fs.writeFileSync(path.join(svgToJpgDir, 'index.html'), buildSvgToJpgHtml(homeHtml, origin), 'utf8');
         fs.writeFileSync(path.join(svgToPngDir, 'index.html'), buildSvgToPngHtml(homeHtml, origin), 'utf8');
+        fs.writeFileSync(path.join(zhCNDir, 'index.html'), buildZhCNHtml(homeHtml, origin), 'utf8');
       }
 
-      console.log(`\n  static HTML: / + ${SVG_TO_JPG_PATH} + ${SVG_TO_PNG_PATH} + 404.html   site: ${origin}\n`);
+      console.log(`\n  static HTML: / + ${ZH_CN_PATH} + ${SVG_TO_JPG_PATH} + ${SVG_TO_PNG_PATH} + 404.html   site: ${origin}\n`);
     },
 
     configurePreviewServer(server) {

@@ -9,6 +9,10 @@ export const en: Messages = {
   header: {
     tagline: 'Image to SVG',
     newImage: 'New image',
+    imageToSvg: 'Image to SVG',
+    svgToJpg: 'SVG to JPG',
+    svgToPng: 'SVG to PNG',
+    language: '中文',
   },
   hero: {
     titleBefore: 'Free SVG Converter',
@@ -111,6 +115,9 @@ export const en: Messages = {
     privacy: 'Privacy',
     copyright: '© 2026 SVGlo. All rights reserved.',
     close: 'Close',
+    imageToSvg: 'Image to SVG',
+    svgToJpg: 'SVG to JPG',
+    svgToPng: 'SVG to PNG',
   },
   notFound: {
     metaTitle: 'Page not found | SVGlo',

@@ -1,4 +1,4 @@
-import { t } from '../i18n';
+import { homePath, locale, t } from '../i18n';
 
 interface HeaderProps {
   hasImage: boolean;
@@ -7,10 +7,13 @@ interface HeaderProps {
 }
 
 export function Header({ hasImage, onReset, currentTool = 'image-to-svg' }: HeaderProps) {
+  const localizedHome = homePath();
+  const languageHref = locale === 'zh-CN' ? '/' : '/zh-cn/';
+
   return (
     <header className="header">
       <div className="header-inner">
-        <a className="brand" href="/">
+        <a className="brand" href={localizedHome}>
           <span className="brand-mark" aria-hidden>
             <svg viewBox="0 0 32 32" width="30" height="30">
               <defs>
@@ -47,28 +50,31 @@ export function Header({ hasImage, onReset, currentTool = 'image-to-svg' }: Head
             <strong>SVGlo</strong>
             <small>
               {currentTool === 'svg-to-jpg'
-                ? 'SVG to JPG'
+                ? t('header.svgToJpg')
                 : currentTool === 'svg-to-png'
-                  ? 'SVG to PNG'
+                  ? t('header.svgToPng')
                   : t('header.tagline')}
             </small>
           </span>
         </a>
         <nav className="header-nav">
-          <a className={`link-btn tool-link ${currentTool === 'image-to-svg' ? 'is-active' : ''}`} href="/">
-            Image to SVG
+          <a className={`link-btn tool-link ${currentTool === 'image-to-svg' ? 'is-active' : ''}`} href={localizedHome}>
+            {t('header.imageToSvg')}
           </a>
           <a className={`link-btn tool-link ${currentTool === 'svg-to-jpg' ? 'is-active' : ''}`} href="/svg-to-jpg/">
-            SVG to JPG
+            {t('header.svgToJpg')}
           </a>
           <a className={`link-btn tool-link ${currentTool === 'svg-to-png' ? 'is-active' : ''}`} href="/svg-to-png/">
-            SVG to PNG
+            {t('header.svgToPng')}
           </a>
           {hasImage && (
             <button className="link-btn" onClick={onReset}>
               {currentTool === 'image-to-svg' ? t('header.newImage') : 'New SVG'}
             </button>
           )}
+          <a className="link-btn lang-switch" href={languageHref} lang={locale === 'zh-CN' ? 'en' : 'zh-CN'}>
+            {t('header.language')}
+          </a>
         </nav>
       </div>
     </header>

@@ -4,7 +4,7 @@ Repository guidance for coding agents working on SVGlo.
 
 ## Project overview
 
-SVGlo is an English-only image-to-SVG converter built with React 18, Vite 5,
+SVGlo is a multilingual image-to-SVG converter built with React 18, Vite 5,
 TypeScript, and visioncortex VTracer.
 
 - The production output is a static site in `dist/`.
@@ -37,14 +37,14 @@ node e2e-test.mjs
 
 The smoke test starts a preview server on port 4174, opens the system Google
 Chrome through Playwright, converts the built-in example image, verifies the
-English-only UI and removed `/zh-cn/` route, and asserts that SVG paths were
+English and Simplified Chinese routes, and asserts that SVG paths were
 generated. It requires Google Chrome to be installed.
 
 ## Architecture
 
 ```text
 Static host
-  └─ English HTML + JS + CSS + WASM
+  └─ English and Simplified Chinese HTML + JS + CSS + WASM
        └─ browser
             ├─ select, drop, or paste a local raster image
             ├─ decode it into a hidden canvas
@@ -93,28 +93,32 @@ Do not pass all UI values through unchanged:
 Presets in `src/lib/presets.ts` contain IDs and converter configs. Their names
 and descriptions come from the typed English catalog under `src/i18n/`.
 
-## English content and SEO
+## Localized content and SEO
 
 | File | Responsibility |
 |---|---|
 | `src/i18n/en.ts` | Typed English UI copy |
+| `src/i18n/zhCN.ts` | Typed Simplified Chinese UI copy |
 | `src/i18n/types.ts` | Copy schema and dot-path message keys |
-| `src/i18n/index.ts` | English `t()` lookup and content exports |
+| `src/i18n/index.ts` | Path-based locale selection, typed `t()` lookup, and content exports |
 | `src/i18n/article.ts` | English article and FAQ content |
+| `src/i18n/article.zhCN.ts` | Simplified Chinese article and FAQ content |
 | `vite-plugin-static-html.ts` | Metadata, JSON-LD, SEO shell, sitemap, robots, and static 404 |
 
-The `src/i18n/` directory name is retained for organization, but the product
-does not have runtime locale state or a language switch.
+English remains the default at `/`. Simplified Chinese is served at `/zh-cn/`.
+The active locale is derived from the pathname, and the header contains a
+language switch.
 
-The Vite plugin injects real English metadata and a text content shell into
-`#root`. Crawlers and browsers without JavaScript therefore receive meaningful
-HTML; React replaces that shell when the application mounts.
+The Vite plugin injects localized metadata and a matching text content shell
+into each language entry. Crawlers and browsers without JavaScript therefore
+receive meaningful HTML; React replaces that shell when the application mounts.
 
 Expected build output:
 
 ```text
 dist/
   index.html
+  zh-cn/index.html
   404.html
   robots.txt
   sitemap.xml
@@ -122,7 +126,7 @@ dist/
 ```
 
 Unknown paths must remain real 404 responses. Do not add a catch-all SPA
-rewrite. In particular, `/zh-cn/` is no longer a valid route.
+rewrite.
 
 The canonical origin defaults to `https://svglo.com`. Override it for a
 different production origin when building:
