@@ -11,10 +11,12 @@ export interface Messages {
   header: {
     tagline: string;
     newImage: string;
+    newSvg: string;
     imageToSvg: string;
     svgToJpg: string;
     svgToPng: string;
     language: string;
+    languageMenu: string;
   };
   hero: {
     titleBefore: string;

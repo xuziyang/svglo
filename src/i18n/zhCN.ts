@@ -9,10 +9,12 @@ export const zhCN: Messages = {
   header: {
     tagline: '图片转 SVG',
     newImage: '更换图片',
+    newSvg: '更换 SVG',
     imageToSvg: '图片转 SVG',
     svgToJpg: 'SVG 转 JPG',
     svgToPng: 'SVG 转 PNG',
-    language: 'English',
+    language: '简体中文',
+    languageMenu: '选择语言',
   },
   hero: {
     titleBefore: '免费 SVG 转换器',

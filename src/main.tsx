@@ -11,9 +11,9 @@ document.documentElement.lang = locale;
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {pathname === '/svg-to-jpg'
+    {pathname === '/svg-to-jpg' || pathname === '/zh-cn/svg-to-jpg'
       ? <SvgToJpgPage />
-      : pathname === '/svg-to-png'
+      : pathname === '/svg-to-png' || pathname === '/zh-cn/svg-to-png'
         ? <SvgToPngPage />
         : <App />}
   </React.StrictMode>,

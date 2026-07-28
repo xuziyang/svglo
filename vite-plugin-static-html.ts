@@ -4,6 +4,9 @@ import type { Plugin } from 'vite';
 import { articleContent, en, zhCN, zhCNArticleContent } from './src/i18n';
 import { svgToJpgArticle } from './src/i18n/svgToJpgArticle';
 import { svgToPngArticle } from './src/i18n/svgToPngArticle';
+import { zhCNSvgToJpgArticle } from './src/i18n/svgToJpgArticle.zhCN';
+import { zhCNSvgToPngArticle } from './src/i18n/svgToPngArticle.zhCN';
+import { zhCNToolPages } from './src/i18n/toolPages';
 
 export const DEFAULT_SITE_URL = 'https://svglo.com';
 
@@ -11,10 +14,12 @@ const HAS_EXTENSION_RE = /\.[a-zA-Z0-9]+$/;
 const OG_IMAGE_PATH = '/og-image.png';
 const OG_IMAGE_ALT = 'SVGlo — free online SVG converter for PNG, JPG, and other images';
 const SVG_TO_JPG_PATH = '/svg-to-jpg/';
+const ZH_CN_SVG_TO_JPG_PATH = '/zh-cn/svg-to-jpg/';
 const SVG_TO_JPG_TITLE = 'SVG to JPG Converter – Convert SVG to JPEG | SVGlo';
 const SVG_TO_JPG_DESCRIPTION =
   "Use SVGlo's free SVG to JPG converter to set image size, quality, and background color. Convert SVG to JPEG privately in your browser with no uploads.";
 const SVG_TO_PNG_PATH = '/svg-to-png/';
+const ZH_CN_SVG_TO_PNG_PATH = '/zh-cn/svg-to-png/';
 const SVG_TO_PNG_TITLE = 'SVG to PNG Converter – Convert SVG to PNG Online | SVGlo';
 const SVG_TO_PNG_DESCRIPTION =
   'Convert SVG to PNG online for free with SVGlo. Preserve transparency, set exact dimensions, preview the result, and download a lossless PNG without uploads.';
@@ -77,6 +82,9 @@ function buildSvgToJpgHeadTags(origin = siteOrigin()): string {
   return [
     `<meta name="description" content="${escapeMarkup(SVG_TO_JPG_DESCRIPTION)}" />`,
     `<link rel="canonical" href="${escapeMarkup(canonical)}" />`,
+    `<link rel="alternate" hreflang="en" href="${escapeMarkup(canonical)}" />`,
+    `<link rel="alternate" hreflang="zh-CN" href="${escapeMarkup(`${origin}${ZH_CN_SVG_TO_JPG_PATH}`)}" />`,
+    `<link rel="alternate" hreflang="x-default" href="${escapeMarkup(canonical)}" />`,
     `<meta property="og:type" content="website" />`,
     `<meta property="og:site_name" content="SVGlo" />`,
     `<meta property="og:title" content="${escapeMarkup(SVG_TO_JPG_TITLE)}" />`,
@@ -182,6 +190,9 @@ function buildSvgToPngHeadTags(origin = siteOrigin()): string {
   return [
     `<meta name="description" content="${escapeMarkup(SVG_TO_PNG_DESCRIPTION)}" />`,
     `<link rel="canonical" href="${escapeMarkup(canonical)}" />`,
+    `<link rel="alternate" hreflang="en" href="${escapeMarkup(canonical)}" />`,
+    `<link rel="alternate" hreflang="zh-CN" href="${escapeMarkup(`${origin}${ZH_CN_SVG_TO_PNG_PATH}`)}" />`,
+    `<link rel="alternate" hreflang="x-default" href="${escapeMarkup(canonical)}" />`,
     `<meta property="og:type" content="website" />`,
     `<meta property="og:site_name" content="SVGlo" />`,
     `<meta property="og:title" content="${escapeMarkup(SVG_TO_PNG_TITLE)}" />`,
@@ -252,6 +263,130 @@ function buildSvgToPngHtml(homeHtml: string, origin = siteOrigin()): string {
   output = output.replace(
     /<!--seo-shell-->[\s\S]*?<!--\/seo-shell-->/,
     `<!--seo-shell-->${buildSvgToPngShell()}<!--/seo-shell-->`,
+  );
+  return output;
+}
+
+function buildZhCNToolHeadTags(tool: 'jpg' | 'png', origin = siteOrigin()): string {
+  const copy = zhCNToolPages[tool];
+  const article = tool === 'jpg' ? zhCNSvgToJpgArticle : zhCNSvgToPngArticle;
+  const chinesePath = tool === 'jpg' ? ZH_CN_SVG_TO_JPG_PATH : ZH_CN_SVG_TO_PNG_PATH;
+  const englishPath = tool === 'jpg' ? SVG_TO_JPG_PATH : SVG_TO_PNG_PATH;
+  const canonical = `${origin}${chinesePath}`;
+  const englishCanonical = `${origin}${englishPath}`;
+  const image = `${origin}${OG_IMAGE_PATH}`;
+  const graph = {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        name: `${copy.heading} - SVGlo`,
+        url: canonical,
+        applicationCategory: 'DesignApplication',
+        operatingSystem: 'Any',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'CNY' },
+        description: copy.metaDescription,
+        image,
+        inLanguage: 'zh-CN',
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: article.faq.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      },
+    ],
+  };
+  const jsonLd = JSON.stringify(graph).replace(/</g, '\\u003c');
+  return [
+    `<meta name="description" content="${escapeMarkup(copy.metaDescription)}" />`,
+    `<link rel="canonical" href="${escapeMarkup(canonical)}" />`,
+    `<link rel="alternate" hreflang="en" href="${escapeMarkup(englishCanonical)}" />`,
+    `<link rel="alternate" hreflang="zh-CN" href="${escapeMarkup(canonical)}" />`,
+    `<link rel="alternate" hreflang="x-default" href="${escapeMarkup(englishCanonical)}" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="SVGlo" />`,
+    `<meta property="og:title" content="${escapeMarkup(copy.metaTitle)}" />`,
+    `<meta property="og:description" content="${escapeMarkup(copy.metaDescription)}" />`,
+    `<meta property="og:url" content="${escapeMarkup(canonical)}" />`,
+    `<meta property="og:image" content="${escapeMarkup(image)}" />`,
+    `<meta property="og:locale" content="zh_CN" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${escapeMarkup(copy.metaTitle)}" />`,
+    `<meta name="twitter:description" content="${escapeMarkup(copy.metaDescription)}" />`,
+    `<meta name="twitter:image" content="${escapeMarkup(image)}" />`,
+    `<script type="application/ld+json">${jsonLd}</script>`,
+  ].join('\n    ');
+}
+
+function buildZhCNToolShell(tool: 'jpg' | 'png'): string {
+  const copy = zhCNToolPages[tool];
+  const article = tool === 'jpg' ? zhCNSvgToJpgArticle : zhCNSvgToPngArticle;
+  const format = tool.toUpperCase();
+  const sections = article.sections
+    .map(
+      (section) =>
+        `        <section aria-labelledby="svg-${tool}-${section.id}">
+          <h2 id="svg-${tool}-${section.id}">${escapeMarkup(section.title)}</h2>
+${section.paragraphs.map((paragraph) => `          <p>${escapeMarkup(paragraph)}</p>`).join('\n')}
+        </section>`,
+    )
+    .join('\n');
+  const faq = article.faq
+    .map(
+      (item) =>
+        `        <details>
+          <summary><h3>${escapeMarkup(item.q)}</h3></summary>
+          <p>${escapeMarkup(item.a)}</p>
+        </details>`,
+    )
+    .join('\n');
+
+  return `<div class="seo-shell">
+      <header class="seo-shell-header">
+        <strong>SVGlo</strong>
+        <span> — SVG 转 ${format}</span>
+      </header>
+      <nav class="seo-shell-tools" aria-label="SVGlo 图片转换工具">
+        <a href="/zh-cn/">图片转 SVG</a>
+        <a href="/zh-cn/svg-to-jpg/">SVG 转 JPG</a>
+        <a href="/zh-cn/svg-to-png/">SVG 转 PNG</a>
+        <a href="${tool === 'jpg' ? SVG_TO_JPG_PATH : SVG_TO_PNG_PATH}" lang="en">English</a>
+      </nav>
+      <main class="seo-shell-main">
+        <h1>${escapeMarkup(copy.heading)} <span>${escapeMarkup(copy.headingAccent)}</span></h1>
+        <p>${escapeMarkup(copy.lead)}</p>
+        <ul>
+${copy.steps.map((step) => `          <li>${escapeMarkup(step.title)}：${escapeMarkup(step.body)}</li>`).join('\n')}
+        </ul>
+        <article class="seo-shell-article">
+          <p class="article-intro">${escapeMarkup(article.intro)}</p>
+${sections}
+          <section aria-labelledby="svg-${tool}-faq-title">
+            <h2 id="svg-${tool}-faq-title">${escapeMarkup(copy.faqTitle)}</h2>
+${faq}
+          </section>
+        </article>
+      </main>
+    </div>`;
+}
+
+function buildZhCNToolHtml(homeHtml: string, tool: 'jpg' | 'png', origin = siteOrigin()): string {
+  const copy = zhCNToolPages[tool];
+  let output = homeHtml.replace(
+    /<!-- seo-static-head -->[\s\S]*?<!-- \/seo-static-head -->/i,
+    `<!-- seo-static-head -->\n    ${buildZhCNToolHeadTags(tool, origin)}\n    <!-- /seo-static-head -->`,
+  );
+  output = output.replace(/<html\b([^>]*)>/i, (_match, attrs: string) => {
+    const cleaned = attrs.replace(/\s*lang="[^"]*"/i, '');
+    return `<html lang="zh-CN"${cleaned}>`;
+  });
+  output = output.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeMarkup(copy.metaTitle)}</title>`);
+  output = output.replace(
+    /<!--seo-shell-->[\s\S]*?<!--\/seo-shell-->/,
+    `<!--seo-shell-->${buildZhCNToolShell(tool)}<!--/seo-shell-->`,
   );
   return output;
 }
@@ -571,10 +706,22 @@ function buildSitemap(origin: string, lastmod = new Date().toISOString().slice(0
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>${escapeMarkup(`${origin}${ZH_CN_SVG_TO_JPG_PATH}`)}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>${escapeMarkup(`${origin}${SVG_TO_PNG_PATH}`)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>${escapeMarkup(`${origin}${ZH_CN_SVG_TO_PNG_PATH}`)}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>
 `;
@@ -662,6 +809,8 @@ function buildNotFoundHtml(origin: string): string {
 function isKnownAppPath(pathname: string): boolean {
   if (pathname === '/' || pathname === '/index.html') return true;
   if (pathname === '/zh-cn' || pathname === '/zh-cn/' || pathname === '/zh-cn/index.html') return true;
+  if (pathname === '/zh-cn/svg-to-jpg' || pathname === '/zh-cn/svg-to-jpg/' || pathname === '/zh-cn/svg-to-jpg/index.html') return true;
+  if (pathname === '/zh-cn/svg-to-png' || pathname === '/zh-cn/svg-to-png/' || pathname === '/zh-cn/svg-to-png/index.html') return true;
   if (pathname === '/svg-to-jpg' || pathname === '/svg-to-jpg/' || pathname === '/svg-to-jpg/index.html') return true;
   if (pathname === '/svg-to-png' || pathname === '/svg-to-png/' || pathname === '/svg-to-png/index.html') return true;
   if (pathname === '/404' || pathname === '/404.html') return true;
@@ -734,16 +883,22 @@ export function staticHtmlPlugin(): Plugin {
         const svgToJpgDir = path.join(outDir, 'svg-to-jpg');
         const svgToPngDir = path.join(outDir, 'svg-to-png');
         const zhCNDir = path.join(outDir, 'zh-cn');
+        const zhCNSvgToJpgDir = path.join(zhCNDir, 'svg-to-jpg');
+        const zhCNSvgToPngDir = path.join(zhCNDir, 'svg-to-png');
         fs.mkdirSync(svgToJpgDir, { recursive: true });
         fs.mkdirSync(svgToPngDir, { recursive: true });
         fs.mkdirSync(zhCNDir, { recursive: true });
+        fs.mkdirSync(zhCNSvgToJpgDir, { recursive: true });
+        fs.mkdirSync(zhCNSvgToPngDir, { recursive: true });
         const homeHtml = fs.readFileSync(homeHtmlPath, 'utf8');
         fs.writeFileSync(path.join(svgToJpgDir, 'index.html'), buildSvgToJpgHtml(homeHtml, origin), 'utf8');
         fs.writeFileSync(path.join(svgToPngDir, 'index.html'), buildSvgToPngHtml(homeHtml, origin), 'utf8');
         fs.writeFileSync(path.join(zhCNDir, 'index.html'), buildZhCNHtml(homeHtml, origin), 'utf8');
+        fs.writeFileSync(path.join(zhCNSvgToJpgDir, 'index.html'), buildZhCNToolHtml(homeHtml, 'jpg', origin), 'utf8');
+        fs.writeFileSync(path.join(zhCNSvgToPngDir, 'index.html'), buildZhCNToolHtml(homeHtml, 'png', origin), 'utf8');
       }
 
-      console.log(`\n  static HTML: / + ${ZH_CN_PATH} + ${SVG_TO_JPG_PATH} + ${SVG_TO_PNG_PATH} + 404.html   site: ${origin}\n`);
+      console.log(`\n  static HTML: / + ${ZH_CN_PATH} + ${SVG_TO_JPG_PATH} + ${ZH_CN_SVG_TO_JPG_PATH} + ${SVG_TO_PNG_PATH} + ${ZH_CN_SVG_TO_PNG_PATH} + 404.html   site: ${origin}\n`);
     },
 
     configurePreviewServer(server) {

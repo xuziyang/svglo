@@ -3,6 +3,11 @@ import { zhCN } from './zhCN';
 import type { MessageKey } from './types';
 import { articleContent } from './article';
 import { zhCNArticleContent } from './article.zhCN';
+import { enToolPages, zhCNToolPages } from './toolPages';
+import { svgToJpgArticle } from './svgToJpgArticle';
+import { svgToPngArticle } from './svgToPngArticle';
+import { zhCNSvgToJpgArticle } from './svgToJpgArticle.zhCN';
+import { zhCNSvgToPngArticle } from './svgToPngArticle.zhCN';
 
 export type { MessageKey, Messages } from './types';
 export { en } from './en';
@@ -38,4 +43,21 @@ export function activeArticleContent() {
 
 export function homePath(): string {
   return locale === 'zh-CN' ? '/zh-cn/' : '/';
+}
+
+export function localizedPath(path: '/' | '/svg-to-jpg/' | '/svg-to-png/', targetLocale = locale): string {
+  if (targetLocale === 'en') return path;
+  return path === '/' ? '/zh-cn/' : `/zh-cn${path}`;
+}
+
+export function activeToolPageCopy() {
+  return locale === 'zh-CN' ? zhCNToolPages : enToolPages;
+}
+
+export function activeSvgToJpgArticle() {
+  return locale === 'zh-CN' ? zhCNSvgToJpgArticle : svgToJpgArticle;
+}
+
+export function activeSvgToPngArticle() {
+  return locale === 'zh-CN' ? zhCNSvgToPngArticle : svgToPngArticle;
 }

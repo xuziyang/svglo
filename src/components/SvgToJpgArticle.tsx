@@ -1,11 +1,13 @@
-import { svgToJpgArticle } from '../i18n/svgToJpgArticle';
+import { activeSvgToJpgArticle, activeToolPageCopy } from '../i18n';
 
 export function SvgToJpgArticle() {
+  const article = activeSvgToJpgArticle();
+  const copy = activeToolPageCopy().jpg;
   return (
     <article className="svg-jpg-article">
-      <p className="svg-jpg-article-intro">{svgToJpgArticle.intro}</p>
+      <p className="svg-jpg-article-intro">{article.intro}</p>
 
-      {svgToJpgArticle.sections.map((section) => (
+      {article.sections.map((section) => (
         <section key={section.id} aria-labelledby={`svg-jpg-${section.id}`}>
           <h2 id={`svg-jpg-${section.id}`}>{section.title}</h2>
           <div className="svg-jpg-article-copy">
@@ -15,8 +17,8 @@ export function SvgToJpgArticle() {
       ))}
 
       <section className="svg-jpg-faq" aria-labelledby="svg-jpg-faq-title">
-        <h2 id="svg-jpg-faq-title">SVG to JPG converter FAQ</h2>
-        {svgToJpgArticle.faq.map((item) => (
+        <h2 id="svg-jpg-faq-title">{copy.faqTitle}</h2>
+        {article.faq.map((item) => (
           <details key={item.q}>
             <summary><h3>{item.q}</h3></summary>
             <p>{item.a}</p>

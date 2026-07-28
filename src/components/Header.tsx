@@ -1,4 +1,4 @@
-import { homePath, locale, t } from '../i18n';
+import { homePath, locale, localizedPath, t } from '../i18n';
 
 interface HeaderProps {
   hasImage: boolean;
@@ -8,7 +8,12 @@ interface HeaderProps {
 
 export function Header({ hasImage, onReset, currentTool = 'image-to-svg' }: HeaderProps) {
   const localizedHome = homePath();
-  const languageHref = locale === 'zh-CN' ? '/' : '/zh-cn/';
+  const currentPath =
+    currentTool === 'svg-to-jpg'
+      ? '/svg-to-jpg/'
+      : currentTool === 'svg-to-png'
+        ? '/svg-to-png/'
+        : '/';
 
   return (
     <header className="header">
@@ -61,22 +66,45 @@ export function Header({ hasImage, onReset, currentTool = 'image-to-svg' }: Head
           <a className={`link-btn tool-link ${currentTool === 'image-to-svg' ? 'is-active' : ''}`} href={localizedHome}>
             {t('header.imageToSvg')}
           </a>
-          <a className={`link-btn tool-link ${currentTool === 'svg-to-jpg' ? 'is-active' : ''}`} href="/svg-to-jpg/">
+          <a className={`link-btn tool-link ${currentTool === 'svg-to-jpg' ? 'is-active' : ''}`} href={localizedPath('/svg-to-jpg/')}>
             {t('header.svgToJpg')}
           </a>
-          <a className={`link-btn tool-link ${currentTool === 'svg-to-png' ? 'is-active' : ''}`} href="/svg-to-png/">
+          <a className={`link-btn tool-link ${currentTool === 'svg-to-png' ? 'is-active' : ''}`} href={localizedPath('/svg-to-png/')}>
             {t('header.svgToPng')}
           </a>
           {hasImage && (
             <button className="link-btn" onClick={onReset}>
-              {currentTool === 'image-to-svg' ? t('header.newImage') : 'New SVG'}
+              {currentTool === 'image-to-svg' ? t('header.newImage') : t('header.newSvg')}
             </button>
           )}
-          <a className="link-btn lang-switch" href={languageHref} lang={locale === 'zh-CN' ? 'en' : 'zh-CN'}>
-            {t('header.language')}
-          </a>
+          <details className="language-menu">
+            <summary className="link-btn lang-switch" aria-label={t('header.languageMenu')}>
+              <GlobeIcon />
+              <span>{t('header.language')}</span>
+              <span className="language-chevron" aria-hidden>⌄</span>
+            </summary>
+            <div className="language-menu-popover">
+              <a className={locale === 'en' ? 'is-current' : ''} href={localizedPath(currentPath, 'en')} lang="en">
+                <span>English</span>
+                {locale === 'en' && <span aria-hidden>✓</span>}
+              </a>
+              <a className={locale === 'zh-CN' ? 'is-current' : ''} href={localizedPath(currentPath, 'zh-CN')} lang="zh-CN">
+                <span>简体中文</span>
+                {locale === 'zh-CN' && <span aria-hidden>✓</span>}
+              </a>
+            </div>
+          </details>
         </nav>
       </div>
     </header>
+  );
+}
+
+function GlobeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" aria-hidden>
+      <circle cx="12" cy="12" r="9" strokeWidth="1.7" />
+      <path d="M3.5 12h17M12 3c2.3 2.5 3.5 5.5 3.5 9S14.3 18.5 12 21c-2.3-2.5-3.5-5.5-3.5-9S9.7 5.5 12 3Z" strokeWidth="1.7" />
+    </svg>
   );
 }

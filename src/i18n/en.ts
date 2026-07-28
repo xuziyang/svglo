@@ -9,10 +9,12 @@ export const en: Messages = {
   header: {
     tagline: 'Image to SVG',
     newImage: 'New image',
+    newSvg: 'New SVG',
     imageToSvg: 'Image to SVG',
     svgToJpg: 'SVG to JPG',
     svgToPng: 'SVG to PNG',
-    language: '中文',
+    language: 'English',
+    languageMenu: 'Choose language',
   },
   hero: {
     titleBefore: 'Free SVG Converter',

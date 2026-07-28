@@ -10,6 +10,7 @@ import { Footer } from './Footer';
 import { Header } from './Header';
 import { RelatedTools } from './RelatedTools';
 import { SvgToPngArticle } from './SvgToPngArticle';
+import { activeToolPageCopy, localizedPath, locale } from '../i18n';
 
 type BackgroundMode = 'transparent' | 'white' | 'dark' | 'custom';
 
@@ -35,6 +36,7 @@ function pngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
 }
 
 export function SvgToPngPage() {
+  const copy = activeToolPageCopy().png;
   const [svg, setSvg] = useState<SvgDocument | null>(null);
   const [outputWidth, setOutputWidth] = useState(1600);
   const [backgroundMode, setBackgroundMode] = useState<BackgroundMode>('transparent');
@@ -60,6 +62,7 @@ export function SvgToPngPage() {
       : backgroundMode === 'dark'
         ? '#171b26'
         : customColor;
+  const formatSize = (bytes: number | undefined) => bytes === undefined ? copy.calculating : formatFileSize(bytes);
 
   const loadFile = useCallback(async (file: File | undefined) => {
     if (!file) return;
@@ -69,7 +72,7 @@ export function SvgToPngPage() {
       setOutputWidth(Math.min(MAX_OUTPUT_EDGE, Math.max(1, Math.round(next.width))));
       setError(null);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'This SVG could not be opened.');
+      setError(locale === 'zh-CN' ? copy.openError : reason instanceof Error ? reason.message : copy.openError);
     }
   }, []);
 
@@ -89,14 +92,14 @@ export function SvgToPngPage() {
   }, []);
 
   useEffect(() => {
-    document.title = 'SVG to PNG Converter – Convert SVG to PNG Online | SVGlo';
+    document.title = copy.metaTitle;
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute(
       'content',
-      'Convert SVG to PNG online for free with SVGlo. Preserve transparency, set exact dimensions, preview the result, and download a lossless PNG without uploads.',
+      copy.metaDescription,
     );
     const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     const canonicalOrigin = canonical ? new URL(canonical.href).origin : window.location.origin;
-    const pageUrl = `${canonicalOrigin}/svg-to-png/`;
+    const pageUrl = `${canonicalOrigin}${localizedPath('/svg-to-png/')}`;
     canonical?.setAttribute('href', pageUrl);
     document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute('content', pageUrl);
   }, []);
@@ -121,7 +124,7 @@ export function SvgToPngPage() {
       canvas.height = outputHeight;
       const context = canvas.getContext('2d');
       if (!context) {
-        setError('Canvas is unavailable in this browser.');
+        setError(copy.canvasError);
         return;
       }
       context.clearRect(0, 0, canvas.width, canvas.height);
@@ -138,7 +141,7 @@ export function SvgToPngPage() {
       if (id === renderIdRef.current) {
         setRendering(false);
         setReady(false);
-        setError('This SVG uses features the browser cannot render. Try simplifying the file.');
+        setError(copy.renderError);
       }
       URL.revokeObjectURL(url);
     };
@@ -177,7 +180,7 @@ export function SvgToPngPage() {
       anchor.remove();
       URL.revokeObjectURL(url);
     } catch {
-      setError('The PNG could not be created. Try a smaller output size.');
+      setError(copy.createError);
     }
   }, [ready, svg]);
 
@@ -199,8 +202,8 @@ export function SvgToPngPage() {
         <section className="svg-jpg-hero">
           <div className="svg-jpg-heading">
             <span className="tool-kicker">SVG → PNG</span>
-            <h1>SVG to PNG Converter <span>with transparency kept intact.</span></h1>
-            <p>Convert SVG to PNG online at the exact size you need. Export clean, lossless pixels without uploading your file.</p>
+            <h1>{copy.heading} <span>{copy.headingAccent}</span></h1>
+            <p>{copy.lead}</p>
           </div>
 
           {!svg ? (
@@ -235,13 +238,13 @@ export function SvgToPngPage() {
                 }}
               />
               <div className="svg-jpg-drop-icon"><PngIcon /></div>
-              <h2>Drop your SVG here</h2>
-              <p>or click to choose a file · up to 10 MB</p>
+              <h2>{copy.dropTitle}</h2>
+              <p>{copy.dropHint}</p>
               <button className="example-link" type="button" onClick={(event) => {
                 event.stopPropagation();
                 loadExample();
               }}>
-                Try the transparent sample
+                {copy.sample}
               </button>
               {error && <p className="svg-jpg-error" role="alert">{error}</p>}
             </div>
@@ -251,7 +254,7 @@ export function SvgToPngPage() {
                 <div className="file-chip">
                   <div className="file-type">SVG</div>
                   <div><strong>{svg.name}.svg</strong><span>{Math.round(svg.width)} × {Math.round(svg.height)}</span></div>
-                  <button type="button" onClick={() => inputRef.current?.click()} aria-label="Replace SVG">Replace</button>
+                  <button type="button" onClick={() => inputRef.current?.click()} aria-label={copy.replace}>{copy.replace}</button>
                   <input ref={inputRef} type="file" accept=".svg,image/svg+xml" hidden onChange={(event) => {
                     void loadFile(event.target.files?.[0]);
                     event.currentTarget.value = '';
@@ -259,23 +262,23 @@ export function SvgToPngPage() {
                 </div>
 
                 <div className="export-field">
-                  <label htmlFor="png-width">Output size</label>
+                  <label htmlFor="png-width">{copy.outputSize}</label>
                   <div className="dimension-row">
                     <div><input id="png-width" type="number" min="1" max={MAX_OUTPUT_EDGE} value={outputWidth} onChange={(event) => setOutputWidth(Number(event.target.value))} /><span>W</span></div>
-                    <span className="dimension-link" aria-label="Aspect ratio locked">⌁</span>
-                    <div><input type="number" value={outputHeight || ''} readOnly aria-label="Output height" /><span>H</span></div>
+                    <span className="dimension-link" aria-label={copy.aspectLocked}>⌁</span>
+                    <div><input type="number" value={outputHeight || ''} readOnly aria-label={copy.outputHeight} /><span>H</span></div>
                   </div>
-                  <p>Aspect ratio locked · maximum {MAX_OUTPUT_EDGE}px per side</p>
+                  <p>{copy.sizeHint(MAX_OUTPUT_EDGE)}</p>
                 </div>
 
                 <div className="export-field">
-                  <label id="png-background-label">Background</label>
+                  <label id="png-background-label">{copy.background}</label>
                   <div className="png-background-options" role="group" aria-labelledby="png-background-label">
                     {([
-                      ['transparent', 'Transparent'],
-                      ['white', 'White'],
-                      ['dark', 'Dark'],
-                      ['custom', 'Custom'],
+                      ['transparent', copy.backgrounds.transparent],
+                      ['white', copy.backgrounds.white],
+                      ['dark', copy.backgrounds.dark],
+                      ['custom', copy.backgrounds.custom],
                     ] as const).map(([id, label]) => (
                       <button
                         key={id}
@@ -291,36 +294,36 @@ export function SvgToPngPage() {
                   </div>
                   {backgroundMode === 'custom' && (
                     <div className="png-custom-color">
-                      <input type="color" value={customColor} onChange={(event) => setCustomColor(event.target.value)} aria-label="Custom PNG background" />
+                      <input type="color" value={customColor} onChange={(event) => setCustomColor(event.target.value)} aria-label={copy.customBackground} />
                       <span>{customColor.toUpperCase()}</span>
                     </div>
                   )}
                 </div>
 
                 <div className="png-lossless-note">
-                  <strong>Lossless PNG</strong>
-                  <span>No quality setting needed</span>
+                  <strong>{copy.losslessPng}</strong>
+                  <span>{copy.noQualitySetting}</span>
                 </div>
-                {invalidSize && <p className="svg-jpg-error" role="alert">Keep both dimensions between 1 and {MAX_OUTPUT_EDGE}px.</p>}
+                {invalidSize && <p className="svg-jpg-error" role="alert">{copy.invalidSize(MAX_OUTPUT_EDGE)}</p>}
                 {error && <p className="svg-jpg-error" role="alert">{error}</p>}
                 <button className="download-jpg" type="button" disabled={!ready || rendering || invalidSize} onClick={() => void download()}>
-                  {rendering ? 'Rendering preview…' : `Download PNG${estimatedSize ? ` · ${formatFileSize(estimatedSize)}` : ''}`}
+                  {rendering ? copy.renderingPreview : `${copy.download}${estimatedSize ? ` · ${formatSize(estimatedSize)}` : ''}`}
                   {!rendering && <span aria-hidden>↓</span>}
                 </button>
               </aside>
 
-              <section className="jpg-preview" aria-label="PNG preview">
+              <section className="jpg-preview" aria-label={copy.preview}>
                 <div className="jpg-preview-bar">
-                  <div><span className="live-dot" /> PNG preview</div>
+                  <div><span className="live-dot" /> {copy.preview}</div>
                   <span>{outputWidth} × {outputHeight}px</span>
                 </div>
                 <div className="jpg-preview-stage">
-                  <canvas ref={canvasRef} aria-label="Rendered PNG preview" />
-                  {rendering && <div className="jpg-rendering">Rendering…</div>}
+                  <canvas ref={canvasRef} aria-label={copy.renderedPreview} />
+                  {rendering && <div className="jpg-rendering">{copy.rendering}</div>}
                 </div>
                 <div className="jpg-preview-caption">
-                  <span>{background ? <>Background <i style={{ background }} /> {background.toUpperCase()}</> : 'Transparency preserved'}</span>
-                  <span>Lossless · {formatFileSize(estimatedSize)}</span>
+                  <span>{background ? <>{copy.backgroundCaption} <i style={{ background }} /> {background.toUpperCase()}</> : copy.transparencyPreserved}</span>
+                  <span>{copy.lossless} · {formatSize(estimatedSize)}</span>
                 </div>
               </section>
             </div>
@@ -328,9 +331,9 @@ export function SvgToPngPage() {
         </section>
 
         <section className="svg-jpg-explainer">
-          <div><span>01</span><h2>Choose an SVG</h2><p>Drop in a logo, icon, illustration, or exported vector file.</p></div>
-          <div><span>02</span><h2>Convert SVG to PNG</h2><p>Choose exact dimensions and keep transparency or add a background.</p></div>
-          <div><span>03</span><h2>Download the PNG</h2><p>Save a lossless pixel image ready for websites, apps, and documents.</p></div>
+          {copy.steps.map((step, index) => (
+            <div key={step.title}><span>{String(index + 1).padStart(2, '0')}</span><h2>{step.title}</h2><p>{step.body}</p></div>
+          ))}
         </section>
         <SvgToPngArticle />
         <RelatedTools current="svg-to-png" />

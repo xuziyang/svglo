@@ -105,9 +105,10 @@ and descriptions come from the typed English catalog under `src/i18n/`.
 | `src/i18n/article.zhCN.ts` | Simplified Chinese article and FAQ content |
 | `vite-plugin-static-html.ts` | Metadata, JSON-LD, SEO shell, sitemap, robots, and static 404 |
 
-English remains the default at `/`. Simplified Chinese is served at `/zh-cn/`.
-The active locale is derived from the pathname, and the header contains a
-language switch.
+English remains the default at `/`. Simplified Chinese is served at `/zh-cn/`,
+`/zh-cn/svg-to-jpg/`, and `/zh-cn/svg-to-png/`. The active locale is derived
+from the pathname, and the header contains a current-language dropdown that
+switches to the matching route in another language.
 
 The Vite plugin injects localized metadata and a matching text content shell
 into each language entry. Crawlers and browsers without JavaScript therefore
@@ -119,6 +120,8 @@ Expected build output:
 dist/
   index.html
   zh-cn/index.html
+  zh-cn/svg-to-jpg/index.html
+  zh-cn/svg-to-png/index.html
   404.html
   robots.txt
   sitemap.xml
