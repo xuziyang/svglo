@@ -49,11 +49,13 @@ export interface Messages {
   controls: {
     presets: string;
     clustering: string;
-    colorMode: string;
-    colorModeColor: string;
-    colorModeBinary: string;
+    clusteringMode: string;
+    clusteringColor: string;
+    clusteringBinary: string;
+    clusteringWatershed: string;
     colorHint: string;
     binaryHint: string;
+    watershedHint: string;
     hierarchy: string;
     hierarchyStacked: string;
     hierarchyCutout: string;
@@ -65,17 +67,15 @@ export interface Messages {
     colorPrecisionHint: string;
     gradientStep: string;
     gradientStepHint: string;
+    watershedDetail: string;
+    watershedDetailHint: string;
     curveFitting: string;
     mode: string;
     modeSpline: string;
     modePolygon: string;
     modePixel: string;
-    cornerThreshold: string;
-    cornerThresholdHint: string;
-    segmentLength: string;
-    segmentLengthHint: string;
-    spliceThreshold: string;
-    spliceThresholdHint: string;
+    simplify: string;
+    simplifyHint: string;
     pathPrecision: string;
     pathPrecisionHint: string;
   };

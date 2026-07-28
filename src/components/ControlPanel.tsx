@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { t, type MessageKey } from '../i18n';
-import type { ColorMode, Hierarchical, PathMode, VTracerConfig } from '../lib/vtracer';
+import type { Clustering, Hierarchical, PathMode, VTracerConfig } from '../lib/vtracer';
 import { PRESETS, type Preset, type PresetId } from '../lib/presets';
 import { Segmented } from './Segmented';
 
@@ -12,8 +12,11 @@ interface ControlPanelProps {
 }
 
 export function ControlPanel({ config, onChange, onPreset, activePresetId }: ControlPanelProps) {
-  const isColor = config.colormode === 'color';
+  const isColorCluster = config.clustering === 'color-cluster';
+  const isWatershed = config.clustering === 'watershed';
+  const isBinary = config.clustering === 'bw';
   const isSpline = config.mode === 'spline';
+  const showHierarchy = !isBinary;
 
   const presetName = (id: PresetId) => t(`presets.${id}.name` as MessageKey);
   const presetDesc = (id: PresetId) => t(`presets.${id}.description` as MessageKey);
@@ -40,20 +43,27 @@ export function ControlPanel({ config, onChange, onPreset, activePresetId }: Con
         <h3>{t('controls.clustering')}</h3>
 
         <Field
-          label={t('controls.colorMode')}
-          hint={isColor ? t('controls.colorHint') : t('controls.binaryHint')}
+          label={t('controls.clusteringMode')}
+          hint={
+            isWatershed
+              ? t('controls.watershedHint')
+              : isBinary
+                ? t('controls.binaryHint')
+                : t('controls.colorHint')
+          }
         >
           <Segmented
-            value={config.colormode}
+            value={config.clustering}
             options={[
-              { value: 'color', label: t('controls.colorModeColor') },
-              { value: 'binary', label: t('controls.colorModeBinary') },
+              { value: 'color-cluster', label: t('controls.clusteringColor') },
+              { value: 'bw', label: t('controls.clusteringBinary') },
+              { value: 'watershed', label: t('controls.clusteringWatershed') },
             ]}
-            onChange={(v) => onChange({ colormode: v as ColorMode })}
+            onChange={(v) => onChange({ clustering: v as Clustering })}
           />
         </Field>
 
-        {isColor && (
+        {showHierarchy && (
           <Field
             label={t('controls.hierarchy')}
             hint={
@@ -78,12 +88,12 @@ export function ControlPanel({ config, onChange, onPreset, activePresetId }: Con
           hint={t('controls.filterSpeckleHint')}
           value={config.filter_speckle}
           min={0}
-          max={16}
+          max={128}
           step={1}
           onChange={(v) => onChange({ filter_speckle: v })}
         />
 
-        {isColor && (
+        {isColorCluster && (
           <>
             <Slider
               label={t('controls.colorPrecision')}
@@ -105,6 +115,18 @@ export function ControlPanel({ config, onChange, onPreset, activePresetId }: Con
             />
           </>
         )}
+
+        {isWatershed && (
+          <Slider
+            label={t('controls.watershedDetail')}
+            hint={t('controls.watershedDetailHint')}
+            value={config.watershed_detail}
+            min={0}
+            max={255}
+            step={1}
+            onChange={(v) => onChange({ watershed_detail: v })}
+          />
+        )}
       </section>
 
       <section className="panel-section">
@@ -116,44 +138,23 @@ export function ControlPanel({ config, onChange, onPreset, activePresetId }: Con
             options={[
               { value: 'spline', label: t('controls.modeSpline') },
               { value: 'polygon', label: t('controls.modePolygon') },
-              { value: 'none', label: t('controls.modePixel') },
+              { value: 'pixel', label: t('controls.modePixel') },
             ]}
             onChange={(v) => onChange({ mode: v as PathMode })}
           />
         </Field>
 
         {isSpline && (
-          <>
-            <Slider
-              label={t('controls.cornerThreshold')}
-              hint={t('controls.cornerThresholdHint')}
-              value={config.corner_threshold}
-              min={0}
-              max={180}
-              step={1}
-              unit="°"
-              onChange={(v) => onChange({ corner_threshold: v })}
-            />
-            <Slider
-              label={t('controls.segmentLength')}
-              hint={t('controls.segmentLengthHint')}
-              value={config.length_threshold}
-              min={3.5}
-              max={10}
-              step={0.5}
-              onChange={(v) => onChange({ length_threshold: v })}
-            />
-            <Slider
-              label={t('controls.spliceThreshold')}
-              hint={t('controls.spliceThresholdHint')}
-              value={config.splice_threshold}
-              min={0}
-              max={180}
-              step={1}
-              unit="°"
-              onChange={(v) => onChange({ splice_threshold: v })}
-            />
-          </>
+          <Slider
+            label={t('controls.simplify')}
+            hint={t('controls.simplifyHint')}
+            value={config.simplify ?? 0}
+            min={0}
+            max={4}
+            step={0.5}
+            unit="px"
+            onChange={(v) => onChange({ simplify: v <= 0 ? null : v })}
+          />
         )}
       </section>
 
@@ -197,13 +198,14 @@ interface SliderProps {
 
 function Slider({ label, hint, value, min, max, step, unit, onChange }: SliderProps) {
   const fill = ((value - min) / (max - min)) * 100;
+  const display =
+    step < 1 && value !== 0 && value % 1 !== 0 ? value.toFixed(1) : String(value);
   return (
     <div className="field">
       <div className="field-head">
         <span className="field-label">{label}</span>
         <span className="field-value">
-          {value}
-          {unit}
+          {value <= 0 && unit === 'px' ? 'off' : `${display}${unit ?? ''}`}
         </span>
       </div>
       <input

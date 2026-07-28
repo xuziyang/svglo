@@ -1,48 +1,28 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export class BinaryImageConverter {
-    private constructor();
-    free(): void;
-    [Symbol.dispose](): void;
-    init(): void;
-    static new_with_string(params: string): BinaryImageConverter;
-    progress(): number;
-    tick(): boolean;
-}
+/**
+ * Vectorize encoded image bytes (PNG/JPEG/GIF/BMP). Returns the SVG string.
+ */
+export function vectorize_bytes(data: Uint8Array, options: any): string;
 
-export class ColorImageConverter {
-    private constructor();
-    free(): void;
-    [Symbol.dispose](): void;
-    init(): void;
-    static new_with_string(params: string): ColorImageConverter;
-    progress(): number;
-    tick(): boolean;
-}
-
-export function main(): void;
+/**
+ * Vectorize a raw RGBA8 buffer (`width * height * 4` bytes). Returns the SVG.
+ */
+export function vectorize_rgba(data: Uint8Array, width: number, height: number, options: any): string;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
-    readonly main: () => void;
-    readonly __wbg_binaryimageconverter_free: (a: number, b: number) => void;
-    readonly binaryimageconverter_init: (a: number) => void;
-    readonly binaryimageconverter_new_with_string: (a: number, b: number) => number;
-    readonly binaryimageconverter_progress: (a: number) => number;
-    readonly binaryimageconverter_tick: (a: number) => number;
-    readonly __wbg_colorimageconverter_free: (a: number, b: number) => void;
-    readonly colorimageconverter_init: (a: number) => void;
-    readonly colorimageconverter_new_with_string: (a: number, b: number) => number;
-    readonly colorimageconverter_progress: (a: number) => number;
-    readonly colorimageconverter_tick: (a: number) => number;
+    readonly vectorize_bytes: (a: number, b: number, c: any) => [number, number, number, number];
+    readonly vectorize_rgba: (a: number, b: number, c: number, d: number, e: any) => [number, number, number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_exn_store: (a: number) => void;
     readonly __externref_table_alloc: () => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;
+    readonly __externref_table_dealloc: (a: number) => void;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_start: () => void;
 }

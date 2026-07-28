@@ -1,36 +1,66 @@
-// Bridges the visioncortex VTracer WebAssembly module to TypeScript.
+// Bridges the visioncortex VTracer 1.0 WebAssembly module to TypeScript.
 //
-// The wasm crate (vtracer/webapp) exposes two DOM-coupled converters that
-// read pixels from a <canvas> and write <path> elements into an <svg> by id.
-// This wrapper replicates the parameter transformations from the original
-// webapp (index.js) so the rest of the React app can work in friendly
-// user-facing units (degrees, side-length, significant bits).
+// The browser package is built from vtracer/nodejs with
+// `wasm-pack build --target web` and vendored at vendor/vtracer-wasm-pkg.
+// Unlike the pre-1.0 webapp (DOM-coupled tick loop), 1.0 takes raw RGBA
+// pixels and returns a complete SVG string via convertPixels / vectorize_rgba.
+//
+// Parameter units match the Rust Config / Node bindings directly:
+// filterSpeckle is a side length (framework squares it), colorPrecision is
+// significant bits, angles are degrees, simplify is a pixel tolerance.
 
-import init, { ColorImageConverter, BinaryImageConverter } from 'vtracer-webapp';
-import wasmUrl from 'vtracer-webapp/vtracer_webapp_bg.wasm?url';
+import init, { vectorize_rgba } from 'vtracer-wasm';
+import wasmUrl from 'vtracer-wasm/vtracer_wasm_bg.wasm?url';
 
-export type ColorMode = 'color' | 'binary';
+/** Region-forming algorithm (replaces the old color/binary "color mode"). */
+export type Clustering = 'color-cluster' | 'bw' | 'watershed';
 export type Hierarchical = 'stacked' | 'cutout';
-export type PathMode = 'spline' | 'polygon' | 'none';
+/** Curve fit mode. `pixel` is the 1.0 name for the old webapp's `none`. */
+export type PathMode = 'spline' | 'polygon' | 'pixel';
 
 export interface VTracerConfig {
-  colormode: ColorMode;
+  clustering: Clustering;
   hierarchical: Hierarchical;
   mode: PathMode;
-  /** Discard patches smaller than X*X px (1..16, side length). */
+  /** Discard patches smaller than X×X px (side length; 0..=128). */
   filter_speckle: number;
-  /** Significant bits per RGB channel (1..8). Higher = more colors. */
+  /** Significant bits per RGB channel (1..=8). Higher = more colors. */
   color_precision: number;
-  /** Color difference between gradient layers (0..255). 0 = diagonal mode. */
+  /** Color difference between gradient layers (0..=255). 0 = diagonal mode. */
   layer_difference: number;
-  /** Min momentary angle (deg, 0..180) to be kept as a corner. */
+  /** Min momentary angle (deg, 0..=180) kept as a corner. */
   corner_threshold: number;
-  /** Iterative subdivide-smooth until segments are shorter than this (3.5..10). */
+  /** Iterative subdivide-smooth until segments are shorter than this (3.5..=10). */
   length_threshold: number;
-  /** Min angle displacement (deg, 0..180) to splice a spline. */
+  /** Min angle displacement (deg, 0..=180) to splice a spline. */
   splice_threshold: number;
-  /** Decimal places in the SVG path string (0..16). */
+  /** Decimal places in the SVG path string (0..=16). */
   path_precision: number;
+  /**
+   * Curve simplification tolerance in px (paper.js-style). `null` = off.
+   * Typical range 1–2.5; only affects spline mode.
+   */
+  simplify: number | null;
+  /** Watershed hierarchy cut level (0..=255). Higher = more regions. */
+  watershed_detail: number;
+}
+
+/** CamelCase options object accepted by the 1.0 wasm bindings. */
+export interface VTracerOptions {
+  clustering?: Clustering;
+  hierarchical?: Hierarchical;
+  mode?: PathMode;
+  filterSpeckle?: number;
+  colorPrecision?: number;
+  layerDifference?: number;
+  cornerThreshold?: number;
+  lengthThreshold?: number;
+  maxIterations?: number;
+  spliceThreshold?: number;
+  simplify?: number;
+  pathPrecision?: number;
+  optimize?: number;
+  watershedDetail?: number;
 }
 
 let initPromise: Promise<void> | null = null;
@@ -38,7 +68,7 @@ let initPromise: Promise<void> | null = null;
 /** Initialise the wasm module exactly once; allow retry on failure. */
 export function ensureWasm(): Promise<void> {
   if (!initPromise) {
-    initPromise = init(wasmUrl).then(
+    initPromise = init({ module_or_path: wasmUrl }).then(
       () => undefined,
       (err) => {
         initPromise = null;
@@ -49,98 +79,73 @@ export function ensureWasm(): Promise<void> {
   return initPromise;
 }
 
-const deg2rad = (deg: number): number => (deg / 180) * Math.PI;
-
-function buildParams(canvasId: string, svgId: string, c: VTracerConfig): string {
-  // Mirror the transformations in vtracer/webapp/app/index.js (restart()).
-  // - filter_speckle is squared into an area threshold
-  // - color_precision is inverted to a "loss" (8 - significant_bits)
-  // - angle thresholds are converted to radians
-  return JSON.stringify({
-    canvas_id: canvasId,
-    svg_id: svgId,
-    mode: c.mode,
+/** Map the friendly UI config to the 1.0 wasm options object. */
+export function buildOptions(c: VTracerConfig): VTracerOptions {
+  const options: VTracerOptions = {
+    clustering: c.clustering,
     hierarchical: c.hierarchical,
-    corner_threshold: deg2rad(c.corner_threshold),
-    length_threshold: c.length_threshold,
-    max_iterations: 10,
-    splice_threshold: deg2rad(c.splice_threshold),
-    filter_speckle: c.filter_speckle * c.filter_speckle,
-    color_precision: 8 - c.color_precision,
-    layer_difference: c.layer_difference,
-    path_precision: c.path_precision,
-  });
-}
-
-type Converter = ColorImageConverter | BinaryImageConverter;
-
-function runTickLoop(
-  converter: Converter,
-  onProgress?: (p: number) => void,
-  shouldStop?: () => boolean,
-): Promise<void> {
-  return new Promise((resolve) => {
-    let lastPct = -1;
-    const tick = () => {
-      if (shouldStop?.()) {
-        resolve();
-        return;
-      }
-      // Time-slice: keep each batch under ~25ms so the UI stays responsive.
-      let done = false;
-      const start = performance.now();
-      while (!(done = converter.tick()) && performance.now() - start < 25) {
-        // batch
-      }
-      // Throttle progress callbacks to integer-percent changes so a 1ms tick
-      // cadence doesn't trigger dozens of React re-renders per second.
-      const p = converter.progress();
-      const pct = Math.round(p);
-      if (onProgress && pct !== lastPct) {
-        lastPct = pct;
-        onProgress(p);
-      }
-      if (done) {
-        resolve();
-        return;
-      }
-      setTimeout(tick, 1);
-    };
-    setTimeout(tick, 1);
-  });
+    mode: c.mode,
+    filterSpeckle: c.filter_speckle,
+    colorPrecision: c.color_precision,
+    layerDifference: c.layer_difference,
+    cornerThreshold: c.corner_threshold,
+    lengthThreshold: c.length_threshold,
+    maxIterations: 10,
+    spliceThreshold: c.splice_threshold,
+    pathPrecision: c.path_precision,
+    // Compact relative encoding + shorthands/grouping.
+    optimize: 2,
+    watershedDetail: c.watershed_detail,
+  };
+  if (c.simplify != null && c.simplify > 0) {
+    options.simplify = c.simplify;
+  }
+  return options;
 }
 
 export interface ConvertOptions {
   canvas: HTMLCanvasElement;
-  svg: SVGSVGElement;
   config: VTracerConfig;
-  onProgress?: (p: number) => void;
   shouldStop?: () => boolean;
 }
 
 /**
- * Convert the image currently drawn on `canvas` into SVG paths written into
- * `svg`. Returns the serialized SVG document as a string.
+ * Convert the image currently drawn on `canvas` into an SVG document string.
+ * Runs synchronously inside wasm after init; callers should yield to the event
+ * loop first so a "running" UI state can paint.
  */
 export async function convertImage(opts: ConvertOptions): Promise<string> {
-  const { canvas, svg, config, onProgress, shouldStop } = opts;
+  const { canvas, config, shouldStop } = opts;
   await ensureWasm();
-
-  // Clear any paths from a previous run.
-  svg.replaceChildren();
-
-  const params = buildParams(canvas.id, svg.id, config);
-  const converter: Converter =
-    config.colormode === 'binary'
-      ? BinaryImageConverter.new_with_string(params)
-      : ColorImageConverter.new_with_string(params);
-
-  try {
-    converter.init();
-    await runTickLoop(converter, onProgress, shouldStop);
-    const svgString = new XMLSerializer().serializeToString(svg);
-    return `<?xml version="1.0" encoding="UTF-8"?>\n${svgString}`;
-  } finally {
-    converter.free();
+  if (shouldStop?.()) {
+    throw new DOMException('Conversion cancelled', 'AbortError');
   }
+
+  const width = canvas.width;
+  const height = canvas.height;
+  if (width <= 0 || height <= 0) {
+    throw new Error('Canvas has no image data');
+  }
+
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) {
+    throw new Error('2D canvas context unavailable');
+  }
+
+  const imageData = ctx.getImageData(0, 0, width, height);
+  // Copy into a plain Uint8Array — wasm-bindgen wants Uint8Array, not Clamped.
+  const rgba = new Uint8Array(imageData.data.buffer.slice(0));
+  const options = buildOptions(config);
+
+  // Yield once more so a superseding convert can cancel before the heavy work.
+  await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  if (shouldStop?.()) {
+    throw new DOMException('Conversion cancelled', 'AbortError');
+  }
+
+  const svg = vectorize_rgba(rgba, width, height, options);
+  if (shouldStop?.()) {
+    throw new DOMException('Conversion cancelled', 'AbortError');
+  }
+  return svg;
 }

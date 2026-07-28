@@ -14,7 +14,6 @@ export default function App() {
   const { status, progress, svgString, error, convert, cancel } = useVTracer();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
   // configRef mirrors `config` so the image-load effect can read the latest
   // config without re-subscribing on every config change.
   const configRef = useRef<VTracerConfig>(DEFAULT_CONFIG);
@@ -41,8 +40,7 @@ export default function App() {
     const img = new Image();
     img.onload = () => {
       const canvas = canvasRef.current;
-      const svg = svgRef.current;
-      if (!canvas || !svg) return;
+      if (!canvas) return;
       canvas.width = img.naturalWidth;
       canvas.height = img.naturalHeight;
       const ctx = canvas.getContext('2d');
@@ -50,7 +48,7 @@ export default function App() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
       setImageDims({ w: img.naturalWidth, h: img.naturalHeight });
-      convert(canvas, svg, configRef.current);
+      convert(canvas, configRef.current);
     };
     img.src = imageSrc;
     return () => {
@@ -64,9 +62,8 @@ export default function App() {
     if (!hasImageRef.current) return;
     const timer = setTimeout(() => {
       const canvas = canvasRef.current;
-      const svg = svgRef.current;
-      if (!canvas || !svg) return;
-      convert(canvas, svg, config);
+      if (!canvas) return;
+      convert(canvas, config);
     }, 300);
     return () => clearTimeout(timer);
   }, [config, convert]);
@@ -142,9 +139,8 @@ export default function App() {
 
   const handleRetry = useCallback(() => {
     const canvas = canvasRef.current;
-    const svg = svgRef.current;
-    if (!canvas || !svg || !hasImageRef.current) return;
-    convert(canvas, svg, config);
+    if (!canvas || !hasImageRef.current) return;
+    convert(canvas, config);
   }, [config, convert]);
 
   const handleDownload = useCallback(() => {
@@ -234,7 +230,6 @@ export default function App() {
               imageSrc={imageSrc}
               imageDims={imageDims}
               canvasRef={canvasRef}
-              svgRef={svgRef}
               view={view}
               onViewChange={setView}
               status={status}

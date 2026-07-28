@@ -1,4 +1,4 @@
-import { useMemo, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import type { ConvertStatus } from '../hooks/useVTracer';
 import { t } from '../i18n';
 import { Segmented } from './Segmented';
@@ -9,7 +9,6 @@ interface PreviewPaneProps {
   imageSrc: string | null;
   imageDims: { w: number; h: number } | null;
   canvasRef: RefObject<HTMLCanvasElement>;
-  svgRef: RefObject<SVGSVGElement>;
   view: PreviewView;
   onViewChange: (view: PreviewView) => void;
   status: ConvertStatus;
@@ -23,12 +22,38 @@ interface PreviewPaneProps {
   copied: boolean;
 }
 
+/**
+ * Pull the root <svg> element out of a full SVG document string so it can be
+ * inlined into the page. Strips the XML declaration / comments the 1.0 writer
+ * prefixes, and stamps id/class for styling + e2e.
+ */
+function prepareInlineSvg(
+  svgString: string,
+  className: string,
+  id: string,
+): string | null {
+  const doc = new DOMParser().parseFromString(svgString, 'image/svg+xml');
+  if (doc.querySelector('parsererror')) return null;
+  const root = doc.documentElement;
+  if (!root || root.tagName.toLowerCase() !== 'svg') return null;
+  root.setAttribute('id', id);
+  root.setAttribute('class', className);
+  // 1.0 writer emits width/height but not viewBox; add one so CSS can scale
+  // the preview while keeping the intrinsic aspect ratio.
+  if (!root.hasAttribute('viewBox')) {
+    const w = root.getAttribute('width');
+    const h = root.getAttribute('height');
+    if (w && h) root.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  }
+  root.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  return new XMLSerializer().serializeToString(root);
+}
+
 export function PreviewPane(props: PreviewPaneProps) {
   const {
     imageSrc,
     imageDims,
     canvasRef,
-    svgRef,
     view,
     onViewChange,
     status,
@@ -43,11 +68,28 @@ export function PreviewPane(props: PreviewPaneProps) {
   } = props;
 
   const running = status === 'running';
-  const viewBox = imageDims ? `0 0 ${imageDims.w} ${imageDims.h}` : undefined;
+  const hostRef = useRef<HTMLDivElement>(null);
   const svgBytes = useMemo(
     () => (svgString ? new Blob([svgString]).size : 0),
     [svgString],
   );
+
+  // Mount the 1.0 SVG string into the preview host. React does not own the
+  // children — we replace the host contents whenever svgString changes.
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    if (!svgString) {
+      host.replaceChildren();
+      return;
+    }
+    const markup = prepareInlineSvg(svgString, 'pane-svg', 'vt-svg');
+    if (!markup) {
+      host.replaceChildren();
+      return;
+    }
+    host.innerHTML = markup;
+  }, [svgString]);
 
   return (
     <section className="preview">
@@ -81,7 +123,7 @@ export function PreviewPane(props: PreviewPaneProps) {
       </div>
 
       <div className="preview-stage">
-        {/* Working canvas: wasm reads pixels from here. Always mounted, hidden. */}
+        {/* Working canvas: source of RGBA pixels for the 1.0 converter. */}
         <canvas ref={canvasRef} id="vt-canvas" style={{ display: 'none' }} />
 
         <div className="pane pane-before" hidden={view !== 'before' && view !== 'compare'}>
@@ -90,29 +132,27 @@ export function PreviewPane(props: PreviewPaneProps) {
 
         <div className="pane pane-after" hidden={view !== 'after' && view !== 'compare'}>
           {/*
-            This SVG is filled imperatively by the wasm converter (paths are
-            added via the DOM, NOT by React). Never render children here —
-            React must not reconcile the wasm-owned children.
+            Host for the SVG string returned by convertPixels. Children are
+            written imperatively — do not put React-managed nodes here.
           */}
-          <svg
-            ref={svgRef}
-            id="vt-svg"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox={viewBox}
-            width={imageDims?.w}
-            height={imageDims?.h}
-            className="pane-svg"
+          <div
+            ref={hostRef}
+            className="pane-svg-host"
+            data-empty={!svgString && !running ? 'true' : undefined}
+            style={
+              imageDims
+                ? { aspectRatio: `${imageDims.w} / ${imageDims.h}`, width: '100%' }
+                : undefined
+            }
           />
         </div>
 
         {running && (
           <div className="preview-overlay">
             <div className="progress-card">
-              <div className="progress-label">
-                {t('preview.vectorizing')} {Math.round(progress)}%
-              </div>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${progress}%` }} />
+              <div className="progress-label">{t('preview.vectorizing')}</div>
+              <div className="progress-bar progress-bar-indeterminate">
+                <div className="progress-fill" style={{ width: `${Math.max(progress, 24)}%` }} />
               </div>
             </div>
           </div>

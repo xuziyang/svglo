@@ -12,8 +12,9 @@ TypeScript, and visioncortex VTracer.
 - Images are never uploaded to an application server.
 - The converter still requires JavaScript, Canvas, and WebAssembly; “static”
   refers to hosting, not a JavaScript-free application.
-- The VTracer WebAssembly package is vendored in
-  `vendor/vtracer-webapp-pkg/`, so normal installs and builds do not require
+- The VTracer 1.0 WebAssembly package is vendored in
+  `vendor/vtracer-wasm-pkg/` (built from upstream `vtracer/nodejs` with
+  `wasm-pack --target web`), so normal installs and builds do not require
   Rust.
 
 ## Commands
@@ -65,33 +66,36 @@ There is no React Router and no backend API. The UI has two states:
 2. `src/hooks/useVTracer.ts` wraps conversion in React state. Its monotonic
    sequence ID ensures a newer run supersedes any in-flight run.
 3. `src/lib/vtracer.ts` is the only bridge to WebAssembly. It lazily
-   initializes the module, builds converter parameters, and processes
-   `tick()` calls in batches of roughly 25 ms.
-4. `src/components/PreviewPane.tsx` keeps the working canvas and SVG mounted.
+   initializes the 1.0 module, reads RGBA from the canvas, and calls
+   `vectorize_rgba` (exposed as `convertPixels` in the Node package).
+4. `src/components/PreviewPane.tsx` keeps the working canvas mounted and
+   mounts the returned SVG string into a host element (`#vt-svg`).
 
 ### DOM ownership constraint
 
-The working elements must keep the IDs `vt-canvas` and `vt-svg`; VTracer
-receives those IDs in its parameter JSON and looks up the nodes itself.
+- `#vt-canvas` is the pixel source. Keep it mounted (hidden is fine).
+- `#vt-svg` is stamped onto the inlined preview root for e2e/styling. The
+  host’s children are written imperatively from the SVG string — do not put
+  React-managed nodes inside the host, and do not key/remount the canvas
+  when settings change.
 
-WebAssembly owns the child paths inside `vt-svg`. Do not render React children
-into that SVG, and do not key or remount the canvas or SVG when settings
-change.
+### Parameter mapping (1.0)
 
-### Parameter transforms
+`buildOptions()` in `src/lib/vtracer.ts` passes UI values in the same units
+as the Rust `Config` / Node bindings. Do **not** re-apply the old webapp
+transforms (no speckle squaring, no `8 - bits`, no degree→radian):
 
-`buildParams()` in `src/lib/vtracer.ts` mirrors the upstream VTracer web app.
-Do not pass all UI values through unchanged:
-
-| UI field | Value sent to WebAssembly |
+| UI field | Sent to WebAssembly |
 |---|---|
-| `filter_speckle` | squared to produce an area threshold |
-| `color_precision` | converted to loss with `8 - significantBits` |
-| `corner_threshold` | converted from degrees to radians |
-| `splice_threshold` | converted from degrees to radians |
+| `clustering` | `"color-cluster" \| "bw" \| "watershed"` |
+| `filter_speckle` | side length (framework squares it) |
+| `color_precision` | significant bits 1..=8 |
+| `corner_threshold` / `splice_threshold` | degrees |
+| `simplify` | pixel tolerance; omitted when off |
+| `watershed_detail` | 0..=255 hierarchy cut |
 
 Presets in `src/lib/presets.ts` contain IDs and converter configs. Their names
-and descriptions come from the typed English catalog under `src/i18n/`.
+and descriptions come from the typed catalogs under `src/i18n/`.
 
 ## Localized content and SEO
 
@@ -143,12 +147,15 @@ configuration because the value is not used by browser code.
 
 ## Vite and WebAssembly constraints
 
-- Keep `optimizeDeps.exclude: ['vtracer-webapp']`; it allows the WASM `?url`
+- Keep `optimizeDeps.exclude: ['vtracer-wasm']`; it allows the WASM `?url`
   asset import to resolve correctly.
 - Keep the production target at `es2020` unless browser support requirements
   are intentionally changed.
 - The vendored WASM package is referenced through the local
-  `file:vendor/vtracer-webapp-pkg` dependency.
+  `file:vendor/vtracer-wasm-pkg` dependency.
+- Conversion is a synchronous wasm call after init. Yield to the event loop
+  before calling it so the running overlay can paint; long-term, move the
+  call into a Web Worker if large photos stall the main thread.
 - Do not add server-side image processing or an upload endpoint unless the
   product architecture is explicitly changed.
 
@@ -156,15 +163,23 @@ configuration because the value is not used by browser code.
 
 This repository does not contain the Rust source checkout. Updating the
 vendored package requires a separate checkout of upstream VTracer and
-`wasm-pack`:
+`wasm-pack`. Build the **nodejs** crate for the browser (not the legacy
+`webapp/`):
 
 ```sh
 SVGLO_REPO=/absolute/path/to/svglo
 VTRACER_REPO=/absolute/path/to/vtracer
 
-cd "$VTRACER_REPO/webapp"
-wasm-pack build --target web --release
-cp -R pkg/. "$SVGLO_REPO/vendor/vtracer-webapp-pkg/"
+cd "$VTRACER_REPO/nodejs"
+wasm-pack build --target web --release --out-dir pkg-web
+rm -rf "$SVGLO_REPO/vendor/vtracer-wasm-pkg"
+mkdir -p "$SVGLO_REPO/vendor/vtracer-wasm-pkg"
+cp pkg-web/vtracer_wasm.js \
+   pkg-web/vtracer_wasm.d.ts \
+   pkg-web/vtracer_wasm_bg.wasm \
+   pkg-web/vtracer_wasm_bg.wasm.d.ts \
+   "$SVGLO_REPO/vendor/vtracer-wasm-pkg/"
+# Keep package.json name as `vtracer-wasm` (see existing vendor file).
 ```
 
 After copying the package, run:
@@ -179,7 +194,7 @@ node e2e-test.mjs
 
 Review the vendored package diff before committing it, especially the generated
 JavaScript bindings, TypeScript declarations, `.wasm` binary, and package
-metadata.
+metadata. Do not copy wasm-pack’s generated `.gitignore` (`*`) into vendor.
 
 ## Deployment
 

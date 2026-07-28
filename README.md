@@ -11,11 +11,11 @@ Browser ──> static wasm + React + CSS (no backend)
          └─ upload image → wasm vectorizes in-browser → output SVG → download/copy
 ```
 
-- **Core engine**: `vtracer/webapp` Rust crate compiled to wasm (MIT / Apache-2.0)
+- **Core engine**: VTracer 1.0 (`vtracer/nodejs` crate, `wasm-pack --target web`) — MIT / Apache-2.0
 - **Frontend**: React 18 + Vite 5 + TypeScript
 - **No backend**: pure static hosting, zero server compute, naturally scalable, privacy-friendly
 
-The wasm `ColorImageConverter` / `BinaryImageConverter` run in `tick()` slices and report progress so the UI main thread stays responsive.
+The browser calls `vectorize_rgba` (raw canvas pixels → SVG string), including 1.0 features such as watershed clustering and curve simplification.
 
 ## Prerequisites
 
@@ -24,18 +24,21 @@ The wasm `ColorImageConverter` / `BinaryImageConverter` run in `tick()` slices a
 
 ## wasm package
 
-The wasm package (`vendor/vtracer-webapp-pkg/`) is committed to the repo and works out of the box — no local Rust build required.
+The wasm package (`vendor/vtracer-wasm-pkg/`) is committed to the repo and works out of the box — no local Rust build required.
 
-To update it (after upstream vtracer changes):
+To update it (after upstream vtracer 1.0 changes):
 
 ```sh
-cd ../vtracer/webapp
-wasm-pack build --target web --release
-# output: ../vtracer/webapp/pkg/
-cp -r ../vtracer/webapp/pkg/* vendor/vtracer-webapp-pkg/
+cd ../vtracer/nodejs
+wasm-pack build --target web --release --out-dir pkg-web
+cp pkg-web/vtracer_wasm.js \
+   pkg-web/vtracer_wasm.d.ts \
+   pkg-web/vtracer_wasm_bg.wasm \
+   pkg-web/vtracer_wasm_bg.wasm.d.ts \
+   ../svglo/vendor/vtracer-wasm-pkg/
 ```
 
-This project's `package.json` references it via `file:vendor/vtracer-webapp-pkg`.
+This project's `package.json` references it via `file:vendor/vtracer-wasm-pkg`.
 
 ## Develop & build
 
@@ -84,13 +87,13 @@ SVGlo has one English page at `/`.
 
 ## Key integration points
 
-- `src/lib/vtracer.ts`: wasm init + param transforms + tick loop. Mirrors the original webapp's parameter conversion (`filter_speckle` squared, `color_precision` inverted, angles to radians).
+- `src/lib/vtracer.ts`: wasm init + `buildOptions()` + `vectorize_rgba`. Units match the 1.0 Rust `Config` (no old webapp transforms).
 - `src/hooks/useVTracer.ts`: state management with a sequence number so later requests supersede in-flight ones (fast param tweaks don't race).
-- `src/components/PreviewPane.tsx`: working `<canvas>` (wasm reads pixels) and `<svg>` (wasm writes paths) stay mounted; React does not manage the svg's children.
+- `src/components/PreviewPane.tsx`: working `<canvas>` supplies pixels; the SVG string is inlined into a host (`#vt-svg`). React does not manage that host’s children.
 
 ## Parameters
 
-See the upstream [parameter docs](../vtracer/README.md) for meanings and use cases. Presets: Default / B&W Line Art / Poster / Photo / Pixel Art.
+See the upstream [parameter docs](../vtracer/README.md) for meanings and use cases. Presets: Default / B&W Line Art / Poster / Photo / Pixel Art. Photo uses watershed + cutout + simplify by default.
 
 > Tip: VTracer works best on icons, illustrations, and line art. Photos (continuous tone) produce large SVGs under default settings — use the Photo preset.
 

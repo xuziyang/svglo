@@ -1,0 +1,16 @@
+{
+  "name": "vtracer-wasm",
+  "type": "module",
+  "version": "1.0.0-alpha.2",
+  "description": "Browser-friendly WebAssembly build of the vtracer 1.0 framework (from vtracer/nodejs, target web).",
+  "license": "MIT OR Apache-2.0",
+  "main": "vtracer_wasm.js",
+  "types": "vtracer_wasm.d.ts",
+  "files": [
+    "vtracer_wasm_bg.wasm",
+    "vtracer_wasm.js",
+    "vtracer_wasm.d.ts",
+    "vtracer_wasm_bg.wasm.d.ts"
+  ],
+  "sideEffects": false
+}

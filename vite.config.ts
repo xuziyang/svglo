@@ -8,7 +8,7 @@ export default defineConfig({
   // The wasm-pack output uses top-level wasm features; keep it out of
   // esbuild's dep pre-bundling so the `?url` asset import resolves cleanly.
   optimizeDeps: {
-    exclude: ['vtracer-webapp'],
+    exclude: ['vtracer-wasm'],
   },
   build: {
     target: 'es2020',
