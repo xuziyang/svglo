@@ -11,7 +11,7 @@ export const DEFAULT_CONFIG: VTracerConfig = {
   length_threshold: 4,
   splice_threshold: 45,
   path_precision: 8,
-  simplify: null,
+  simplify: 1,
   watershed_detail: 128,
 };
 

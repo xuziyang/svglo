@@ -5,78 +5,28 @@
 // Unlike the pre-1.0 webapp (DOM-coupled tick loop), 1.0 takes raw RGBA
 // pixels and returns a complete SVG string via convertPixels / vectorize_rgba.
 //
+// Tracing happens in a dedicated Web Worker (see ../workers/vtracer.worker.ts)
+// so the main thread isn't blocked by the synchronous wasm call. Pixels are
+// passed via a transferable ArrayBuffer to keep the cross-thread cost low.
+//
 // Parameter units match the Rust Config / Node bindings directly:
 // filterSpeckle is a side length (framework squares it), colorPrecision is
 // significant bits, angles are degrees, simplify is a pixel tolerance.
 
-import init, { vectorize_rgba } from 'vtracer-wasm';
-import wasmUrl from 'vtracer-wasm/vtracer_wasm_bg.wasm?url';
+import type {
+  Clustering,
+  Hierarchical,
+  PathMode,
+  VTracerConfig,
+  VTracerOptions,
+} from './vtracer-shared';
 
-/** Region-forming algorithm (replaces the old color/binary "color mode"). */
-export type Clustering = 'color-cluster' | 'bw' | 'watershed';
-export type Hierarchical = 'stacked' | 'cutout';
-/** Curve fit mode. `pixel` is the 1.0 name for the old webapp's `none`. */
-export type PathMode = 'spline' | 'polygon' | 'pixel';
+export type { Clustering, Hierarchical, PathMode, VTracerConfig, VTracerOptions };
 
-export interface VTracerConfig {
-  clustering: Clustering;
-  hierarchical: Hierarchical;
-  mode: PathMode;
-  /** Discard patches smaller than X×X px (side length; 0..=128). */
-  filter_speckle: number;
-  /** Significant bits per RGB channel (1..=8). Higher = more colors. */
-  color_precision: number;
-  /** Color difference between gradient layers (0..=255). 0 = diagonal mode. */
-  layer_difference: number;
-  /** Min momentary angle (deg, 0..=180) kept as a corner. */
-  corner_threshold: number;
-  /** Iterative subdivide-smooth until segments are shorter than this (3.5..=10). */
-  length_threshold: number;
-  /** Min angle displacement (deg, 0..=180) to splice a spline. */
-  splice_threshold: number;
-  /** Decimal places in the SVG path string (0..=16). */
-  path_precision: number;
-  /**
-   * Curve simplification tolerance in px (paper.js-style). `null` = off.
-   * Typical range 1–2.5; only affects spline mode.
-   */
-  simplify: number | null;
-  /** Watershed hierarchy cut level (0..=255). Higher = more regions. */
-  watershed_detail: number;
-}
-
-/** CamelCase options object accepted by the 1.0 wasm bindings. */
-export interface VTracerOptions {
-  clustering?: Clustering;
-  hierarchical?: Hierarchical;
-  mode?: PathMode;
-  filterSpeckle?: number;
-  colorPrecision?: number;
-  layerDifference?: number;
-  cornerThreshold?: number;
-  lengthThreshold?: number;
-  maxIterations?: number;
-  spliceThreshold?: number;
-  simplify?: number;
-  pathPrecision?: number;
-  optimize?: number;
-  watershedDetail?: number;
-}
-
-let initPromise: Promise<void> | null = null;
-
-/** Initialise the wasm module exactly once; allow retry on failure. */
-export function ensureWasm(): Promise<void> {
-  if (!initPromise) {
-    initPromise = init({ module_or_path: wasmUrl }).then(
-      () => undefined,
-      (err) => {
-        initPromise = null;
-        throw err;
-      },
-    );
-  }
-  return initPromise;
+export interface ConvertOptions {
+  canvas: HTMLCanvasElement;
+  config: VTracerConfig;
+  shouldStop?: () => boolean;
 }
 
 /** Map the friendly UI config to the 1.0 wasm options object. */
@@ -103,20 +53,56 @@ export function buildOptions(c: VTracerConfig): VTracerOptions {
   return options;
 }
 
-export interface ConvertOptions {
-  canvas: HTMLCanvasElement;
-  config: VTracerConfig;
-  shouldStop?: () => boolean;
+// Lazy worker singleton. We import.meta.url-resolve the worker so Vite emits
+// it as a separate entry chunk. `type: 'module'` matches the worker's own
+// module-mode build.
+let workerInstance: Worker | null = null;
+let nextRequestId = 1;
+const pending = new Map<number, { resolve: (svg: string) => void; reject: (err: Error) => void }>();
+
+function getWorker(): Worker {
+  if (workerInstance) return workerInstance;
+  const url = new URL('../workers/vtracer.worker.ts', import.meta.url);
+  workerInstance = new Worker(url, { type: 'module' });
+  workerInstance.onmessage = (event: MessageEvent<{ id: number; svg?: string; error?: string }>) => {
+    const { id, svg, error } = event.data;
+    const slot = pending.get(id);
+    if (!slot) return;
+    pending.delete(id);
+    if (error) slot.reject(new Error(error));
+    else slot.resolve(svg ?? '');
+  };
+  workerInstance.onerror = (event) => {
+    // Worker died — fail every in-flight request and force a fresh worker.
+    const err = new Error(event.message || 'vtracer worker crashed');
+    for (const [, slot] of pending) slot.reject(err);
+    pending.clear();
+    workerInstance?.terminate();
+    workerInstance = null;
+  };
+  return workerInstance;
+}
+
+function callWorker(pixels: Uint8Array, width: number, height: number, options: VTracerOptions): Promise<string> {
+  const id = nextRequestId++;
+  return new Promise((resolve, reject) => {
+    pending.set(id, { resolve, reject });
+    const worker = getWorker();
+    // Transferable: hand off the underlying buffer. The Uint8Array view
+    // becomes detached on the sender side after postMessage.
+    const buffer = pixels.buffer.slice(pixels.byteOffset, pixels.byteOffset + pixels.byteLength);
+    worker.postMessage({ id, pixels: buffer, width, height, options }, [buffer]);
+  });
 }
 
 /**
  * Convert the image currently drawn on `canvas` into an SVG document string.
- * Runs synchronously inside wasm after init; callers should yield to the event
- * loop first so a "running" UI state can paint.
+ * Runs the wasm synchronously inside the worker, so the caller remains free
+ * to respond to other events while the trace is in flight.
  */
 export async function convertImage(opts: ConvertOptions): Promise<string> {
   const { canvas, config, shouldStop } = opts;
-  await ensureWasm();
+
   if (shouldStop?.()) {
     throw new DOMException('Conversion cancelled', 'AbortError');
   }
@@ -133,17 +119,20 @@ export async function convertImage(opts: ConvertOptions): Promise<string> {
   }
 
   const imageData = ctx.getImageData(0, 0, width, height);
-  // Copy into a plain Uint8Array — wasm-bindgen wants Uint8Array, not Clamped.
-  const rgba = new Uint8Array(imageData.data.buffer.slice(0));
-  const options = buildOptions(config);
+  // Copy into a fresh Uint8Array — the worker expects its own buffer.
+  // We hand off the buffer as transferable so no structured clone copy is made.
+  const rgba = new Uint8Array(width * height * 4);
+  rgba.set(imageData.data);
 
-  // Yield once more so a superseding convert can cancel before the heavy work.
+  // Yield once so a superseding convert can cancel before the heavy work.
   await new Promise<void>((resolve) => setTimeout(resolve, 0));
   if (shouldStop?.()) {
     throw new DOMException('Conversion cancelled', 'AbortError');
   }
 
-  const svg = vectorize_rgba(rgba, width, height, options);
+  const options = buildOptions(config);
+  const svg = await callWorker(rgba, width, height, options);
+
   if (shouldStop?.()) {
     throw new DOMException('Conversion cancelled', 'AbortError');
   }
