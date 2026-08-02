@@ -36,7 +36,14 @@ const server = spawn(process.execPath, [viteCli, 'preview', '--port', PORT, '--s
 
   const errors = [];
   page.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(msg.text());
+    if (msg.type() === 'error') {
+      const location = msg.location();
+      // Analytics requests may be blocked in CI; they do not affect app behavior.
+      if (/^https:\/\/(?:stats\.g\.doubleclick\.net|www\.google-analytics\.com|www\.googletagmanager\.com)\//.test(location.url)) {
+        return;
+      }
+      errors.push(location.url ? `${msg.text()} (${location.url})` : msg.text());
+    }
   });
   page.on('pageerror', (err) => errors.push(String(err)));
 
@@ -47,6 +54,86 @@ const server = spawn(process.execPath, [viteCli, 'preview', '--port', PORT, '--s
 
   // Wait for the Download button to become enabled (= svgString is set).
   await page.waitForSelector('button.btn-primary:not([disabled])', { timeout: 45000 });
+
+  const initialControls = await page.evaluate(() => ({
+    advancedExpanded: document.querySelector('.advanced-toggle')?.getAttribute('aria-expanded'),
+    hasAdvancedContent: document.querySelector('.advanced-content') !== null,
+    selectedPreset: document.querySelector('.preset-btn[aria-pressed="true"]')?.textContent?.trim(),
+    presetDescription: document.querySelector('.preset-description')?.textContent?.trim(),
+  }));
+
+  // Advanced settings start collapsed and can be opened from the keyboard.
+  await page.locator('.advanced-toggle').focus();
+  await page.keyboard.press('Enter');
+  const openedControls = await page.evaluate(() => ({
+    advancedExpanded: document.querySelector('.advanced-toggle')?.getAttribute('aria-expanded'),
+    hasAdvancedContent: document.querySelector('.advanced-content') !== null,
+  }));
+
+  // Existing conditional controls remain intact for binary and pixel presets.
+  await page.getByRole('button', { name: 'B&W Line Art', exact: true }).click();
+  const binaryLabels = await page.locator('.advanced-content .field-label').allTextContents();
+  await page.getByRole('button', { name: 'Pixel Art', exact: true }).click();
+  const pixelLabels = await page.locator('.advanced-content .field-label').allTextContents();
+
+  // A manual adjustment keeps the last preset selected and can be fully reset.
+  await page.getByRole('button', { name: 'Photo', exact: true }).click();
+  const speckleSlider = page.locator('input.slider').first();
+  const photoSpeckle = await speckleSlider.inputValue();
+  await speckleSlider.fill('9');
+  const adjustedControls = await page.evaluate(() => ({
+    hasAdjustedBadge: document.querySelector('.preset-adjusted') !== null,
+    hasResetButton: document.querySelector('.preset-reset') !== null,
+    selectedPreset: document.querySelector('.preset-btn[aria-pressed="true"]')?.textContent?.trim(),
+  }));
+  await page.locator('.preset-reset').click();
+  const resetControls = await page.evaluate(() => ({
+    hasAdjustedBadge: document.querySelector('.preset-adjusted') !== null,
+    speckle: document.querySelector('input.slider')?.value,
+    selectedPreset: document.querySelector('.preset-btn[aria-pressed="true"]')?.textContent?.trim(),
+  }));
+
+  // Collapsing only hides the controls; reopening shows the restored photo config.
+  await page.locator('.advanced-toggle').focus();
+  await page.keyboard.press('Space');
+  const collapsedAgain = await page.evaluate(() => ({
+    advancedExpanded: document.querySelector('.advanced-toggle')?.getAttribute('aria-expanded'),
+    hasAdvancedContent: document.querySelector('.advanced-content') !== null,
+  }));
+  await page.locator('.advanced-toggle').focus();
+  await page.keyboard.press('Enter');
+  const reopenedSpeckle = await speckleSlider.inputValue();
+
+  // Let the final debounced conversion finish before inspecting the SVG.
+  await page.waitForTimeout(350);
+  await page.waitForSelector('.preview-overlay', { state: 'detached', timeout: 45000 });
+
+  const controlsOk =
+    initialControls.advancedExpanded === 'false'
+    && !initialControls.hasAdvancedContent
+    && initialControls.selectedPreset === 'Recommended'
+    && initialControls.presetDescription?.includes('Good for most icons and illustrations')
+    && openedControls.advancedExpanded === 'true'
+    && openedControls.hasAdvancedContent
+    && binaryLabels.includes('Filter speckle')
+    && binaryLabels.includes('Mode')
+    && binaryLabels.includes('Path precision')
+    && !binaryLabels.includes('Hierarchy')
+    && !binaryLabels.includes('Color precision')
+    && pixelLabels.includes('Filter speckle')
+    && pixelLabels.includes('Mode')
+    && pixelLabels.includes('Path precision')
+    && !pixelLabels.includes('Corner threshold')
+    && adjustedControls.hasAdjustedBadge
+    && adjustedControls.hasResetButton
+    && adjustedControls.selectedPreset === 'Photo'
+    && photoSpeckle === '10'
+    && !resetControls.hasAdjustedBadge
+    && resetControls.speckle === '10'
+    && resetControls.selectedPreset === 'Photo'
+    && collapsedAgain.advancedExpanded === 'false'
+    && !collapsedAgain.hasAdvancedContent
+    && reopenedSpeckle === '10';
 
   const result = await page.evaluate(() => {
     const svg = document.getElementById('vt-svg');
@@ -62,6 +149,7 @@ const server = spawn(process.execPath, [viteCli, 'preview', '--port', PORT, '--s
 
   const ok =
     result.pathCount > 0
+    && controlsOk
     && result.documentLang === 'en'
     && result.hasLanguageSwitch
     && errors.length === 0;
@@ -114,6 +202,14 @@ const server = spawn(process.execPath, [viteCli, 'preview', '--port', PORT, '--s
   console.log(JSON.stringify({
     ok: ok && chineseOk && chineseToolsOk,
     english: result,
+    controls: {
+      ok: controlsOk,
+      initial: initialControls,
+      opened: openedControls,
+      adjusted: adjustedControls,
+      reset: resetControls,
+      collapsedAgain,
+    },
     chinese: chineseResult,
     chineseTools,
     consoleErrors: errors,

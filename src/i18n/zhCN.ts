@@ -39,7 +39,7 @@ export const zhCN: Messages = {
   },
   presets: {
     default: {
-      name: '默认',
+      name: '推荐',
       description: '适合大多数图标和插画',
     },
     bw: {
@@ -60,7 +60,12 @@ export const zhCN: Messages = {
     },
   },
   controls: {
-    presets: '预设',
+    presets: '选择预设',
+    presetGuide: '选择最符合图片类型的效果即可开始。',
+    adjusted: '已调整',
+    resetPreset: '恢复此预设',
+    advancedSettings: '高级设置',
+    optional: '可选微调',
     clustering: '颜色聚类',
     colorMode: '颜色模式',
     colorModeColor: '彩色',

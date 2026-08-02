@@ -7,7 +7,7 @@ import { ControlPanel } from './components/ControlPanel';
 import { PreviewPane, type PreviewView } from './components/PreviewPane';
 import { useVTracer } from './hooks/useVTracer';
 import { t } from './i18n';
-import { DEFAULT_CONFIG, PRESETS, type Preset } from './lib/presets';
+import { DEFAULT_CONFIG, PRESETS, type Preset, type PresetId } from './lib/presets';
 import type { VTracerConfig } from './lib/vtracer';
 
 export default function App() {
@@ -24,6 +24,7 @@ export default function App() {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageDims, setImageDims] = useState<{ w: number; h: number } | null>(null);
   const [config, setConfig] = useState<VTracerConfig>(DEFAULT_CONFIG);
+  const [selectedPresetId, setSelectedPresetId] = useState<PresetId>('default');
   const [view, setView] = useState<PreviewView>('after');
   const [copied, setCopied] = useState(false);
 
@@ -130,9 +131,8 @@ export default function App() {
     ctx.font = '700 64px system-ui, sans-serif';
     ctx.fillText('SVGLO', 376, 224);
     ctx.fillStyle = '#6366f1';
-    ctx.font = '700 19px system-ui, sans-serif';
-    ctx.letterSpacing = '2px';
-    ctx.fillText('LOCAL  •  PRIVATE', 380, 264);
+    ctx.font = '800 28px system-ui, sans-serif';
+    ctx.fillText('VECTOR READY', 380, 270);
 
     canvas.toBlob((blob) => {
       if (!blob) return;
@@ -173,6 +173,7 @@ export default function App() {
   }, [svgString]);
 
   const handlePreset = useCallback((preset: Preset) => {
+    setSelectedPresetId(preset.id);
     setConfig(preset.config);
   }, []);
 
@@ -180,10 +181,19 @@ export default function App() {
     setConfig((prev) => ({ ...prev, ...partial }));
   }, []);
 
-  const activePresetId = useMemo(() => {
+  const selectedPreset = useMemo(
+    () => PRESETS.find((preset) => preset.id === selectedPresetId) ?? PRESETS[0],
+    [selectedPresetId],
+  );
+
+  const isCustomized = useMemo(() => {
     const keys = Object.keys(DEFAULT_CONFIG) as (keyof VTracerConfig)[];
-    return PRESETS.find((p) => keys.every((k) => p.config[k] === config[k]))?.id ?? null;
-  }, [config]);
+    return keys.some((key) => selectedPreset.config[key] !== config[key]);
+  }, [config, selectedPreset]);
+
+  const handleResetPreset = useCallback(() => {
+    setConfig(selectedPreset.config);
+  }, [selectedPreset]);
 
   return (
     <div className="app">
@@ -228,7 +238,9 @@ export default function App() {
               config={config}
               onChange={updateConfig}
               onPreset={handlePreset}
-              activePresetId={activePresetId}
+              selectedPresetId={selectedPresetId}
+              isCustomized={isCustomized}
+              onResetPreset={handleResetPreset}
             />
             <PreviewPane
               imageSrc={imageSrc}

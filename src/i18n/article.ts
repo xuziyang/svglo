@@ -60,7 +60,7 @@ export const articleContent: ArticleContent = {
       id: 'howto',
       title: 'How to convert PNG to SVG',
       paragraphs: [
-        'Start with the highest-resolution source you have — crisp edges trace more cleanly than blurry ones. Drop the PNG onto the workspace, then try the presets: “Default” suits most icons and illustrations, while “Poster” keeps full color for flat artwork. Source quality usually matters more than any single slider when you convert PNG to SVG.',
+        'Start with the highest-resolution source you have — crisp edges trace more cleanly than blurry ones. Drop the PNG onto the workspace, then try the presets: “Recommended” suits most icons and illustrations, while “Poster” keeps full color for flat artwork. Source quality usually matters more than any single slider when you convert PNG to SVG.',
         'If the result has too many tiny shapes, raise the speckle filter to discard small clusters. If edges look jagged, increase color precision or switch curve fitting to spline. When the preview looks right, download the file. The same workflow handles JPG and JPEG sources; because those formats soften edges, a clear high-contrast original (or a quick contrast boost beforehand) often improves the outline noticeably.',
         'For screenshots and flat graphics saved as JPEG, the “B&W Line Art” or “Poster” preset usually gives the sharpest output. Spend a minute comparing presets before you chase individual parameters — most logos and icons land on a good result within a couple of tries.',
       ],
@@ -94,7 +94,7 @@ export const articleContent: ArticleContent = {
       title: 'Tips for cleaner vector traces',
       paragraphs: [
         'Source quality drives the result more than any setting. Use the sharpest, highest-resolution original you can — a crisp logo or line drawing traces into far fewer, cleaner paths than a blurry photo. If you are working from a screenshot, capture it at 2× or higher.',
-        'Start from a preset that matches your artwork, then refine from there. “Default” handles most icons and illustrations; “B&W Line Art” is ideal for scans and sketches; “Poster” keeps flat colors vibrant; “Photo” merges similar tones for smoother gradients. Small moves on color precision and speckle filtering usually fix whatever is left.',
+        'Start from a preset that matches your artwork, then refine from there. “Recommended” handles most icons and illustrations; “B&W Line Art” is ideal for scans and sketches; “Poster” keeps flat colors vibrant; “Photo” merges similar tones for smoother gradients. Small moves on color precision and speckle filtering usually fix whatever is left.',
         'When file size matters, lower path precision slightly and raise the speckle filter so tiny noise shapes disappear. When editability matters more, prefer stacked hierarchy and spline fitting so individual shapes stay smooth and easy to select later.',
       ],
     },

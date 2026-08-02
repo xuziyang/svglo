@@ -48,6 +48,11 @@ export interface Messages {
   };
   controls: {
     presets: string;
+    presetGuide: string;
+    adjusted: string;
+    resetPreset: string;
+    advancedSettings: string;
+    optional: string;
     clustering: string;
     colorMode: string;
     colorModeColor: string;

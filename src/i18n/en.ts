@@ -39,7 +39,7 @@ export const en: Messages = {
   },
   presets: {
     default: {
-      name: 'Default',
+      name: 'Recommended',
       description: 'Good for most icons and illustrations',
     },
     bw: {
@@ -60,7 +60,12 @@ export const en: Messages = {
     },
   },
   controls: {
-    presets: 'Presets',
+    presets: 'Choose a preset',
+    presetGuide: 'Pick the option that best matches your image.',
+    adjusted: 'Adjusted',
+    resetPreset: 'Reset to preset',
+    advancedSettings: 'Advanced settings',
+    optional: 'Optional fine-tuning',
     clustering: 'Clustering',
     colorMode: 'Color mode',
     colorModeColor: 'Color',
