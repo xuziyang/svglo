@@ -109,30 +109,23 @@ export default function App() {
 
     ctx.fillStyle = '#6366f1';
     ctx.beginPath();
-    ctx.arc(220, 224, 112, 0, Math.PI * 2);
+    ctx.arc(360, 224, 112, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = '#fbbf24';
     ctx.beginPath();
-    ctx.arc(248, 188, 34, 0, Math.PI * 2);
+    ctx.arc(388, 188, 34, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.fillStyle = '#312e81';
     ctx.beginPath();
-    ctx.moveTo(120, 304);
-    ctx.lineTo(196, 202);
-    ctx.lineTo(250, 260);
-    ctx.lineTo(292, 218);
-    ctx.lineTo(336, 304);
+    ctx.moveTo(260, 304);
+    ctx.lineTo(336, 202);
+    ctx.lineTo(390, 260);
+    ctx.lineTo(432, 218);
+    ctx.lineTo(476, 304);
     ctx.closePath();
     ctx.fill();
-
-    ctx.fillStyle = '#171b26';
-    ctx.font = '700 64px system-ui, sans-serif';
-    ctx.fillText('SVGLO', 376, 224);
-    ctx.fillStyle = '#6366f1';
-    ctx.font = '800 28px system-ui, sans-serif';
-    ctx.fillText('VECTOR READY', 380, 270);
 
     canvas.toBlob((blob) => {
       if (!blob) return;
