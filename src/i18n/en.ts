@@ -128,8 +128,7 @@ export const en: Messages = {
     zoomIn: 'Zoom in',
     zoomOut: 'Zoom out',
     zoomReset: 'Reset zoom',
-    compareAria: 'Drag the handle to compare original and vector',
-    compareHandle: 'Compare slider',
+    compareAria: 'Side-by-side comparison of original and vector',
   },
   footer: {
     privacyTitle: 'Privacy',

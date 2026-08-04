@@ -126,8 +126,7 @@ export const zhCN: Messages = {
     zoomIn: '放大',
     zoomOut: '缩小',
     zoomReset: '重置缩放',
-    compareAria: '拖动滑块对比原图与矢量图',
-    compareHandle: '对比滑块',
+    compareAria: '原图与矢量图并排对比',
   },
   footer: {
     privacyTitle: '隐私保护',

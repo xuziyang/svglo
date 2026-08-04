@@ -87,21 +87,17 @@ export function PreviewPane(props: PreviewPaneProps) {
 
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [comparePos, setComparePos] = useState(50);
   const [dragging, setDragging] = useState(false);
   const [replaceError, setReplaceError] = useState<string | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const compareRef = useRef<HTMLDivElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const panDrag = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
-  const compareDrag = useRef(false);
   const dropDepth = useRef(0);
 
   // Reset view tools when the source image changes.
   useEffect(() => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
-    setComparePos(50);
     setReplaceError(null);
   }, [imageSrc]);
 
@@ -123,8 +119,6 @@ export function PreviewPane(props: PreviewPaneProps) {
 
   const onStagePointerDown = (event: ReactPointerEvent) => {
     if (zoom <= 1 || event.button !== 0) return;
-    // Don't pan when interacting with the compare handle.
-    if ((event.target as HTMLElement).closest('.compare-handle')) return;
     panDrag.current = {
       x: event.clientX,
       y: event.clientY,
@@ -146,38 +140,6 @@ export function PreviewPane(props: PreviewPaneProps) {
     panDrag.current = null;
     try {
       event.currentTarget.releasePointerCapture(event.pointerId);
-    } catch {
-      // already released
-    }
-  };
-
-  const updateCompareFromClientX = useCallback((clientX: number) => {
-    const el = compareRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    if (rect.width <= 0) return;
-    const pct = ((clientX - rect.left) / rect.width) * 100;
-    setComparePos(Math.min(95, Math.max(5, pct)));
-  }, []);
-
-  const onComparePointerDown = (event: ReactPointerEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    compareDrag.current = true;
-    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
-    updateCompareFromClientX(event.clientX);
-  };
-
-  const onComparePointerMove = (event: ReactPointerEvent) => {
-    if (!compareDrag.current) return;
-    updateCompareFromClientX(event.clientX);
-  };
-
-  const onComparePointerUp = (event: ReactPointerEvent) => {
-    if (!compareDrag.current) return;
-    compareDrag.current = false;
-    try {
-      (event.currentTarget as HTMLElement).releasePointerCapture(event.pointerId);
     } catch {
       // already released
     }
@@ -370,52 +332,34 @@ export function PreviewPane(props: PreviewPaneProps) {
           )}
 
           {view === 'compare' && imageSrc && (
-            <div
-              ref={compareRef}
-              className="compare-frame"
-              role="img"
-              aria-label={t('preview.compareAria')}
-            >
-              <img
-                src={vectorUrl ?? imageSrc}
-                alt=""
-                className={`compare-base ${vectorUrl ? '' : 'pane-pending'}`}
-                draggable={false}
-              />
-              <img
-                src={imageSrc}
-                alt=""
-                className="compare-overlay"
-                draggable={false}
-                style={{ clipPath: `inset(0 ${100 - comparePos}% 0 0)` }}
-              />
-              <div
-                className="compare-handle"
-                style={{ left: `${comparePos}%` }}
-                onPointerDown={onComparePointerDown}
-                onPointerMove={onComparePointerMove}
-                onPointerUp={onComparePointerUp}
-                onPointerCancel={onComparePointerUp}
-                role="slider"
-                aria-valuemin={5}
-                aria-valuemax={95}
-                aria-valuenow={Math.round(comparePos)}
-                aria-label={t('preview.compareHandle')}
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'ArrowLeft') setComparePos((p) => Math.max(5, p - 2));
-                  if (e.key === 'ArrowRight') setComparePos((p) => Math.min(95, p + 2));
-                }}
-              >
-                <span className="compare-handle-line" />
-                <span className="compare-handle-knob" aria-hidden>
-                  ‹ ›
-                </span>
-              </div>
-              <div className="compare-labels" aria-hidden>
-                <span>{t('preview.original')}</span>
-                <span>{t('preview.vector')}</span>
-              </div>
+            <div className="compare-split" role="group" aria-label={t('preview.compareAria')}>
+              <figure className="compare-pane">
+                <img
+                  src={imageSrc}
+                  alt={t('preview.originalAlt')}
+                  className="pane-img"
+                  draggable={false}
+                />
+                <figcaption>{t('preview.original')}</figcaption>
+              </figure>
+              <figure className="compare-pane">
+                {vectorUrl ? (
+                  <img
+                    src={vectorUrl}
+                    alt={t('preview.vectorAlt')}
+                    className="pane-img pane-vector"
+                    draggable={false}
+                  />
+                ) : (
+                  <img
+                    src={imageSrc}
+                    alt={t('preview.originalAlt')}
+                    className="pane-img pane-pending"
+                    draggable={false}
+                  />
+                )}
+                <figcaption>{t('preview.vector')}</figcaption>
+              </figure>
             </div>
           )}
         </div>

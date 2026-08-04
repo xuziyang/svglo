@@ -114,7 +114,6 @@ export interface Messages {
     zoomOut: string;
     zoomReset: string;
     compareAria: string;
-    compareHandle: string;
   };
   footer: {
     privacyTitle: string;
