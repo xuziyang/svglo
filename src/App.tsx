@@ -11,7 +11,8 @@ import { DEFAULT_CONFIG, PRESETS, type Preset, type PresetId } from './lib/prese
 import type { VTracerConfig } from './lib/vtracer';
 
 export default function App() {
-  const { status, progress, svgString, error, convert, cancel } = useVTracer();
+  const { status, progress, svgString, pathCount, error, convert, cancel, reset, clearResult } =
+    useVTracer();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -72,17 +73,24 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [config, convert]);
 
-  const handleImage = useCallback((file: File) => {
-    if (urlRef.current) URL.revokeObjectURL(urlRef.current);
-    const url = URL.createObjectURL(file);
-    urlRef.current = url;
-    setImageDims(null);
-    setImageSrc(url);
-    setView('after');
-  }, []);
+  const handleImage = useCallback(
+    (file: File) => {
+      // Drop the previous vector so we never show a stale result for a new image.
+      clearResult();
+      if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+      const url = URL.createObjectURL(file);
+      urlRef.current = url;
+      setImageDims(null);
+      setImageSrc(url);
+      setView('after');
+      setCopied(false);
+      // Keep converter config/preset; a new convert will start from the image-load effect.
+    },
+    [clearResult],
+  );
 
   const handleReset = useCallback(() => {
-    cancel();
+    reset();
     if (urlRef.current) {
       URL.revokeObjectURL(urlRef.current);
       urlRef.current = null;
@@ -90,7 +98,8 @@ export default function App() {
     hasImageRef.current = false;
     setImageSrc(null);
     setImageDims(null);
-  }, [cancel]);
+    setCopied(false);
+  }, [reset]);
 
   const handleExample = useCallback(() => {
     const canvas = document.createElement('canvas');
@@ -245,9 +254,12 @@ export default function App() {
               status={status}
               progress={progress}
               svgString={svgString}
+              pathCount={pathCount}
               error={error}
               onRetry={handleRetry}
               onReset={handleReset}
+              onCancel={cancel}
+              onReplaceImage={handleImage}
               onDownload={handleDownload}
               onCopy={handleCopy}
               copied={copied}

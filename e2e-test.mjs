@@ -105,8 +105,13 @@ const server = spawn(process.execPath, [viteCli, 'preview', '--port', PORT, '--s
   const reopenedSpeckle = await speckleSlider.inputValue();
 
   // Let the final debounced conversion finish before inspecting the SVG.
+  // Re-converts use a non-blocking progress strip (not the full-screen overlay).
   await page.waitForTimeout(350);
-  await page.waitForSelector('.preview-overlay', { state: 'detached', timeout: 45000 });
+  await page.waitForFunction(
+    () => !document.querySelector('.preview-overlay') && !document.querySelector('.preview-progress-inline'),
+    null,
+    { timeout: 45000 },
+  );
 
   const controlsOk =
     initialControls.advancedExpanded === 'false'

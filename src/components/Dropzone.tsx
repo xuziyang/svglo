@@ -1,31 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '../i18n';
+import { ACCEPTED_IMAGE_TYPES, validateImageFile } from '../lib/imageInput';
 
 interface DropzoneProps {
   onImage: (file: File) => void;
   onExample: () => void;
 }
 
-const ACCEPTED = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/bmp', 'image/x-ms-bmp'];
-const ACCEPTED_EXTENSIONS = /\.(png|jpe?g|webp|gif|bmp)$/i;
-const MAX_FILE_BYTES = 25 * 1024 * 1024;
-const MAX_IMAGE_PIXELS = 40_000_000;
-
-function readImageDimensions(file: File) {
-  return new Promise<{ width: number; height: number }>((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const image = new Image();
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve({ width: image.naturalWidth, height: image.naturalHeight });
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Unreadable image'));
-    };
-    image.src = url;
-  });
-}
+const ERROR_COPY = {
+  unsupported: 'dropzone.unsupported',
+  tooLarge: 'dropzone.tooLarge',
+  tooManyPixels: 'dropzone.tooManyPixels',
+  unreadable: 'dropzone.unreadable',
+} as const;
 
 export function Dropzone({ onImage, onExample }: DropzoneProps) {
   const [dragging, setDragging] = useState(false);
@@ -38,29 +25,15 @@ export function Dropzone({ onImage, onExample }: DropzoneProps) {
     async (files: FileList | File[] | null) => {
       if (!files || files.length === 0) return;
       const file = files[0];
-      const supported = ACCEPTED.includes(file.type) || ACCEPTED_EXTENSIONS.test(file.name);
-      if (!supported) {
-        setValidationError(t('dropzone.unsupported'));
-        return;
-      }
-      if (file.size > MAX_FILE_BYTES) {
-        setValidationError(t('dropzone.tooLarge'));
-        return;
-      }
-      try {
-        const { width, height } = await readImageDimensions(file);
-        if (width * height > MAX_IMAGE_PIXELS) {
-          setValidationError(t('dropzone.tooManyPixels'));
-          return;
-        }
-      } catch {
-        setValidationError(t('dropzone.unreadable'));
+      const result = await validateImageFile(file);
+      if (!result.ok) {
+        setValidationError(t(ERROR_COPY[result.error]));
         return;
       }
       setValidationError(null);
       onImage(file);
     },
-    [onImage, t],
+    [onImage],
   );
 
   const onDrop = useCallback(
@@ -120,7 +93,7 @@ export function Dropzone({ onImage, onExample }: DropzoneProps) {
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPTED.join(',')}
+        accept={ACCEPTED_IMAGE_TYPES.join(',')}
         hidden
         onChange={(e) => {
           void handleFiles(e.target.files);
