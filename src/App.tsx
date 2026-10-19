@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Header } from './components/Header';
-import { Footer } from './components/Footer';
+import { SiteFooter } from './components/SiteFooter';
 import { Dropzone } from './components/Dropzone';
 import { Article } from './components/Article';
 import { ControlPanel } from './components/ControlPanel';
@@ -267,7 +267,7 @@ export default function App() {
           </div>
         )}
       </main>
-      <Footer />
+      <SiteFooter />
     </div>
   );
 }

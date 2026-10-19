@@ -54,11 +54,25 @@ npm run typecheck # type check
 ```text
 dist/
   index.html             # English title, description, social tags, and SEO text shell
+  about/                 # trust pages (English)
+  contact/
+  privacy/
+  terms/
+  zh-cn/                 # Simplified Chinese routes, including about/contact/privacy/terms
   404.html               # English static 404 (noindex); static hosts auto-serve it
   sitemap.xml
   robots.txt
   assets/...
 ```
+
+`ads.txt` is emitted only when `ADSENSE_PUBLISHER_ID` is set at build time:
+
+```sh
+ADSENSE_PUBLISHER_ID=pub-XXXXXXXXXXXXXXXX npm run build
+```
+
+Without it, the build leaves `ads.txt` out (and removes a stale one), so a placeholder
+publisher ID can never be deployed by accident.
 
 ### Cloudflare Pages (recommended)
 
@@ -68,6 +82,7 @@ dist/
 | Build output directory | `dist` |
 | Root directory | `/` (repo root) |
 | Env var `SITE_URL` | optional; defaults to `https://svglo.com` |
+| Env var `ADSENSE_PUBLISHER_ID` | optional; set once the AdSense publisher ID exists |
 
 - wasm deps are vendored in-repo (`vendor/`), so CI needs no Rust step
 - Build always emits absolute canonical and Open Graph URLs, plus `/robots.txt`, `/sitemap.xml`, and `/404.html`
@@ -87,6 +102,7 @@ SVGlo has one English page at `/`.
 - `src/lib/vtracer.ts`: wasm init + param transforms + tick loop. Mirrors the original webapp's parameter conversion (`filter_speckle` squared, `color_precision` inverted, angles to radians).
 - `src/hooks/useVTracer.ts`: state management with a sequence number so later requests supersede in-flight ones (fast param tweaks don't race).
 - `src/components/PreviewPane.tsx`: working `<canvas>` (wasm reads pixels) and `<svg>` (wasm writes paths) stay mounted; React does not manage the svg's children.
+- `src/lib/analyticsConsent.ts`: Google Consent Mode defaults plus the stored analytics choice; `index.html` sets `consent default` before `gtag('config')`, and `ConsentBanner` updates it.
 
 ## Parameters
 

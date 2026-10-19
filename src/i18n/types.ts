@@ -3,6 +3,8 @@ export interface PresetMessages {
   description: string;
 }
 
+export type Locale = 'en' | 'zh-CN';
+
 export interface Messages {
   meta: {
     title: string;
@@ -17,6 +19,8 @@ export interface Messages {
     svgToPng: string;
     language: string;
     languageMenu: string;
+    menu: string;
+    siteNav: string;
   };
   hero: {
     titleBefore: string;
@@ -118,13 +122,22 @@ export interface Messages {
   footer: {
     privacyTitle: string;
     privacySummary: string;
-    privacyBody: string;
     privacy: string;
+    about: string;
+    contact: string;
+    terms: string;
+    cookieSettings: string;
     copyright: string;
-    close: string;
     imageToSvg: string;
     svgToJpg: string;
     svgToPng: string;
+  };
+  consent: {
+    title: string;
+    body: string;
+    accept: string;
+    reject: string;
+    privacyLink: string;
   };
   notFound: {
     metaTitle: string;

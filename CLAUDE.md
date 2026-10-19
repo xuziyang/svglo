@@ -103,12 +103,28 @@ and descriptions come from the typed English catalog under `src/i18n/`.
 | `src/i18n/index.ts` | Path-based locale selection, typed `t()` lookup, and content exports |
 | `src/i18n/article.ts` | English article and FAQ content |
 | `src/i18n/article.zhCN.ts` | Simplified Chinese article and FAQ content |
-| `vite-plugin-static-html.ts` | Metadata, JSON-LD, SEO shell, sitemap, robots, and static 404 |
+| `src/i18n/legal.ts` | About, contact, privacy, and terms copy in both languages |
+| `src/components/LegalPage.tsx` | Shared layout for the trust pages |
+| `src/components/ConsentBanner.tsx` | First-visit analytics consent choice |
+| `vite-plugin-static-html.ts` | Metadata, JSON-LD, SEO shell, sitemap, robots, ads.txt, static 404 |
 
 English remains the default at `/`. Simplified Chinese is served at `/zh-cn/`,
 `/zh-cn/svg-to-jpg/`, and `/zh-cn/svg-to-png/`. The active locale is derived
 from the pathname, and the header contains a current-language dropdown that
 switches to the matching route in another language.
+
+Trust pages live at `/about/`, `/contact/`, `/privacy/`, and `/terms/`, with
+Chinese counterparts under `/zh-cn/`. Their copy is typed in
+`src/i18n/legal.ts` and rendered by `src/components/LegalPage.tsx`; the build
+plugin emits static HTML for each route. Keep the privacy policy aligned with
+the actual data flows (GA4, Cloudflare, AdSense) and keep the footer links real
+`<a href>` elements rather than JavaScript-only dialogs.
+
+Analytics consent: `index.html` sets Google Consent Mode defaults (all denied)
+before `gtag('config')`, using a stored `svglo-analytics-consent` value.
+`src/lib/analyticsConsent.ts` owns the storage key and update calls, and
+`ConsentBanner` asks on first visit. The footer's "Cookie settings" control
+re-opens the choice. Do not add tracking that fires before consent.
 
 The Vite plugin injects localized metadata and a matching text content shell
 into each language entry. Crawlers and browsers without JavaScript therefore
@@ -122,11 +138,23 @@ dist/
   zh-cn/index.html
   zh-cn/svg-to-jpg/index.html
   zh-cn/svg-to-png/index.html
+  about/index.html
+  contact/index.html
+  privacy/index.html
+  terms/index.html
+  zh-cn/about/index.html
+  zh-cn/contact/index.html
+  zh-cn/privacy/index.html
+  zh-cn/terms/index.html
   404.html
   robots.txt
   sitemap.xml
   assets/
 ```
+
+`ads.txt` is only generated when `ADSENSE_PUBLISHER_ID` is set (format
+`pub-` plus 16 digits). Without it the build omits `ads.txt` and deletes any
+stale copy; never hardcode a placeholder publisher ID.
 
 Unknown paths must remain real 404 responses. Do not add a catch-all SPA
 rewrite.

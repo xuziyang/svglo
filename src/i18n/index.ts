@@ -1,6 +1,6 @@
 import { en } from './en';
 import { zhCN } from './zhCN';
-import type { MessageKey } from './types';
+import type { Locale, MessageKey } from './types';
 import { articleContent } from './article';
 import { zhCNArticleContent } from './article.zhCN';
 import { enToolPages, zhCNToolPages } from './toolPages';
@@ -8,14 +8,16 @@ import { svgToJpgArticle } from './svgToJpgArticle';
 import { svgToPngArticle } from './svgToPngArticle';
 import { zhCNSvgToJpgArticle } from './svgToJpgArticle.zhCN';
 import { zhCNSvgToPngArticle } from './svgToPngArticle.zhCN';
+import { legalPages } from './legal';
+import type { LegalPageId } from './legal';
 
-export type { MessageKey, Messages } from './types';
+export type { Locale, MessageKey, Messages } from './types';
 export { en } from './en';
 export { zhCN } from './zhCN';
 export { articleContent } from './article';
 export { zhCNArticleContent } from './article.zhCN';
-
-export type Locale = 'en' | 'zh-CN';
+export { legalPages, SUPPORT_EMAIL, REPO_URL, LEGAL_PAGE_IDS, legalPageFromPath } from './legal';
+export type { LegalPageId, LegalPageCopy, LegalSection, LegalBlock } from './legal';
 
 export function localeFromPath(pathname: string): Locale {
   return pathname === '/zh-cn' || pathname.startsWith('/zh-cn/') ? 'zh-CN' : 'en';
@@ -45,7 +47,12 @@ export function homePath(): string {
   return locale === 'zh-CN' ? '/zh-cn/' : '/';
 }
 
-export function localizedPath(path: '/' | '/svg-to-jpg/' | '/svg-to-png/', targetLocale = locale): string {
+export type LegalPath = `/${LegalPageId}/`;
+
+export function localizedPath(
+  path: '/' | '/svg-to-jpg/' | '/svg-to-png/' | LegalPath,
+  targetLocale = locale,
+): string {
   if (targetLocale === 'en') return path;
   return path === '/' ? '/zh-cn/' : `/zh-cn${path}`;
 }

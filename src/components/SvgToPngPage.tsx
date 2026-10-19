@@ -6,7 +6,7 @@ import {
   readSvg,
   type SvgDocument,
 } from '../lib/svgRaster';
-import { Footer } from './Footer';
+import { SiteFooter } from './SiteFooter';
 import { Header } from './Header';
 import { RelatedTools } from './RelatedTools';
 import { SvgToPngArticle } from './SvgToPngArticle';
@@ -338,7 +338,7 @@ export function SvgToPngPage() {
         <SvgToPngArticle />
         <RelatedTools current="svg-to-png" />
       </main>
-      <Footer />
+      <SiteFooter />
     </div>
   );
 }

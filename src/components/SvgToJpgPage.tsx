@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Footer } from './Footer';
+import { SiteFooter } from './SiteFooter';
 import { Header } from './Header';
 import { SvgToJpgArticle } from './SvgToJpgArticle';
 import { RelatedTools } from './RelatedTools';
@@ -354,7 +354,7 @@ export function SvgToJpgPage() {
         <SvgToJpgArticle />
         <RelatedTools current="svg-to-jpg" />
       </main>
-      <Footer />
+      <SiteFooter />
     </div>
   );
 }

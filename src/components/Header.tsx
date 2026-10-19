@@ -15,6 +15,18 @@ export function Header({ hasImage, onReset, currentTool = 'image-to-svg' }: Head
         ? '/svg-to-png/'
         : '/';
 
+  const toolLinks: { id: NonNullable<HeaderProps['currentTool']>; href: string; label: string }[] = [
+    { id: 'image-to-svg', href: localizedHome, label: t('header.imageToSvg') },
+    { id: 'svg-to-jpg', href: localizedPath('/svg-to-jpg/'), label: t('header.svgToJpg') },
+    { id: 'svg-to-png', href: localizedPath('/svg-to-png/'), label: t('header.svgToPng') },
+  ];
+  const trustLinks = [
+    { href: localizedPath('/about/'), label: t('footer.about') },
+    { href: localizedPath('/contact/'), label: t('footer.contact') },
+    { href: localizedPath('/privacy/'), label: t('footer.privacy') },
+    { href: localizedPath('/terms/'), label: t('footer.terms') },
+  ];
+
   return (
     <header className="header">
       <div className="header-inner">
@@ -63,15 +75,15 @@ export function Header({ hasImage, onReset, currentTool = 'image-to-svg' }: Head
           </span>
         </a>
         <nav className="header-nav">
-          <a className={`link-btn tool-link ${currentTool === 'image-to-svg' ? 'is-active' : ''}`} href={localizedHome}>
-            {t('header.imageToSvg')}
-          </a>
-          <a className={`link-btn tool-link ${currentTool === 'svg-to-jpg' ? 'is-active' : ''}`} href={localizedPath('/svg-to-jpg/')}>
-            {t('header.svgToJpg')}
-          </a>
-          <a className={`link-btn tool-link ${currentTool === 'svg-to-png' ? 'is-active' : ''}`} href={localizedPath('/svg-to-png/')}>
-            {t('header.svgToPng')}
-          </a>
+          {toolLinks.map((link) => (
+            <a
+              key={link.id}
+              className={`link-btn tool-link ${currentTool === link.id ? 'is-active' : ''}`}
+              href={link.href}
+            >
+              {link.label}
+            </a>
+          ))}
           {hasImage && (
             <button className="link-btn" onClick={onReset}>
               {currentTool === 'image-to-svg' ? t('header.newImage') : t('header.newSvg')}
@@ -94,6 +106,22 @@ export function Header({ hasImage, onReset, currentTool = 'image-to-svg' }: Head
               </a>
             </div>
           </details>
+          <details className="mobile-menu">
+            <summary className="link-btn mobile-menu-toggle" aria-label={t('header.menu')}>
+              <MenuIcon />
+              <span>{t('header.menu')}</span>
+            </summary>
+            <div className="mobile-menu-popover">
+              {toolLinks.map((link) => (
+                <a key={link.id} className={currentTool === link.id ? 'is-current' : ''} href={link.href}>
+                  {link.label}
+                </a>
+              ))}
+              {trustLinks.map((link) => (
+                <a key={link.href} href={link.href}>{link.label}</a>
+              ))}
+            </div>
+          </details>
         </nav>
       </div>
     </header>
@@ -105,6 +133,14 @@ function GlobeIcon() {
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" aria-hidden>
       <circle cx="12" cy="12" r="9" strokeWidth="1.7" />
       <path d="M3.5 12h17M12 3c2.3 2.5 3.5 5.5 3.5 9S14.3 18.5 12 21c-2.3-2.5-3.5-5.5-3.5-9S9.7 5.5 12 3Z" strokeWidth="1.7" />
+    </svg>
+  );
+}
+
+function MenuIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" aria-hidden>
+      <path d="M4 7h16M4 12h16M4 17h16" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }

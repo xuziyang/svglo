@@ -15,6 +15,8 @@ export const zhCN: Messages = {
     svgToPng: 'SVG 转 PNG',
     language: '简体中文',
     languageMenu: '选择语言',
+    menu: '菜单',
+    siteNav: '站点',
   },
   hero: {
     titleBefore: '免费 SVG 转换器',
@@ -131,14 +133,23 @@ export const zhCN: Messages = {
   footer: {
     privacyTitle: '隐私保护',
     privacySummary: '图片不会上传或保存。',
-    privacyBody:
-      'SVGlo 没有图片上传接口，也不会存储你的图片或转换结果。关闭当前页面后，工作副本即被清除。',
     privacy: '隐私',
+    about: '关于',
+    contact: '联系',
+    terms: '条款',
+    cookieSettings: 'Cookie 设置',
     copyright: '© 2026 SVGlo。保留所有权利。',
-    close: '关闭',
     imageToSvg: '图片转 SVG',
     svgToJpg: 'SVG 转 JPG',
     svgToPng: 'SVG 转 PNG',
+  },
+  consent: {
+    title: 'Cookie 与统计分析',
+    body:
+      'SVGlo 转换图片本身不需要 Cookie 同意：所有文件都在本地处理，从不上传。在你允许后，我们还会使用 Google Analytics 了解网站的使用情况。你可以随时接受或拒绝统计分析。',
+    accept: '接受统计分析',
+    reject: '拒绝统计分析',
+    privacyLink: '隐私政策',
   },
   notFound: {
     metaTitle: '页面未找到 | SVGlo',

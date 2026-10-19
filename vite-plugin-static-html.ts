@@ -1,7 +1,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { Plugin } from 'vite';
-import { articleContent, en, zhCN, zhCNArticleContent } from './src/i18n';
+import {
+  articleContent,
+  en,
+  legalPages,
+  localizedPath,
+  LEGAL_PAGE_IDS,
+  zhCN,
+  zhCNArticleContent,
+  type LegalPageCopy,
+  type LegalPageId,
+  type Locale,
+} from './src/i18n';
 import { svgToJpgArticle } from './src/i18n/svgToJpgArticle';
 import { svgToPngArticle } from './src/i18n/svgToPngArticle';
 import { zhCNSvgToJpgArticle } from './src/i18n/svgToJpgArticle.zhCN';
@@ -24,6 +35,7 @@ const SVG_TO_PNG_TITLE = 'SVG to PNG Converter – Convert SVG to PNG Online | S
 const SVG_TO_PNG_DESCRIPTION =
   'Convert SVG to PNG online for free with SVGlo. Preserve transparency, set exact dimensions, preview the result, and download a lossless PNG without uploads.';
 const ZH_CN_PATH = '/zh-cn/';
+const ADS_TXT_PUBLISHER_RE = /^pub-\d{10,20}$/;
 
 function siteOrigin(): string {
   const raw = process.env.SITE_URL ?? process.env.VITE_SITE_URL;
@@ -47,6 +59,10 @@ function buildStaticToolNav(): string {
         <a href="/">Image to SVG Converter</a>
         <a href="/svg-to-jpg/">SVG to JPG Converter</a>
         <a href="/svg-to-png/">SVG to PNG Converter</a>
+        <a href="/about/">About</a>
+        <a href="/contact/">Contact</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="/terms/">Terms</a>
       </nav>`;
 }
 
@@ -353,6 +369,10 @@ ${section.paragraphs.map((paragraph) => `          <p>${escapeMarkup(paragraph)}
         <a href="/zh-cn/">图片转 SVG</a>
         <a href="/zh-cn/svg-to-jpg/">SVG 转 JPG</a>
         <a href="/zh-cn/svg-to-png/">SVG 转 PNG</a>
+        <a href="/zh-cn/about/">关于</a>
+        <a href="/zh-cn/contact/">联系</a>
+        <a href="/zh-cn/privacy/">隐私</a>
+        <a href="/zh-cn/terms/">条款</a>
         <a href="${tool === 'jpg' ? SVG_TO_JPG_PATH : SVG_TO_PNG_PATH}" lang="en">English</a>
       </nav>
       <main class="seo-shell-main">
@@ -607,6 +627,10 @@ function buildZhCNSeoShell(): string {
         <a href="/zh-cn/">图片转 SVG</a>
         <a href="/svg-to-jpg/">SVG 转 JPG</a>
         <a href="/svg-to-png/">SVG 转 PNG</a>
+        <a href="/zh-cn/about/">关于</a>
+        <a href="/zh-cn/contact/">联系</a>
+        <a href="/zh-cn/privacy/">隐私</a>
+        <a href="/zh-cn/terms/">条款</a>
         <a href="/" lang="en">English</a>
       </nav>
       <main class="seo-shell-main">
@@ -723,12 +747,137 @@ function buildSitemap(origin: string, lastmod = new Date().toISOString().slice(0
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+${buildLegalSitemapEntries(origin, lastmod)}
 </urlset>
 `;
 }
 
+function buildLegalSitemapEntries(origin: string, lastmod: string): string {
+  return LEGAL_PAGE_IDS
+    .flatMap((page) =>
+      (['en', 'zh-CN'] as const).map((targetLocale) => `  <url>
+    <loc>${escapeMarkup(`${origin}${localizedPath(`/${page}/`, targetLocale)}`)}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>${targetLocale === 'en' ? '0.3' : '0.2'}</priority>
+  </url>`),
+    )
+    .join('\n');
+}
+
 function buildRobots(origin: string): string {
   return `User-agent: *\nAllow: /\n\nSitemap: ${origin}/sitemap.xml\n`;
+}
+
+/**
+ * ads.txt is only emitted when a real publisher ID is supplied at build time,
+ * so a placeholder ID can never be deployed by accident.
+ */
+function buildAdsTxt(): string | null {
+  const publisherId = process.env.ADSENSE_PUBLISHER_ID?.trim();
+  if (!publisherId) return null;
+  if (!ADS_TXT_PUBLISHER_RE.test(publisherId)) {
+    throw new Error(
+      `ADSENSE_PUBLISHER_ID must look like pub-XXXXXXXXXXXXXXXX (16 digits); received "${publisherId}"`,
+    );
+  }
+  return `google.com, ${publisherId}, DIRECT, f08c47fec0942fa0\n`;
+}
+
+function buildLegalHeadTags(page: LegalPageId, targetLocale: Locale, origin = siteOrigin()): string {
+  const copy = legalPages[targetLocale][page];
+  const canonical = `${origin}${localizedPath(`/${page}/`, targetLocale)}`;
+  const englishCanonical = `${origin}${localizedPath(`/${page}/`, 'en')}`;
+  const chineseCanonical = `${origin}${localizedPath(`/${page}/`, 'zh-CN')}`;
+  const image = `${origin}${OG_IMAGE_PATH}`;
+
+  return [
+    `<meta name="description" content="${escapeMarkup(copy.metaDescription)}" />`,
+    `<link rel="canonical" href="${escapeMarkup(canonical)}" />`,
+    `<link rel="alternate" hreflang="en" href="${escapeMarkup(englishCanonical)}" />`,
+    `<link rel="alternate" hreflang="zh-CN" href="${escapeMarkup(chineseCanonical)}" />`,
+    `<link rel="alternate" hreflang="x-default" href="${escapeMarkup(englishCanonical)}" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="SVGlo" />`,
+    `<meta property="og:title" content="${escapeMarkup(copy.metaTitle)}" />`,
+    `<meta property="og:description" content="${escapeMarkup(copy.metaDescription)}" />`,
+    `<meta property="og:url" content="${escapeMarkup(canonical)}" />`,
+    `<meta property="og:image" content="${escapeMarkup(image)}" />`,
+    `<meta property="og:locale" content="${targetLocale === 'zh-CN' ? 'zh_CN' : 'en_US'}" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${escapeMarkup(copy.metaTitle)}" />`,
+    `<meta name="twitter:description" content="${escapeMarkup(copy.metaDescription)}" />`,
+    `<meta name="twitter:image" content="${escapeMarkup(image)}" />`,
+  ].join('\n    ');
+}
+
+function buildLegalShell(copy: LegalPageCopy, targetLocale: Locale): string {
+  const sections = copy.sections
+    .map((section) => {
+      const body = section.blocks
+        .map((block) =>
+          Array.isArray(block)
+            ? `          <ul>\n${block.map((item) => `            <li>${escapeMarkup(item)}</li>`).join('\n')}\n          </ul>`
+            : `          <p>${escapeMarkup(block)}</p>`,
+        )
+        .join('\n');
+      return `        <section aria-labelledby="legal-${section.id}">
+          <h2 id="legal-${section.id}">${escapeMarkup(section.title)}</h2>
+${body}
+        </section>`;
+    })
+    .join('\n');
+  const isChinese = targetLocale === 'zh-CN';
+  const m = isChinese ? zhCN : en;
+  const home = isChinese ? '/zh-cn/' : '/';
+  const otherLocale: Locale = isChinese ? 'en' : 'zh-CN';
+  const otherHome = isChinese ? '/' : '/zh-cn/';
+  const trustLinks = LEGAL_PAGE_IDS.map(
+    (id) => `        <a href="${localizedPath(`/${id}/`, targetLocale)}">${escapeMarkup(m.footer[id])}</a>`,
+  ).join('\n');
+
+  return `<div class="seo-shell">
+      <header class="seo-shell-header">
+        <strong>SVGlo</strong>
+        <span> — ${escapeMarkup(m.header.tagline)}</span>
+      </header>
+      <nav class="seo-shell-tools" aria-label="${isChinese ? 'SVGlo 页面导航' : 'SVGlo site navigation'}">
+        <a href="${home}">${escapeMarkup(m.header.imageToSvg)}</a>
+${trustLinks}
+        <a href="${otherHome}" lang="${otherLocale}">${otherLocale === 'en' ? 'English' : '简体中文'}</a>
+      </nav>
+      <main class="seo-shell-main">
+        <h1>${escapeMarkup(copy.title)}</h1>
+        <p>${escapeMarkup(copy.lead)}</p>
+        <p>${escapeMarkup(copy.updated)}</p>
+        <article class="seo-shell-article">
+${sections}
+        </article>
+      </main>
+    </div>`;
+}
+
+function buildLegalHtml(
+  homeHtml: string,
+  page: LegalPageId,
+  targetLocale: Locale,
+  origin = siteOrigin(),
+): string {
+  const copy = legalPages[targetLocale][page];
+  let output = homeHtml.replace(
+    /<!-- seo-static-head -->[\s\S]*?<!-- \/seo-static-head -->/i,
+    `<!-- seo-static-head -->\n    ${buildLegalHeadTags(page, targetLocale, origin)}\n    <!-- /seo-static-head -->`,
+  );
+  output = output.replace(/<html\b([^>]*)>/i, (_match, attrs: string) => {
+    const cleaned = attrs.replace(/\s*lang="[^"]*"/i, '');
+    return `<html lang="${targetLocale}"${cleaned}>`;
+  });
+  output = output.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeMarkup(copy.metaTitle)}</title>`);
+  output = output.replace(
+    /<!--seo-shell-->[\s\S]*?<!--\/seo-shell-->/,
+    `<!--seo-shell-->${buildLegalShell(copy, targetLocale)}<!--/seo-shell-->`,
+  );
+  return output;
 }
 
 function buildNotFoundHtml(origin: string): string {
@@ -806,6 +955,11 @@ function buildNotFoundHtml(origin: string): string {
 `;
 }
 
+/** Matches a legal page at root or under /zh-cn, with an optional index.html. */
+const LEGAL_APP_PATH_RE = new RegExp(
+  `^(?:/zh-cn)?/(?:${LEGAL_PAGE_IDS.join('|')})(?:/index\\.html)?/?$`,
+);
+
 function isKnownAppPath(pathname: string): boolean {
   if (pathname === '/' || pathname === '/index.html') return true;
   if (pathname === '/zh-cn' || pathname === '/zh-cn/' || pathname === '/zh-cn/index.html') return true;
@@ -814,10 +968,11 @@ function isKnownAppPath(pathname: string): boolean {
   if (pathname === '/svg-to-jpg' || pathname === '/svg-to-jpg/' || pathname === '/svg-to-jpg/index.html') return true;
   if (pathname === '/svg-to-png' || pathname === '/svg-to-png/' || pathname === '/svg-to-png/index.html') return true;
   if (pathname === '/404' || pathname === '/404.html') return true;
-  if (pathname === '/robots.txt' || pathname === '/sitemap.xml') return true;
+  if (pathname === '/robots.txt' || pathname === '/sitemap.xml' || pathname === '/ads.txt') return true;
   if (pathname.startsWith('/assets/')) return true;
   if (pathname.startsWith('/@') || pathname.startsWith('/node_modules/')) return true;
   if (pathname.startsWith('/src/') || pathname.startsWith('/vendor/')) return true;
+  if (LEGAL_APP_PATH_RE.test(pathname)) return true;
   return HAS_EXTENSION_RE.test(pathname);
 }
 
@@ -830,6 +985,7 @@ function serveNotFound(
   },
   next: () => void,
   body: () => string,
+  adsTxtExists = false,
 ): void {
   if (req.method && req.method !== 'GET' && req.method !== 'HEAD') {
     next();
@@ -837,6 +993,14 @@ function serveNotFound(
   }
 
   const pathname = decodeURIComponent((req.url ?? '/').split('?')[0] ?? '/');
+  // ads.txt is only served when a build actually emitted it; otherwise it must
+  // 404 instead of falling through to the SPA document.
+  if (pathname === '/ads.txt' && !adsTxtExists) {
+    res.statusCode = 404;
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.end('Not found\n');
+    return;
+  }
   if (isKnownAppPath(pathname)) {
     next();
     return;
@@ -859,8 +1023,9 @@ export function staticHtmlPlugin(): Plugin {
 
     configureServer(server) {
       const notFound = buildNotFoundHtml(siteOrigin());
+      const adsTxtExists = fs.existsSync(path.join(server.config.publicDir, 'ads.txt'));
       server.middlewares.use((req, res, next) => {
-        serveNotFound(req, res, next, () => notFound);
+        serveNotFound(req, res, next, () => notFound, adsTxtExists);
       });
     },
 
@@ -878,6 +1043,14 @@ export function staticHtmlPlugin(): Plugin {
       fs.writeFileSync(path.join(outDir, 'robots.txt'), buildRobots(origin), 'utf8');
       fs.writeFileSync(path.join(outDir, 'sitemap.xml'), buildSitemap(origin), 'utf8');
       fs.writeFileSync(path.join(outDir, '404.html'), buildNotFoundHtml(origin), 'utf8');
+      const adsTxt = buildAdsTxt();
+      const adsTxtPath = path.join(outDir, 'ads.txt');
+      if (adsTxt) {
+        fs.writeFileSync(adsTxtPath, adsTxt, 'utf8');
+      } else if (fs.existsSync(adsTxtPath)) {
+        // Never ship a stale ads.txt from a previous build.
+        fs.unlinkSync(adsTxtPath);
+      }
       const homeHtmlPath = path.join(outDir, 'index.html');
       if (fs.existsSync(homeHtmlPath)) {
         const svgToJpgDir = path.join(outDir, 'svg-to-jpg');
@@ -896,20 +1069,33 @@ export function staticHtmlPlugin(): Plugin {
         fs.writeFileSync(path.join(zhCNDir, 'index.html'), buildZhCNHtml(homeHtml, origin), 'utf8');
         fs.writeFileSync(path.join(zhCNSvgToJpgDir, 'index.html'), buildZhCNToolHtml(homeHtml, 'jpg', origin), 'utf8');
         fs.writeFileSync(path.join(zhCNSvgToPngDir, 'index.html'), buildZhCNToolHtml(homeHtml, 'png', origin), 'utf8');
+
+        for (const page of LEGAL_PAGE_IDS) {
+          for (const targetLocale of ['en', 'zh-CN'] as const) {
+            const dir = path.join(outDir, localizedPath(`/${page}/`, targetLocale).replace(/^\/|\/$/g, ''));
+            fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(
+              path.join(dir, 'index.html'),
+              buildLegalHtml(homeHtml, page, targetLocale, origin),
+              'utf8',
+            );
+          }
+        }
       }
 
-      console.log(`\n  static HTML: / + ${ZH_CN_PATH} + ${SVG_TO_JPG_PATH} + ${ZH_CN_SVG_TO_JPG_PATH} + ${SVG_TO_PNG_PATH} + ${ZH_CN_SVG_TO_PNG_PATH} + 404.html   site: ${origin}\n`);
+      console.log(`\n  static HTML: / + ${ZH_CN_PATH} + ${SVG_TO_JPG_PATH} + ${ZH_CN_SVG_TO_JPG_PATH} + ${SVG_TO_PNG_PATH} + ${ZH_CN_SVG_TO_PNG_PATH} + legal pages + 404.html   site: ${origin}${adsTxt ? '' : '   ads.txt: not generated (set ADSENSE_PUBLISHER_ID)'}\n`);
     },
 
     configurePreviewServer(server) {
       const file = path.join(outDir, '404.html');
       const body = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+      const adsTxtExists = fs.existsSync(path.join(outDir, 'ads.txt'));
       server.middlewares.use((req, res, next) => {
         if (!body) {
           next();
           return;
         }
-        serveNotFound(req, res, next, () => body);
+        serveNotFound(req, res, next, () => body, adsTxtExists);
       });
     },
   };

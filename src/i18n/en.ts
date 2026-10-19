@@ -15,6 +15,8 @@ export const en: Messages = {
     svgToPng: 'SVG to PNG',
     language: 'English',
     languageMenu: 'Choose language',
+    menu: 'Menu',
+    siteNav: 'Site',
   },
   hero: {
     titleBefore: 'Free SVG Converter',
@@ -133,14 +135,23 @@ export const en: Messages = {
   footer: {
     privacyTitle: 'Privacy',
     privacySummary: 'Images are processed in your browser and never uploaded.',
-    privacyBody:
-      'SVGlo has no image upload endpoint and does not store your images or results. Conversion runs locally through WebAssembly, and downloads are generated on your device.',
     privacy: 'Privacy',
+    about: 'About',
+    contact: 'Contact',
+    terms: 'Terms',
+    cookieSettings: 'Cookie settings',
     copyright: '© 2026 SVGlo. All rights reserved.',
-    close: 'Close',
     imageToSvg: 'Image to SVG',
     svgToJpg: 'SVG to JPG',
     svgToPng: 'SVG to PNG',
+  },
+  consent: {
+    title: 'Cookies and analytics',
+    body:
+      'SVGlo needs no cookie consent to convert images: every file is processed locally and never uploaded. With your permission we also use Google Analytics to understand how the site is used. You can accept or reject analytics at any time.',
+    accept: 'Accept analytics',
+    reject: 'Reject analytics',
+    privacyLink: 'Privacy policy',
   },
   notFound: {
     metaTitle: 'Page not found | SVGlo',
