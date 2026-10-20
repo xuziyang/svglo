@@ -2,8 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '../i18n';
 import { ACCEPTED_IMAGE_TYPES, validateImageFile } from '../lib/imageInput';
 
+/** How a file reached the dropzone; reported with the `image_uploaded` event. */
+export type ImageSource = 'picker' | 'drop' | 'paste';
+
 interface DropzoneProps {
-  onImage: (file: File) => void;
+  onImage: (file: File, source: ImageSource) => void;
   onExample: () => void;
 }
 
@@ -22,7 +25,7 @@ export function Dropzone({ onImage, onExample }: DropzoneProps) {
   const errorId = 'dropzone-error';
 
   const handleFiles = useCallback(
-    async (files: FileList | File[] | null) => {
+    async (files: FileList | File[] | null, source: ImageSource) => {
       if (!files || files.length === 0) return;
       const file = files[0];
       const result = await validateImageFile(file);
@@ -31,7 +34,7 @@ export function Dropzone({ onImage, onExample }: DropzoneProps) {
         return;
       }
       setValidationError(null);
-      onImage(file);
+      onImage(file, source);
     },
     [onImage],
   );
@@ -41,7 +44,7 @@ export function Dropzone({ onImage, onExample }: DropzoneProps) {
       e.preventDefault();
       depthRef.current = 0;
       setDragging(false);
-      void handleFiles(e.dataTransfer.files);
+      void handleFiles(e.dataTransfer.files, 'drop');
     },
     [handleFiles],
   );
@@ -55,7 +58,7 @@ export function Dropzone({ onImage, onExample }: DropzoneProps) {
         const file = item.getAsFile();
         if (file) {
           event.preventDefault();
-          void handleFiles([file]);
+          void handleFiles([file], 'paste');
           return;
         }
       }
@@ -96,7 +99,7 @@ export function Dropzone({ onImage, onExample }: DropzoneProps) {
         accept={ACCEPTED_IMAGE_TYPES.join(',')}
         hidden
         onChange={(e) => {
-          void handleFiles(e.target.files);
+          void handleFiles(e.target.files, 'picker');
           e.currentTarget.value = '';
         }}
       />

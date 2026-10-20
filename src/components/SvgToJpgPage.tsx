@@ -11,6 +11,7 @@ import {
   type SvgDocument,
 } from '../lib/svgRaster';
 import { activeToolPageCopy, localizedPath, locale } from '../i18n';
+import { trackEvent } from '../lib/analytics';
 const QUALITY_OPTIONS = [
   { id: 'compact', value: 0.78 },
   { id: 'balanced', value: 0.9 },
@@ -191,6 +192,7 @@ export function SvgToJpgPage() {
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
+      trackEvent('raster_tool_downloaded', { format: 'jpg' });
     }, 'image/jpeg', quality.value);
   }, [quality, ready, svg]);
 

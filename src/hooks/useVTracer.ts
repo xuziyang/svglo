@@ -3,6 +3,21 @@ import { convertImage, ensureWasm, type VTracerConfig } from '../lib/vtracer';
 
 export type ConvertStatus = 'idle' | 'loading' | 'running' | 'done' | 'error';
 
+/** What kicked off a conversion; used to tell first runs from parameter tweaks. */
+export type ConvertTrigger = 'image' | 'config' | 'retry';
+
+/** Summary handed to the optional `onDone` callback after a successful run. */
+export interface ConvertResult {
+  pathCount: number;
+  durationMs: number;
+  trigger: ConvertTrigger;
+}
+
+export interface ConvertOptions {
+  trigger: ConvertTrigger;
+  onDone?: (info: ConvertResult) => void;
+}
+
 export interface VTracerState {
   status: ConvertStatus;
   progress: number;
@@ -11,7 +26,12 @@ export interface VTracerState {
   error: string | null;
   /** True once the wasm module has finished loading at least once. */
   engineReady: boolean;
-  convert: (canvas: HTMLCanvasElement, svg: SVGSVGElement, config: VTracerConfig) => void;
+  convert: (
+    canvas: HTMLCanvasElement,
+    svg: SVGSVGElement,
+    config: VTracerConfig,
+    options: ConvertOptions,
+  ) => void;
   /** Abort an in-flight run but keep the last good result. */
   cancel: () => void;
   /** Abort and clear result state (used when leaving the workspace). */
@@ -70,8 +90,14 @@ export function useVTracer(): VTracerState {
   }, [preload]);
 
   const convert = useCallback(
-    (canvas: HTMLCanvasElement, svg: SVGSVGElement, config: VTracerConfig) => {
+    (
+      canvas: HTMLCanvasElement,
+      svg: SVGSVGElement,
+      config: VTracerConfig,
+      options: ConvertOptions,
+    ) => {
       const seq = ++seqRef.current;
+      const startedAt = Date.now();
       setStatus('running');
       setProgress(0);
       setError(null);
@@ -89,12 +115,18 @@ export function useVTracer(): VTracerState {
       })
         .then((result) => {
           if (seq !== seqRef.current) return;
+          const count = countPaths(result);
           hasResultRef.current = true;
           setSvgString(result);
-          setPathCount(countPaths(result));
+          setPathCount(count);
           setProgress(100);
           setStatus('done');
           setEngineReady(true);
+          options.onDone?.({
+            pathCount: count,
+            durationMs: Date.now() - startedAt,
+            trigger: options.trigger,
+          });
         })
         .catch((e: unknown) => {
           if (seq !== seqRef.current) return;

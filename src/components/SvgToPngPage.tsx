@@ -11,6 +11,7 @@ import { Header } from './Header';
 import { RelatedTools } from './RelatedTools';
 import { SvgToPngArticle } from './SvgToPngArticle';
 import { activeToolPageCopy, localizedPath, locale } from '../i18n';
+import { trackEvent } from '../lib/analytics';
 
 type BackgroundMode = 'transparent' | 'white' | 'dark' | 'custom';
 
@@ -179,6 +180,7 @@ export function SvgToPngPage() {
       anchor.click();
       anchor.remove();
       URL.revokeObjectURL(url);
+      trackEvent('raster_tool_downloaded', { format: 'png' });
     } catch {
       setError(copy.createError);
     }

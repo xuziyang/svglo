@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Header } from './components/Header';
 import { SiteFooter } from './components/SiteFooter';
-import { Dropzone } from './components/Dropzone';
+import { Dropzone, type ImageSource } from './components/Dropzone';
 import { Article } from './components/Article';
 import { ControlPanel } from './components/ControlPanel';
 import { PreviewPane, type PreviewView } from './components/PreviewPane';
-import { useVTracer } from './hooks/useVTracer';
+import { useVTracer, type ConvertResult } from './hooks/useVTracer';
 import { t } from './i18n';
+import { trackEvent } from './lib/analytics';
 import { DEFAULT_CONFIG, PRESETS, type Preset, type PresetId } from './lib/presets';
 import type { VTracerConfig } from './lib/vtracer';
+
+/** Every way a file can reach the workspace; reported with `image_uploaded`. */
+type UploadSource = ImageSource | 'example' | 'replace';
 
 export default function App() {
   const { status, progress, svgString, pathCount, error, convert, cancel, reset, clearResult } =
@@ -19,6 +23,9 @@ export default function App() {
   // configRef mirrors `config` so the image-load effect can read the latest
   // config without re-subscribing on every config change.
   const configRef = useRef<VTracerConfig>(DEFAULT_CONFIG);
+  // presetRef mirrors `selectedPresetId` for the same reason: the conversion
+  // callbacks report which preset produced the result.
+  const presetRef = useRef<PresetId>('default');
   const hasImageRef = useRef(false);
   const urlRef = useRef<string | null>(null);
 
@@ -32,6 +39,25 @@ export default function App() {
   useEffect(() => {
     configRef.current = config;
   }, [config]);
+
+  useEffect(() => {
+    presetRef.current = selectedPresetId;
+  }, [selectedPresetId]);
+
+  // Report a finished conversion. `trigger` separates the first run on a new
+  // image from the re-runs caused by parameter tweaks, so the two can be told
+  // apart in GA4 even though both share one event name.
+  const reportConversion = useCallback(
+    (info: ConvertResult) => {
+      trackEvent('conversion_completed', {
+        path_count: info.pathCount,
+        duration_ms: info.durationMs,
+        preset: presetRef.current,
+        trigger: info.trigger,
+      });
+    },
+    [],
+  );
 
   // New image: paint it onto the working canvas, then kick off a conversion.
   useEffect(() => {
@@ -52,13 +78,13 @@ export default function App() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
       setImageDims({ w: img.naturalWidth, h: img.naturalHeight });
-      convert(canvas, svg, configRef.current);
+      convert(canvas, svg, configRef.current, { trigger: 'image', onDone: reportConversion });
     };
     img.src = imageSrc;
     return () => {
       img.src = '';
     };
-  }, [imageSrc, convert]);
+  }, [imageSrc, convert, reportConversion]);
 
   // Config change: debounce, then re-convert using the pixels already on the
   // canvas (no need to re-decode the source image).
@@ -68,13 +94,18 @@ export default function App() {
       const canvas = canvasRef.current;
       const svg = svgRef.current;
       if (!canvas || !svg) return;
-      convert(canvas, svg, config);
+      convert(canvas, svg, config, { trigger: 'config', onDone: reportConversion });
     }, 300);
     return () => clearTimeout(timer);
-  }, [config, convert]);
+  }, [config, convert, reportConversion]);
 
   const handleImage = useCallback(
-    (file: File) => {
+    (file: File, source: UploadSource = 'picker') => {
+      trackEvent('image_uploaded', {
+        source,
+        file_type: file.type || 'unknown',
+        file_kb: Math.round(file.size / 1024),
+      });
       // Drop the previous vector so we never show a stale result for a new image.
       clearResult();
       if (urlRef.current) URL.revokeObjectURL(urlRef.current);
@@ -87,6 +118,11 @@ export default function App() {
       // Keep converter config/preset; a new convert will start from the image-load effect.
     },
     [clearResult],
+  );
+
+  const handleReplaceImage = useCallback(
+    (file: File) => handleImage(file, 'replace'),
+    [handleImage],
   );
 
   const handleReset = useCallback(() => {
@@ -138,7 +174,7 @@ export default function App() {
 
     canvas.toBlob((blob) => {
       if (!blob) return;
-      handleImage(new File([blob], 'svglo-example.png', { type: 'image/png' }));
+      handleImage(new File([blob], 'svglo-example.png', { type: 'image/png' }), 'example');
     }, 'image/png');
   }, [handleImage]);
 
@@ -146,8 +182,8 @@ export default function App() {
     const canvas = canvasRef.current;
     const svg = svgRef.current;
     if (!canvas || !svg || !hasImageRef.current) return;
-    convert(canvas, svg, config);
-  }, [config, convert]);
+    convert(canvas, svg, config, { trigger: 'retry', onDone: reportConversion });
+  }, [config, convert, reportConversion]);
 
   const handleDownload = useCallback(() => {
     if (!svgString) return;
@@ -161,20 +197,26 @@ export default function App() {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
-  }, [svgString]);
+    trackEvent('svg_downloaded', {
+      file_kb: Math.round(blob.size / 1024),
+      preset: selectedPresetId,
+    });
+  }, [svgString, selectedPresetId]);
 
   const handleCopy = useCallback(async () => {
     if (!svgString) return;
     try {
       await navigator.clipboard.writeText(svgString);
+      trackEvent('svg_copied', { preset: selectedPresetId });
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // clipboard unavailable — ignore
     }
-  }, [svgString]);
+  }, [svgString, selectedPresetId]);
 
   const handlePreset = useCallback((preset: Preset) => {
+    trackEvent('preset_selected', { preset: preset.id });
     setSelectedPresetId(preset.id);
     setConfig(preset.config);
   }, []);
@@ -259,7 +301,7 @@ export default function App() {
               onRetry={handleRetry}
               onReset={handleReset}
               onCancel={cancel}
-              onReplaceImage={handleImage}
+              onReplaceImage={handleReplaceImage}
               onDownload={handleDownload}
               onCopy={handleCopy}
               copied={copied}
