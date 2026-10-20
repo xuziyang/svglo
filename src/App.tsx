@@ -20,11 +20,10 @@ export default function App() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  // configRef mirrors `config` so the image-load effect can read the latest
-  // config without re-subscribing on every config change.
+  // These refs mirror state so the image-load and conversion effects can read
+  // the latest values without re-subscribing on every change: config determines
+  // what a new image converts with, preset identifies the result in analytics.
   const configRef = useRef<VTracerConfig>(DEFAULT_CONFIG);
-  // presetRef mirrors `selectedPresetId` for the same reason: the conversion
-  // callbacks report which preset produced the result.
   const presetRef = useRef<PresetId>('default');
   const hasImageRef = useRef(false);
   const urlRef = useRef<string | null>(null);
@@ -38,11 +37,8 @@ export default function App() {
 
   useEffect(() => {
     configRef.current = config;
-  }, [config]);
-
-  useEffect(() => {
     presetRef.current = selectedPresetId;
-  }, [selectedPresetId]);
+  }, [config, selectedPresetId]);
 
   // Report a finished conversion. `trigger` separates the first run on a new
   // image from the re-runs caused by parameter tweaks, so the two can be told
@@ -100,7 +96,7 @@ export default function App() {
   }, [config, convert, reportConversion]);
 
   const handleImage = useCallback(
-    (file: File, source: UploadSource = 'picker') => {
+    (file: File, source: UploadSource) => {
       trackEvent('image_uploaded', {
         source,
         file_type: file.type || 'unknown',

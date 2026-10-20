@@ -1,5 +1,7 @@
 /** Shared raster-image validation for the dropzone and in-workspace replace. */
 
+import type { MessageKey } from '../i18n/types';
+
 export const ACCEPTED_IMAGE_TYPES = [
   'image/png',
   'image/jpeg',
@@ -22,6 +24,38 @@ export type ImageValidationError =
 export type ImageValidationResult =
   | { ok: true; width: number; height: number }
   | { ok: false; error: ImageValidationError };
+
+/** Translation key for each rejection reason; both image pickers render these. */
+const ERROR_MESSAGE_KEYS: Record<ImageValidationError, MessageKey> = {
+  unsupported: 'dropzone.unsupported',
+  tooLarge: 'dropzone.tooLarge',
+  tooManyPixels: 'dropzone.tooManyPixels',
+  unreadable: 'dropzone.unreadable',
+};
+
+/** Localized message for a rejected file. */
+export function imageErrorMessage(
+  error: ImageValidationError,
+  translate: (key: MessageKey) => string,
+): string {
+  return translate(ERROR_MESSAGE_KEYS[error]);
+}
+
+/**
+ * Find the image file a paste event carries, ignoring pastes aimed at text
+ * fields. Returns null when the clipboard holds no image, in which case the
+ * event should be left alone.
+ */
+export function imageFromPasteEvent(event: ClipboardEvent): File | null {
+  const target = event.target as HTMLElement | null;
+  if (target?.matches('input, textarea, [contenteditable="true"]')) return null;
+  for (const item of event.clipboardData?.items ?? []) {
+    if (!item.type.startsWith('image/')) continue;
+    const file = item.getAsFile();
+    if (file) return file;
+  }
+  return null;
+}
 
 function readImageDimensions(file: File) {
   return new Promise<{ width: number; height: number }>((resolve, reject) => {

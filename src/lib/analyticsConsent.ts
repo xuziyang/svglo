@@ -13,8 +13,8 @@ export const CONSENT_EVENT = 'svglo:analytics-consent';
 
 export type AnalyticsConsent = 'granted' | 'denied';
 
-interface GtagWindow extends Window {
-  dataLayer?: unknown[];
+/** The `gtag` entry point index.html installs before React renders. */
+export interface GtagWindow extends Window {
   gtag?: (...args: unknown[]) => void;
 }
 

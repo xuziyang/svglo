@@ -23,8 +23,10 @@ export interface LegalPageCopy {
 }
 
 /** Match a normalized (trailing-slash-stripped) pathname to a legal page. */
+const LEGAL_PATH_RE = new RegExp(`^(?:/zh-cn)?/(${LEGAL_PAGE_IDS.join('|')})$`);
+
 export function legalPageFromPath(pathname: string): LegalPageId | null {
-  const id = pathname.match(/^(?:\/zh-cn)?\/(about|contact|privacy|terms)$/)?.[1];
+  const id = pathname.match(LEGAL_PATH_RE)?.[1];
   return (id as LegalPageId | undefined) ?? null;
 }
 

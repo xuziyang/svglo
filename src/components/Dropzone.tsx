@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '../i18n';
-import { ACCEPTED_IMAGE_TYPES, validateImageFile } from '../lib/imageInput';
+import { ACCEPTED_IMAGE_TYPES, imageErrorMessage, imageFromPasteEvent, validateImageFile } from '../lib/imageInput';
 
 /** How a file reached the dropzone; reported with the `image_uploaded` event. */
 export type ImageSource = 'picker' | 'drop' | 'paste';
@@ -9,13 +9,6 @@ interface DropzoneProps {
   onImage: (file: File, source: ImageSource) => void;
   onExample: () => void;
 }
-
-const ERROR_COPY = {
-  unsupported: 'dropzone.unsupported',
-  tooLarge: 'dropzone.tooLarge',
-  tooManyPixels: 'dropzone.tooManyPixels',
-  unreadable: 'dropzone.unreadable',
-} as const;
 
 export function Dropzone({ onImage, onExample }: DropzoneProps) {
   const [dragging, setDragging] = useState(false);
@@ -30,7 +23,7 @@ export function Dropzone({ onImage, onExample }: DropzoneProps) {
       const file = files[0];
       const result = await validateImageFile(file);
       if (!result.ok) {
-        setValidationError(t(ERROR_COPY[result.error]));
+        setValidationError(imageErrorMessage(result.error, t));
         return;
       }
       setValidationError(null);
@@ -51,17 +44,10 @@ export function Dropzone({ onImage, onExample }: DropzoneProps) {
 
   useEffect(() => {
     const onPaste = (event: ClipboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.matches('input, textarea, [contenteditable="true"]')) return;
-      for (const item of event.clipboardData?.items ?? []) {
-        if (!item.type.startsWith('image/')) continue;
-        const file = item.getAsFile();
-        if (file) {
-          event.preventDefault();
-          void handleFiles([file], 'paste');
-          return;
-        }
-      }
+      const file = imageFromPasteEvent(event);
+      if (!file) return;
+      event.preventDefault();
+      void handleFiles([file], 'paste');
     };
     window.addEventListener('paste', onPaste);
     return () => window.removeEventListener('paste', onPaste);

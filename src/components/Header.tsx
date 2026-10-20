@@ -6,16 +6,29 @@ interface HeaderProps {
   currentTool?: 'image-to-svg' | 'svg-to-jpg' | 'svg-to-png';
 }
 
+type HeaderTool = NonNullable<HeaderProps['currentTool']>;
+type ToolPath = '/' | '/svg-to-jpg/' | '/svg-to-png/';
+
+/** Unprefixed path per tool; used to switch locale on the current page. */
+function toolPath(currentTool: HeaderTool): ToolPath {
+  if (currentTool === 'svg-to-jpg') return '/svg-to-jpg/';
+  if (currentTool === 'svg-to-png') return '/svg-to-png/';
+  return '/';
+}
+
+/** Brand subtitle per tool; the home view shows the general tagline. */
+function brandLabel(currentTool: HeaderTool): string {
+  if (currentTool === 'svg-to-jpg') return t('header.svgToJpg');
+  if (currentTool === 'svg-to-png') return t('header.svgToPng');
+  return t('header.tagline');
+}
+
 export function Header({ hasImage, onReset, currentTool = 'image-to-svg' }: HeaderProps) {
   const localizedHome = homePath();
-  const currentPath =
-    currentTool === 'svg-to-jpg'
-      ? '/svg-to-jpg/'
-      : currentTool === 'svg-to-png'
-        ? '/svg-to-png/'
-        : '/';
+  const currentPath: ToolPath = toolPath(currentTool);
+  const brandLabelText = brandLabel(currentTool);
 
-  const toolLinks: { id: NonNullable<HeaderProps['currentTool']>; href: string; label: string }[] = [
+  const toolLinks: { id: HeaderTool; href: string; label: string }[] = [
     { id: 'image-to-svg', href: localizedHome, label: t('header.imageToSvg') },
     { id: 'svg-to-jpg', href: localizedPath('/svg-to-jpg/'), label: t('header.svgToJpg') },
     { id: 'svg-to-png', href: localizedPath('/svg-to-png/'), label: t('header.svgToPng') },
@@ -65,13 +78,7 @@ export function Header({ hasImage, onReset, currentTool = 'image-to-svg' }: Head
           </span>
           <span className="brand-text">
             <strong>SVGlo</strong>
-            <small>
-              {currentTool === 'svg-to-jpg'
-                ? t('header.svgToJpg')
-                : currentTool === 'svg-to-png'
-                  ? t('header.svgToPng')
-                  : t('header.tagline')}
-            </small>
+            <small>{brandLabelText}</small>
           </span>
         </a>
         <nav className="header-nav">

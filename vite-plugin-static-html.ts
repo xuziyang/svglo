@@ -54,6 +54,32 @@ function canonicalUrl(origin = siteOrigin()): string {
   return `${origin}/`;
 }
 
+/**
+ * Rewrite the shared head/shell of `index.html` for one static route: replace
+ * the metadata placeholder, set `<html lang>`, swap `<title>`, and inject the
+ * no-JavaScript content shell. Every route uses the same document skeleton.
+ */
+function rewriteStaticPage(
+  homeHtml: string,
+  page: { headTags: string; title: string; shell: string; lang?: string },
+): string {
+  let output = homeHtml.replace(
+    /<!-- seo-static-head -->[\s\S]*?<!-- \/seo-static-head -->/i,
+    `<!-- seo-static-head -->\n    ${page.headTags}\n    <!-- /seo-static-head -->`,
+  );
+  if (page.lang) {
+    output = output.replace(/<html\b([^>]*)>/i, (_match, attrs: string) => {
+      const cleaned = attrs.replace(/\s*lang="[^"]*"/i, '');
+      return `<html lang="${page.lang}"${cleaned}>`;
+    });
+  }
+  output = output.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeMarkup(page.title)}</title>`);
+  return output.replace(
+    /<!--seo-shell-->[\s\S]*?<!--\/seo-shell-->/,
+    `<!--seo-shell-->${page.shell}<!--/seo-shell-->`,
+  );
+}
+
 function buildStaticToolNav(): string {
   return `<nav class="seo-shell-tools" aria-label="SVGlo image converters">
         <a href="/">Image to SVG Converter</a>
@@ -163,16 +189,11 @@ ${faq}
 }
 
 function buildSvgToJpgHtml(homeHtml: string, origin = siteOrigin()): string {
-  let output = homeHtml.replace(
-    /<!-- seo-static-head -->[\s\S]*?<!-- \/seo-static-head -->/i,
-    `<!-- seo-static-head -->\n    ${buildSvgToJpgHeadTags(origin)}\n    <!-- /seo-static-head -->`,
-  );
-  output = output.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeMarkup(SVG_TO_JPG_TITLE)}</title>`);
-  output = output.replace(
-    /<!--seo-shell-->[\s\S]*?<!--\/seo-shell-->/,
-    `<!--seo-shell-->${buildSvgToJpgShell()}<!--/seo-shell-->`,
-  );
-  return output;
+  return rewriteStaticPage(homeHtml, {
+    headTags: buildSvgToJpgHeadTags(origin),
+    title: SVG_TO_JPG_TITLE,
+    shell: buildSvgToJpgShell(),
+  });
 }
 
 function buildSvgToPngHeadTags(origin = siteOrigin()): string {
@@ -271,16 +292,11 @@ ${faq}
 }
 
 function buildSvgToPngHtml(homeHtml: string, origin = siteOrigin()): string {
-  let output = homeHtml.replace(
-    /<!-- seo-static-head -->[\s\S]*?<!-- \/seo-static-head -->/i,
-    `<!-- seo-static-head -->\n    ${buildSvgToPngHeadTags(origin)}\n    <!-- /seo-static-head -->`,
-  );
-  output = output.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeMarkup(SVG_TO_PNG_TITLE)}</title>`);
-  output = output.replace(
-    /<!--seo-shell-->[\s\S]*?<!--\/seo-shell-->/,
-    `<!--seo-shell-->${buildSvgToPngShell()}<!--/seo-shell-->`,
-  );
-  return output;
+  return rewriteStaticPage(homeHtml, {
+    headTags: buildSvgToPngHeadTags(origin),
+    title: SVG_TO_PNG_TITLE,
+    shell: buildSvgToPngShell(),
+  });
 }
 
 function buildZhCNToolHeadTags(tool: 'jpg' | 'png', origin = siteOrigin()): string {
@@ -394,21 +410,12 @@ ${faq}
 }
 
 function buildZhCNToolHtml(homeHtml: string, tool: 'jpg' | 'png', origin = siteOrigin()): string {
-  const copy = zhCNToolPages[tool];
-  let output = homeHtml.replace(
-    /<!-- seo-static-head -->[\s\S]*?<!-- \/seo-static-head -->/i,
-    `<!-- seo-static-head -->\n    ${buildZhCNToolHeadTags(tool, origin)}\n    <!-- /seo-static-head -->`,
-  );
-  output = output.replace(/<html\b([^>]*)>/i, (_match, attrs: string) => {
-    const cleaned = attrs.replace(/\s*lang="[^"]*"/i, '');
-    return `<html lang="zh-CN"${cleaned}>`;
+  return rewriteStaticPage(homeHtml, {
+    headTags: buildZhCNToolHeadTags(tool, origin),
+    title: zhCNToolPages[tool].metaTitle,
+    shell: buildZhCNToolShell(tool),
+    lang: 'zh-CN',
   });
-  output = output.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeMarkup(copy.metaTitle)}</title>`);
-  output = output.replace(
-    /<!--seo-shell-->[\s\S]*?<!--\/seo-shell-->/,
-    `<!--seo-shell-->${buildZhCNToolShell(tool)}<!--/seo-shell-->`,
-  );
-  return output;
 }
 
 export function buildJsonLd(origin = siteOrigin()): string {
@@ -666,20 +673,12 @@ ${faq}
 }
 
 function buildZhCNHtml(homeHtml: string, origin = siteOrigin()): string {
-  let output = homeHtml.replace(
-    /<!-- seo-static-head -->[\s\S]*?<!-- \/seo-static-head -->/i,
-    `<!-- seo-static-head -->\n    ${buildZhCNHeadTags(origin)}\n    <!-- /seo-static-head -->`,
-  );
-  output = output.replace(/<html\b([^>]*)>/i, (_match, attrs: string) => {
-    const cleaned = attrs.replace(/\s*lang="[^"]*"/i, '');
-    return `<html lang="zh-CN"${cleaned}>`;
+  return rewriteStaticPage(homeHtml, {
+    headTags: buildZhCNHeadTags(origin),
+    title: zhCN.meta.title,
+    shell: buildZhCNSeoShell(),
+    lang: 'zh-CN',
   });
-  output = output.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeMarkup(zhCN.meta.title)}</title>`);
-  output = output.replace(
-    /<!--seo-shell-->[\s\S]*?<!--\/seo-shell-->/,
-    `<!--seo-shell-->${buildZhCNSeoShell()}<!--/seo-shell-->`,
-  );
-  return output;
 }
 
 function applyStaticHtml(html: string, origin = siteOrigin()): string {
@@ -864,20 +863,12 @@ function buildLegalHtml(
   origin = siteOrigin(),
 ): string {
   const copy = legalPages[targetLocale][page];
-  let output = homeHtml.replace(
-    /<!-- seo-static-head -->[\s\S]*?<!-- \/seo-static-head -->/i,
-    `<!-- seo-static-head -->\n    ${buildLegalHeadTags(page, targetLocale, origin)}\n    <!-- /seo-static-head -->`,
-  );
-  output = output.replace(/<html\b([^>]*)>/i, (_match, attrs: string) => {
-    const cleaned = attrs.replace(/\s*lang="[^"]*"/i, '');
-    return `<html lang="${targetLocale}"${cleaned}>`;
+  return rewriteStaticPage(homeHtml, {
+    headTags: buildLegalHeadTags(page, targetLocale, origin),
+    title: copy.metaTitle,
+    shell: buildLegalShell(copy, targetLocale),
+    lang: targetLocale,
   });
-  output = output.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeMarkup(copy.metaTitle)}</title>`);
-  output = output.replace(
-    /<!--seo-shell-->[\s\S]*?<!--\/seo-shell-->/,
-    `<!--seo-shell-->${buildLegalShell(copy, targetLocale)}<!--/seo-shell-->`,
-  );
-  return output;
 }
 
 function buildNotFoundHtml(origin: string): string {

@@ -6,11 +6,7 @@
  * functions here are no-ops, so callers never need to check first.
  */
 
-import { readConsent } from './analyticsConsent';
-
-interface GtagWindow extends Window {
-  gtag?: (...args: unknown[]) => void;
-}
+import { readConsent, type GtagWindow } from './analyticsConsent';
 
 /** Parameter values GA4 accepts on an event. */
 export type EventParams = Record<string, string | number | boolean>;

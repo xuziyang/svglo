@@ -10,7 +10,12 @@ import {
 } from 'react';
 import type { ConvertStatus } from '../hooks/useVTracer';
 import { t } from '../i18n';
-import { ACCEPTED_IMAGE_TYPES, validateImageFile } from '../lib/imageInput';
+import {
+  ACCEPTED_IMAGE_TYPES,
+  imageErrorMessage,
+  imageFromPasteEvent,
+  validateImageFile,
+} from '../lib/imageInput';
 import { Segmented } from './Segmented';
 
 export type PreviewView = 'before' | 'after' | 'compare';
@@ -151,15 +156,7 @@ export function PreviewPane(props: PreviewPaneProps) {
       const file = files[0];
       const result = await validateImageFile(file);
       if (!result.ok) {
-        const key =
-          result.error === 'unsupported'
-            ? 'dropzone.unsupported'
-            : result.error === 'tooLarge'
-              ? 'dropzone.tooLarge'
-              : result.error === 'tooManyPixels'
-                ? 'dropzone.tooManyPixels'
-                : 'dropzone.unreadable';
-        setReplaceError(t(key));
+        setReplaceError(imageErrorMessage(result.error, t));
         return;
       }
       setReplaceError(null);
@@ -171,17 +168,10 @@ export function PreviewPane(props: PreviewPaneProps) {
   // Paste-to-replace while the workspace is open.
   useEffect(() => {
     const onPaste = (event: ClipboardEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.matches('input, textarea, [contenteditable="true"]')) return;
-      for (const item of event.clipboardData?.items ?? []) {
-        if (!item.type.startsWith('image/')) continue;
-        const file = item.getAsFile();
-        if (file) {
-          event.preventDefault();
-          void acceptReplace([file]);
-          return;
-        }
-      }
+      const file = imageFromPasteEvent(event);
+      if (!file) return;
+      event.preventDefault();
+      void acceptReplace([file]);
     };
     window.addEventListener('paste', onPaste);
     return () => window.removeEventListener('paste', onPaste);
