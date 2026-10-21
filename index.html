@@ -9,14 +9,39 @@
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       var svgloConsent = null;
-      try { svgloConsent = window.localStorage.getItem('svglo-analytics-consent'); } catch (e) {}
+      var svgloInternalTraffic = false;
+      try {
+        svgloConsent = window.localStorage.getItem('svglo-analytics-consent');
+        // GA4's "Internal traffic" data filter matches the `traffic_type` event
+        // parameter, not an IP address, so one `?internal=1` visit keeps this
+        // browser excluded even when its IP address changes. `?internal=0`
+        // clears the marking again.
+        var svgloParams = new URLSearchParams(window.location.search);
+        var svgloInternalFlag = svgloParams.get('internal');
+        if (svgloInternalFlag === '1' || svgloInternalFlag === 'true') {
+          window.localStorage.setItem('svglo-internal-traffic', '1');
+        } else if (svgloInternalFlag === '0' || svgloInternalFlag === 'false') {
+          window.localStorage.removeItem('svglo-internal-traffic');
+        }
+        if (svgloInternalFlag !== null) {
+          // Drop the flag from the address bar so shared links stay clean.
+          svgloParams.delete('internal');
+          var svgloQuery = svgloParams.toString();
+          window.history.replaceState(
+            null,
+            '',
+            window.location.pathname + (svgloQuery ? '?' + svgloQuery : '') + window.location.hash
+          );
+        }
+        svgloInternalTraffic = window.localStorage.getItem('svglo-internal-traffic') === '1';
+      } catch (e) {}
       gtag('consent', 'default', {
         ad_storage: 'denied',
         ad_user_data: 'denied',
         ad_personalization: 'denied',
         analytics_storage: svgloConsent === 'granted' ? 'granted' : 'denied'
       });
-      gtag('config', 'G-4ZEZRGHH7R');
+      gtag('config', 'G-4ZEZRGHH7R', svgloInternalTraffic ? { traffic_type: 'internal' } : {});
     </script>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
