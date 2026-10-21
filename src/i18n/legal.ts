@@ -240,33 +240,33 @@ const chinesePages: Record<LegalPageId, LegalPageCopy> = {
     metaTitle: '关于 SVGlo | 免费的浏览器端图片转 SVG 工具',
     metaDescription:
       '了解 SVGlo 的维护者、浏览器端图片转 SVG 的工作原理，以及为什么图片永远不会离开你的设备。',
-    kicker: '关于',
-    title: '一个小巧的本地优先矢量工具',
+    kicker: '关于我们',
+    title: '轻量、本地优先的矢量工具',
     lead:
-      'SVGlo 是一款完全在浏览器中运行的免费图片转 SVG 转换器，目标是让这项常见的设计工作变得快速、私密，并且不需要注册账号。',
+      'SVGlo 是一款完全在浏览器端运行的免费图片转 SVG 工具，致力于让日常设计中的矢量转换更快速、私密且无繁琐账号门槛。',
     updated: '最后更新：2026 年 10 月 19 日',
     sections: [
       {
         id: 'what',
-        title: 'SVGlo 做什么',
+        title: '产品定位与核心功能',
         blocks: [
-          'SVGlo 可将 PNG、JPG、JPEG、WebP、GIF 和 BMP 图片转换为干净的 SVG 路径，也能把 SVG 转回 JPG 或 PNG。所有处理都通过 WebAssembly 和 Canvas 在你的设备上完成：没有上传接口，不存储图片，也不需要账号。',
-          '本站由 SVGlo 贡献者维护。项目以 MIT 许可证开源，转换器基于 visioncortex VTracer 描摹引擎构建。',
+          'SVGlo 支持将 PNG、JPG、JPEG、WebP、GIF 和 BMP 等常见图片快速转换为规范整洁的 SVG 矢量路径，同时也支持将 SVG 图形转回 JPG 或 PNG 位图。所有运算均借助 WebAssembly 和 Canvas 在你的本地设备上高效完成：没有服务器上传接口，不存储任何图片，更无需注册账号。',
+          '本站由 SVGlo 开源贡献者维护。项目遵循 MIT 开源许可协议，核心矢量化能力基于 visioncortex VTracer 引擎构建。',
         ],
       },
       {
         id: 'why',
-        title: '为什么这样设计',
+        title: '设计理念与初衷',
         blocks: [
-          '多数在线转换器会把文件上传到服务器处理，并保留一段时间。这对未发布的徽标、客户素材或受保密协议约束的文件并不合适。本地处理消除了这个取舍：转换能力没有打折，而文件始终不离开你的电脑。',
-          '本站仅通过不打扰阅读的广告维持运营，没有付费版本、水印或转换次数限制。广告位（如有）会清晰标注，并且不会遮挡转换器或操作按钮。',
+          '多数传统在线转换工具都会将用户文件上传至远端服务器进行处理，并在云端保留一段时间。对于未公开的品牌 Logo、客户设计稿或受保密协议保护的文件而言，这存在明显的合规与隐私风险。SVGlo 采用纯前端本地计算，彻底解决了这一痛点：在具备完整专业转换能力的同时，确保源文件始终不离开你的本地设备。',
+          '本站仅依托极简、不打扰操作的广告来维持日常服务器与带宽成本，不存在付费门槛、强制水印或转换配额限制。广告展示（如有）均会有清晰标注，绝不会遮挡转换界面与控制面板。',
         ],
       },
       {
         id: 'contact',
         title: '联系我们',
         blocks: [
-          `问题反馈、缺陷报告和授权咨询请发送至 ${SUPPORT_EMAIL}。你也可以在 GitHub 上阅读源码或提交 issue：${REPO_URL}。`,
+          `问题反馈、缺陷报告与授权咨询欢迎发送邮件至 ${SUPPORT_EMAIL}。你也可以在 GitHub 上查阅源代码或提交 Issue：${REPO_URL}。`,
         ],
       },
     ],
@@ -274,33 +274,33 @@ const chinesePages: Record<LegalPageId, LegalPageCopy> = {
   contact: {
     metaTitle: '联系 SVGlo | 支持与反馈',
     metaDescription: '通过电子邮件联系 SVGlo 团队，反馈问题、提交缺陷、提出隐私请求或咨询授权。',
-    kicker: '联系',
+    kicker: '联系我们',
     title: '联系 SVGlo 团队',
-    lead: '无论是转换问题、隐私请求、缺陷报告，还是其他与本站相关的事项，都欢迎来信。',
+    lead: '无论是转换问题反馈、隐私相关请求、缺陷报告，还是其他与本站相关的事项，都欢迎与我们联系。',
     updated: '最后更新：2026 年 10 月 19 日',
     sections: [
       {
         id: 'email',
-        title: '电子邮件',
-        blocks: [`请发送至 ${SUPPORT_EMAIL}。我们通常会在几个工作日内回复。`],
+        title: '电子邮箱',
+        blocks: [`来信请发送至 ${SUPPORT_EMAIL}。我们通常会在几个工作日内予以回复。`],
       },
       {
         id: 'include',
-        title: '来信请包含',
+        title: '建议包含的信息',
         blocks: [
           [
-            '你使用的页面地址和浏览器。',
-            '如果与转换有关，请说明图片格式和大致尺寸。',
-            '你选择的预设和参数，以及你期望看到的结果。',
+            '你遇到问题时的页面 URL 地址与所使用的浏览器版本。',
+            '若与图片转换效果相关，请说明原始图片格式与大致像素尺寸。',
+            '你所选用的预设与参数设置，以及你期望获得的效果。',
           ],
-          '请不要附上保密素材。SVGlo 从不会收到你的图片，而邮件附件会由邮件服务商存储。',
+          '请不要在邮件中附带机密设计素材。SVGlo 网站本身绝不收集你的图片，但邮件附件会被邮件服务提供商存储。',
         ],
       },
       {
         id: 'privacy-requests',
-        title: '隐私请求',
+        title: '隐私相关请求',
         blocks: [
-          `如需咨询数据处理，或要求删除与你访问相关的分析数据，请发送邮件至 ${SUPPORT_EMAIL}，主题注明“隐私请求”。具体收集内容请参阅隐私政策。`,
+          `如需咨询数据合规处理，或申请删除与你访问相关的分析统计数据，请发送邮件至 ${SUPPORT_EMAIL}，并在主题注明“隐私请求”。具体数据收集范围请查阅隐私政策。`,
         ],
       },
     ],
@@ -308,7 +308,7 @@ const chinesePages: Record<LegalPageId, LegalPageCopy> = {
   privacy: {
     metaTitle: '隐私政策 | SVGlo',
     metaDescription: 'SVGlo 如何处理图片、分析 Cookie 与广告数据。图片在本地处理，从不上传。',
-    kicker: '隐私',
+    kicker: '隐私政策',
     title: '隐私政策',
     lead:
       'SVGlo 遵循一个简单原则：你的图片留在你的设备上。本页说明本站实际处理的少量数据，以及你可以做出的选择。',
@@ -316,15 +316,15 @@ const chinesePages: Record<LegalPageId, LegalPageCopy> = {
     sections: [
       {
         id: 'images',
-        title: '图片与转换结果',
+        title: '图片与转换数据',
         blocks: [
-          '你选择、粘贴或拖入的图片只会在浏览器内解码和矢量化。SVGlo 没有上传接口，不会存储你的图片或转换结果，也不保留转换历史。关闭标签页后，工作副本即被丢弃。',
-          '下载文件由本地生成的 SVG 源码在你的设备上创建，图片的任何信息都不会发送给 SVGlo 或第三方。',
+          '你所拖入、粘贴或选取的图片仅在浏览器沙箱内完成解码与矢量化运算。SVGlo 没有云端上传接口，不会持久化存储你的源图片或转换结果，亦不记录任何转换历史。一旦关闭当前网页标签，所有工作缓存将立即彻底销毁。',
+          '导出的 SVG 或位图文件直接基于本地内存生成并触发下载，图片的任何像素信息都不会发送给 SVGlo 或任何第三方机构。',
         ],
       },
       {
         id: 'analytics',
-        title: '统计分析',
+        title: '访问统计与分析',
         blocks: [
           '在你同意后，SVGlo 使用 Google Analytics 4 了解网站的整体使用情况，例如访问了哪些页面、转换是否成功。Google Analytics 可能设置 _ga、_ga_4ZEZRGHH7R 等 Cookie，并收集 IP 地址、大致位置、设备与浏览器信息以及交互事件。',
           '分析存储默认关闭。首次访问时，横幅以一个统一选择征求同意：选择“全部接受”会允许 Google Analytics Cookie；选择“全部拒绝”后，Google Analytics 不会存储或读取分析 Cookie。你可以随时通过页脚的“Cookie 设置”更改选择。',
@@ -333,7 +333,7 @@ const chinesePages: Record<LegalPageId, LegalPageCopy> = {
       },
       {
         id: 'advertising',
-        title: '广告',
+        title: '广告投放',
         blocks: [
           'SVGlo 可能通过 Google AdSense 展示广告。展示广告时，Google 及其合作伙伴可能使用 Cookie、网络信标、IP 地址和其他标识符来投放和衡量广告，包括基于你此前访问本网站和其他网站的个性化广告。',
           '网站通过 Google Consent Mode 在设置任何广告 Cookie 之前收集这一选择。选择“全部接受”会启用广告 Cookie 和个性化广告；选择“全部拒绝”会关闭广告 Cookie，此时 Google 仍可能展示不使用 Cookie 的有限广告。你可以随时通过页脚的“Cookie 设置”更改选择，在 https://adssettings.google.com 管理个性化广告，并在 https://www.aboutads.info 退出参与供应商的个性化广告。',
@@ -341,7 +341,7 @@ const chinesePages: Record<LegalPageId, LegalPageCopy> = {
       },
       {
         id: 'third-parties',
-        title: '服务提供商',
+        title: '第三方服务提供商',
         blocks: [
           '本站由 Cloudflare 提供托管与加速服务，其会处理 IP 地址、User-Agent 等请求元数据，用于分发内容和防御滥用。Cloudflare Web Analytics 可能在不使用 Cookie 的情况下收集汇总性能数据。',
           'Google Analytics 与 Google AdSense 由 Google LLC 提供，其数据处理受 https://policies.google.com/privacy 约束。',
@@ -349,7 +349,7 @@ const chinesePages: Record<LegalPageId, LegalPageCopy> = {
       },
       {
         id: 'cookies',
-        title: 'Cookie 与本地存储',
+        title: 'Cookie 与本地缓存',
         blocks: [
           'SVGlo 会将你的 Cookie 选择（统计与广告）保存在浏览器本地存储的 svglo-analytics-consent 键中。该值只保留在你的设备上，不会被传输。',
           '除交付页面或记录同意状态所必需的 Cookie 外，分析 Cookie 与广告 Cookie 仅在你同意后设置。',
@@ -359,71 +359,71 @@ const chinesePages: Record<LegalPageId, LegalPageCopy> = {
         id: 'rights',
         title: '你的权利',
         blocks: [
-          '根据你所在地区的法律，你可能有权访问、更正、删除或限制处理个人数据，也有权反对处理或撤回同意。由于 SVGlo 不保存图片或账号，多数请求涉及的是分析数据。',
-          `如需行使上述权利，或对本政策有疑问，请发送邮件至 ${SUPPORT_EMAIL}。你也可以立即使用页脚的“Cookie 设置”撤回分析同意。`,
+          '根据你所在国家或地区的法律法规，你可能拥有访问、更正、删除或限制处理个人数据的权利，亦有权拒绝处理或撤回授权同意。由于 SVGlo 本身不储存任何用户图片或账号信息，绝大多数请求通常仅涉及匿名统计数据。',
+          `如需行使上述权利，或对本政策有疑问，请发送邮件至 ${SUPPORT_EMAIL}。你也可以随时点击页脚的“Cookie 设置”撤回分析授权。`,
         ],
       },
       {
         id: 'children',
-        title: '儿童',
+        title: '未成年人保护',
         blocks: [
-          'SVGlo 是面向一般用户的工具，不面向 13 岁以下儿童，也不会在知情情况下收集儿童的个人信息。',
+          'SVGlo 是面向一般受众的工具，不面向 13 周岁以下儿童，也不会在知情情况下收集儿童的个人信息。',
         ],
       },
       {
         id: 'changes',
         title: '政策变更',
         blocks: [
-          '当网站发生变化（例如启用广告）时，本政策可能会更新。重大变更会通过页面顶部的“最后更新”日期体现。',
+          '当网站功能发生变更（例如启用新服务）时，本政策可能会适时修订。重大变更将通过页面顶部的“最后更新”日期明确标识。',
         ],
       },
     ],
   },
   terms: {
     metaTitle: '使用条款 | SVGlo',
-    metaDescription: '使用 SVGlo 时适用的条款，包括可接受使用、知识产权与免责声明。',
-    kicker: '条款',
+    metaDescription: '使用 SVGlo 时适用的条款，包括使用准则、知识产权归属与免责声明。',
+    kicker: '使用条款',
     title: '使用条款',
-    lead: '以下条款适用于你对 SVGlo 的使用。使用本站即表示你同意这些条款。',
+    lead: '以下使用条款适用于你对 SVGlo 网站及服务的访问与使用。使用本站即代表你知悉并同意本条款。',
     updated: '最后更新：2026 年 10 月 19 日',
     sections: [
       {
         id: 'service',
         title: '服务说明',
         blocks: [
-          'SVGlo 是一款免费的浏览器端图片与 SVG 转换工具，按现状提供，不附带服务等级保证。功能可能调整，网站也可能在维护或故障期间不可用。',
-          '使用本站无需账号。转换在本地运行，因此可用性取决于你的浏览器是否支持 JavaScript、Canvas 和 WebAssembly。',
+          'SVGlo 是一款免费的浏览器端图片与 SVG 转换工具，按“现状”提供，不承诺特定的服务等级保证（SLA）。工具功能可能会适时优化更新，网站亦可能在服务器维护或网络故障期间出现暂时不可用。',
+          '使用本站无需注册账号。转换全流程在本地浏览器中运行，因此其可用性取决于你的浏览器是否正常支持 JavaScript、Canvas 和 WebAssembly。',
         ],
       },
       {
         id: 'acceptable-use',
-        title: '可接受使用',
+        title: '使用规范与合规要求',
         blocks: [
-          '你可以将 SVGlo 用于个人或商业项目。你需要对自己转换的文件负责，并确保拥有使用这些文件的权利。',
-          '请勿使用本站处理违法内容、侵犯版权或商标、传播恶意软件，或试图破坏、过载本服务。',
+          '你可以将 SVGlo 自由用于个人学习或商业项目。你需要对自己转换的文件内容及其合法性负责，并确保拥有使用相应素材的合法权利或授权。',
+          '请勿利用本站处理任何违反法律法规的内容，不得侵犯他人的著作权、商标权等合法权益，亦不得利用本站传播恶意软件或蓄意攻击、破坏站点的正常运行。',
         ],
       },
       {
         id: 'ip',
-        title: '知识产权',
+        title: '知识产权归属',
         blocks: [
-          '你保留对自己图片和所生成文件的全部权利。SVGlo 不对你的内容主张任何所有权。',
-          'SVGlo 网站、品牌与源代码受版权保护，适用部分以 MIT 许可证发布。转换器使用 visioncortex VTracer 引擎，该引擎以 MIT 或 Apache-2.0 许可证分发。',
+          '你保留对自身原始图片及转换生成文件的全部知识产权与所有权，SVGlo 不对你的任何创作内容主张任何权利。',
+          'SVGlo 网站界面设计、品牌标识及源代码受版权法保护，适用部分根据 MIT 开源许可协议发布。图像矢量化转换引擎基于 visioncortex VTracer 构建，该引擎依据 MIT 或 Apache-2.0 许可证分发。',
         ],
       },
       {
         id: 'disclaimer',
         title: '免责声明',
         blocks: [
-          'SVGlo 按“现状”和“可用”状态提供，不作任何明示或暗示的保证，包括对特定用途适用性的保证。矢量化本身是有损的，请在生产使用前检查输出结果。',
-          '在法律允许的最大范围内，SVGlo 贡献者不对因使用本站产生的间接、附带或后果性损害承担责任。',
+          'SVGlo 按“现状”及“现有可用”的基础提供服务，不包含任何明示或暗示的保证，包括但不限于对特定商业用途的适用性保证。由于位图矢量化在算法原理上具有近似有损特性，请务必在投入正式生产或印刷前仔细核验输出效果。',
+          '在法律允许的最大范围内，SVGlo 开发者与开源贡献者不对因使用本站产生的任何间接、附带或后果性损失承担法律责任。',
         ],
       },
       {
         id: 'changes',
         title: '条款变更',
         blocks: [
-          `本条款可能不时更新，当前版本始终发布在本页面。如有疑问，请联系 ${SUPPORT_EMAIL}。`,
+          `本条款可能会不时更新，最新版本将始终发布在本页面上。如有任何疑问，请联系 ${SUPPORT_EMAIL}。`,
         ],
       },
     ],

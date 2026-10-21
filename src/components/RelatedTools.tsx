@@ -10,13 +10,13 @@ export function RelatedTools({ current }: RelatedToolsProps) {
     ? {
         href: localizedPath('/svg-to-png/'),
         label: isChinese ? 'SVG 转 PNG 转换器' : 'SVG to PNG Converter',
-        description: isChinese ? '保留透明区域并导出无损 PNG。' : 'Keep transparent areas and export a lossless PNG.',
+        description: isChinese ? '保留 Alpha 透明通道，导出清晰无损的 PNG 图片。' : 'Keep transparent areas and export a lossless PNG.',
         format: 'PNG',
       }
     : {
         href: localizedPath('/svg-to-jpg/'),
         label: isChinese ? 'SVG 转 JPG 转换器' : 'SVG to JPG Converter',
-        description: isChinese ? '使用所选背景生成紧凑的 JPG。' : 'Create a compact JPG with your chosen background.',
+        description: isChinese ? '自定义背景底色，生成紧凑轻量的 JPG 图片。' : 'Create a compact JPG with your chosen background.',
         format: 'JPG',
       };
 
@@ -36,7 +36,7 @@ export function RelatedTools({ current }: RelatedToolsProps) {
           <span className="related-format">SVG</span>
           <span>
             <strong>{isChinese ? '图片转 SVG 转换器' : 'Image to SVG Converter'}</strong>
-            <small>{isChinese ? '将 PNG、JPG 等图片转换为可编辑矢量图。' : 'Turn PNG, JPG, and other images into editable vectors.'}</small>
+            <small>{isChinese ? '将 PNG、JPG 等位图快速转换为清晰的 SVG 矢量图。' : 'Turn PNG, JPG, and other images into editable vectors.'}</small>
           </span>
           <i aria-hidden>→</i>
         </a>

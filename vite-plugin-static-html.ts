@@ -385,10 +385,10 @@ ${section.paragraphs.map((paragraph) => `          <p>${escapeMarkup(paragraph)}
         <a href="/zh-cn/">图片转 SVG</a>
         <a href="/zh-cn/svg-to-jpg/">SVG 转 JPG</a>
         <a href="/zh-cn/svg-to-png/">SVG 转 PNG</a>
-        <a href="/zh-cn/about/">关于</a>
-        <a href="/zh-cn/contact/">联系</a>
-        <a href="/zh-cn/privacy/">隐私</a>
-        <a href="/zh-cn/terms/">条款</a>
+        <a href="/zh-cn/about/">关于我们</a>
+        <a href="/zh-cn/contact/">联系我们</a>
+        <a href="/zh-cn/privacy/">隐私政策</a>
+        <a href="/zh-cn/terms/">使用条款</a>
         <a href="${tool === 'jpg' ? SVG_TO_JPG_PATH : SVG_TO_PNG_PATH}" lang="en">English</a>
       </nav>
       <main class="seo-shell-main">
@@ -632,12 +632,12 @@ function buildZhCNSeoShell(): string {
       </header>
       <nav class="seo-shell-tools" aria-label="SVGlo 图片转换工具">
         <a href="/zh-cn/">图片转 SVG</a>
-        <a href="/svg-to-jpg/">SVG 转 JPG</a>
-        <a href="/svg-to-png/">SVG 转 PNG</a>
-        <a href="/zh-cn/about/">关于</a>
-        <a href="/zh-cn/contact/">联系</a>
-        <a href="/zh-cn/privacy/">隐私</a>
-        <a href="/zh-cn/terms/">条款</a>
+        <a href="/zh-cn/svg-to-jpg/">SVG 转 JPG</a>
+        <a href="/zh-cn/svg-to-png/">SVG 转 PNG</a>
+        <a href="/zh-cn/about/">关于我们</a>
+        <a href="/zh-cn/contact/">联系我们</a>
+        <a href="/zh-cn/privacy/">隐私政策</a>
+        <a href="/zh-cn/terms/">使用条款</a>
         <a href="/" lang="en">English</a>
       </nav>
       <main class="seo-shell-main">
