@@ -695,9 +695,10 @@ function applyStaticHtml(html: string, origin = siteOrigin()): string {
     return `<html lang="en"${cleaned}>`;
   });
   output = output.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeMarkup(en.meta.title)}</title>`);
+  const adSenseSnippet = buildAdSenseSnippet();
   output = output.replace(
     /<\/head>/i,
-    `    <!-- seo-static-head -->\n    ${buildHeadTags(origin)}\n    <!-- /seo-static-head -->\n  </head>`,
+    `${adSenseSnippet ? `    ${adSenseSnippet}\n` : ''}    <!-- seo-static-head -->\n    ${buildHeadTags(origin)}\n    <!-- /seo-static-head -->\n  </head>`,
   );
 
   const markedShell = `<!--seo-shell-->${buildSeoShell()}<!--/seo-shell-->`;
@@ -769,10 +770,11 @@ function buildRobots(origin: string): string {
 }
 
 /**
- * ads.txt is only emitted when a real publisher ID is supplied at build time,
- * so a placeholder ID can never be deployed by accident.
+ * Read and validate the AdSense publisher ID at build time. Returns null when
+ * unset so a build without the ID ships nothing AdSense-related; a malformed
+ * value fails the build so a typo can never reach production.
  */
-function buildAdsTxt(): string | null {
+function getPublisherId(): string | null {
   const publisherId = process.env.ADSENSE_PUBLISHER_ID?.trim();
   if (!publisherId) return null;
   if (!ADS_TXT_PUBLISHER_RE.test(publisherId)) {
@@ -780,7 +782,27 @@ function buildAdsTxt(): string | null {
       `ADSENSE_PUBLISHER_ID must look like pub-XXXXXXXXXXXXXXXX (16 digits); received "${publisherId}"`,
     );
   }
+  return publisherId;
+}
+
+/**
+ * ads.txt is only emitted when a real publisher ID is supplied at build time,
+ * so a placeholder ID can never be deployed by accident.
+ */
+function buildAdsTxt(): string | null {
+  const publisherId = getPublisherId();
+  if (!publisherId) return null;
   return `google.com, ${publisherId}, DIRECT, f08c47fec0942fa0\n`;
+}
+
+/**
+ * The AdSense site-verification/loader snippet for every page head. The same
+ * publisher ID gates ads.txt, so the two are always deployed together.
+ */
+function buildAdSenseSnippet(): string | null {
+  const publisherId = getPublisherId();
+  if (!publisherId) return null;
+  return `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-${publisherId}" crossorigin="anonymous"></script>`;
 }
 
 function buildLegalHeadTags(page: LegalPageId, targetLocale: Locale, origin = siteOrigin()): string {
@@ -1074,7 +1096,7 @@ export function staticHtmlPlugin(): Plugin {
         }
       }
 
-      console.log(`\n  static HTML: / + ${ZH_CN_PATH} + ${SVG_TO_JPG_PATH} + ${ZH_CN_SVG_TO_JPG_PATH} + ${SVG_TO_PNG_PATH} + ${ZH_CN_SVG_TO_PNG_PATH} + legal pages + 404.html   site: ${origin}${adsTxt ? '' : '   ads.txt: not generated (set ADSENSE_PUBLISHER_ID)'}\n`);
+      console.log(`\n  static HTML: / + ${ZH_CN_PATH} + ${SVG_TO_JPG_PATH} + ${ZH_CN_SVG_TO_JPG_PATH} + ${SVG_TO_PNG_PATH} + ${ZH_CN_SVG_TO_PNG_PATH} + legal pages + 404.html   site: ${origin}${adsTxt ? '   AdSense: enabled' : '   AdSense: not enabled (set ADSENSE_PUBLISHER_ID)'}\n`);
     },
 
     configurePreviewServer(server) {

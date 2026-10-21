@@ -146,11 +146,11 @@ export const en: Messages = {
     svgToPng: 'SVG to PNG',
   },
   consent: {
-    title: 'Cookies and analytics',
+    title: 'Cookies, analytics and ads',
     body:
-      'SVGlo needs no cookie consent to convert images: every file is processed locally and never uploaded. With your permission we also use Google Analytics to understand how the site is used. You can accept or reject analytics at any time.',
-    accept: 'Accept analytics',
-    reject: 'Reject analytics',
+      'SVGlo converts images locally and never uploads your files, so conversion itself needs no consent. With your permission, Google sets cookies for Google Analytics and Google AdSense to measure usage and show ads, including personalized ads based on your activity. If you reject, ads may still appear but without advertising cookies. You can change this choice anytime from the footer.',
+    accept: 'Accept all',
+    reject: 'Reject all',
     privacyLink: 'Privacy policy',
   },
   notFound: {

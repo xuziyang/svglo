@@ -144,11 +144,11 @@ export const zhCN: Messages = {
     svgToPng: 'SVG 转 PNG',
   },
   consent: {
-    title: 'Cookie 与统计分析',
+    title: 'Cookie、统计与广告',
     body:
-      'SVGlo 转换图片本身不需要 Cookie 同意：所有文件都在本地处理，从不上传。在你允许后，我们还会使用 Google Analytics 了解网站的使用情况。你可以随时接受或拒绝统计分析。',
-    accept: '接受统计分析',
-    reject: '拒绝统计分析',
+      'SVGlo 在本地转换图片、从不上传你的文件，转换本身无需同意 Cookie。在你允许后，Google 会设置 Google Analytics 与 Google AdSense 的 Cookie，用于访问统计和展示广告，包括基于你浏览活动的个性化广告。拒绝后广告仍可能展示，但不会使用广告 Cookie。你可以随时通过页脚更改选择。',
+    accept: '全部接受',
+    reject: '全部拒绝',
     privacyLink: '隐私政策',
   },
   notFound: {

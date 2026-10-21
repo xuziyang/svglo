@@ -1,10 +1,10 @@
 /**
- * Consent state for the Google Analytics tag.
+ * Consent state for the Google tag (Analytics + AdSense).
  *
  * The gtag bootstrap in `index.html` runs before React: it reads the stored
  * choice and sends `gtag('consent', 'default', ...)` before the config command,
- * so analytics storage stays denied until the visitor opts in. This module
- * persists later choices and applies them as consent updates.
+ * so analytics and ad storage stay denied until the visitor opts in. This
+ * module persists later choices and applies them as consent updates.
  */
 
 export const CONSENT_STORAGE_KEY = 'svglo-analytics-consent';
@@ -31,12 +31,16 @@ export function readConsent(): AnalyticsConsent | null {
   }
 }
 
-/** Apply Consent Mode signals; advertising storage always stays denied. */
+/**
+ * Apply Consent Mode signals. Accepting the banner opts into both analytics
+ * and personalized advertising; rejecting denies all non-essential signals,
+ * in which case AdSense serves cookie-free limited ads.
+ */
 export function applyConsent(consent: AnalyticsConsent): void {
   gtag('consent', 'update', {
-    ad_storage: 'denied',
-    ad_user_data: 'denied',
-    ad_personalization: 'denied',
+    ad_storage: consent,
+    ad_user_data: consent,
+    ad_personalization: consent,
     analytics_storage: consent,
   });
 }

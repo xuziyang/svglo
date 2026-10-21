@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <!-- Google tag (gtag.js). Consent Mode is set before `config` so analytics
-         storage stays denied until the visitor opts in. -->
+         and advertising storage stay denied until the visitor opts in. -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4ZEZRGHH7R"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -35,11 +35,12 @@
         }
         svgloInternalTraffic = window.localStorage.getItem('svglo-internal-traffic') === '1';
       } catch (e) {}
+      var svgloStorageConsent = svgloConsent === 'granted' ? 'granted' : 'denied';
       gtag('consent', 'default', {
-        ad_storage: 'denied',
-        ad_user_data: 'denied',
-        ad_personalization: 'denied',
-        analytics_storage: svgloConsent === 'granted' ? 'granted' : 'denied'
+        ad_storage: svgloStorageConsent,
+        ad_user_data: svgloStorageConsent,
+        ad_personalization: svgloStorageConsent,
+        analytics_storage: svgloStorageConsent
       });
       gtag('config', 'G-4ZEZRGHH7R', svgloInternalTraffic ? { traffic_type: 'internal' } : {});
     </script>

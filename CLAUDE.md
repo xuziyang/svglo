@@ -153,8 +153,10 @@ dist/
 ```
 
 `ads.txt` is only generated when `ADSENSE_PUBLISHER_ID` is set (format
-`pub-` plus 16 digits). Without it the build omits `ads.txt` and deletes any
-stale copy; never hardcode a placeholder publisher ID.
+`pub-` plus 16 digits). The same env var also injects the `adsbygoogle.js`
+site-verification/loader snippet into every page's `<head>`. Without it the
+build omits both and deletes any stale `ads.txt`; never hardcode a placeholder
+publisher ID.
 
 Unknown paths must remain real 404 responses. Do not add a catch-all SPA
 rewrite.

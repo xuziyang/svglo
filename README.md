@@ -65,14 +65,17 @@ dist/
   assets/...
 ```
 
-`ads.txt` is emitted only when `ADSENSE_PUBLISHER_ID` is set at build time:
+`ads.txt` and the AdSense loader snippet are emitted only when
+`ADSENSE_PUBLISHER_ID` is set at build time:
 
 ```sh
 ADSENSE_PUBLISHER_ID=pub-XXXXXXXXXXXXXXXX npm run build
 ```
 
-Without it, the build leaves `ads.txt` out (and removes a stale one), so a placeholder
-publisher ID can never be deployed by accident.
+With it, the build writes `/ads.txt` and injects the `adsbygoogle.js` site
+verification snippet into every page's `<head>`. Without it, both are left out
+(and any stale `ads.txt` is removed), so a placeholder publisher ID can never
+be deployed by accident.
 
 ### Cloudflare Pages (recommended)
 
@@ -87,6 +90,15 @@ publisher ID can never be deployed by accident.
 - wasm deps are vendored in-repo (`vendor/`), so CI needs no Rust step
 - Build always emits absolute canonical and Open Graph URLs, plus `/robots.txt`, `/sitemap.xml`, and `/404.html`
 - Unknown paths are served as HTTP 404 via `404.html` (Cloudflare Pages / Netlify / Vercel auto-detect this file)
+
+### Google AdSense
+
+1. Sign in at [AdSense](https://www.google.com/adsense/) and add `svglo.com` as a site; copy the publisher ID (`pub-` + 16 digits).
+2. In Cloudflare Pages → Settings → Environment variables, set `ADSENSE_PUBLISHER_ID=pub-...` and redeploy.
+3. Confirm `https://svglo.com/ads.txt` exists and the AdSense snippet appears in the page source, then request review in AdSense.
+4. After approval, enable **Auto ads** in the AdSense dashboard—no code change needed, the existing loader snippet handles it. Manual ad units can be added later.
+
+Consent Mode stays in force: visitors who reject cookies receive cookie-free limited ads only; accepting enables analytics and personalized advertising.
 
 ### English content & SEO
 

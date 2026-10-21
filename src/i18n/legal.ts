@@ -115,7 +115,7 @@ const englishPages: Record<LegalPageId, LegalPageCopy> = {
     title: 'Privacy Policy',
     lead:
       'SVGlo is built around a simple rule: your images stay on your device. This page explains the small amount of data the site does handle, and the choices you have.',
-    updated: 'Last updated: 19 October 2026',
+    updated: 'Last updated: 21 October 2026',
     sections: [
       {
         id: 'images',
@@ -130,7 +130,7 @@ const englishPages: Record<LegalPageId, LegalPageCopy> = {
         title: 'Analytics',
         blocks: [
           'With your consent, SVGlo uses Google Analytics 4 to understand aggregate site usage, such as which pages are visited and whether the converter completes successfully. Google Analytics may set cookies such as _ga and _ga_4ZEZRGHH7R and collect your IP address, approximate location, device and browser information, and interaction events.',
-          'Analytics storage is off by default. When you first visit, a banner asks whether you accept analytics; choosing "Reject analytics" keeps Google Analytics from storing or reading analytics cookies. You can change your choice at any time with the "Cookie settings" link in the footer.',
+          'Analytics storage is off by default. When you first visit, a banner asks for one combined choice: "Accept all" allows Google Analytics cookies, while "Reject all" keeps Google Analytics from storing or reading analytics cookies. You can change your choice at any time with the "Cookie settings" link in the footer.',
           'Google processes this data as described at https://policies.google.com/technologies/partner-sites. You can opt out of Google Analytics across all sites with the Google Analytics opt-out browser add-on.',
         ],
       },
@@ -139,7 +139,7 @@ const englishPages: Record<LegalPageId, LegalPageCopy> = {
         title: 'Advertising',
         blocks: [
           'SVGlo may display advertising through Google AdSense. When ads are shown, Google and its partners may use cookies, web beacons, IP addresses, and other identifiers to serve and measure ads, including personalized ads based on your prior visits to this and other websites.',
-          'Where required, advertising consent is collected before any advertising cookie is set, and the site uses Google Consent Mode so ad and analytics storage stay denied until you agree. You can manage personalized advertising at https://adssettings.google.com and opt out of participating vendors at https://www.aboutads.info.',
+          'The cookie banner collects this choice before any advertising cookie is set, using Google Consent Mode. "Accept all" enables advertising cookies and personalized ads; "Reject all" keeps advertising cookies off, in which case Google may still serve cookie-free limited ads. You can change the choice anytime with the "Cookie settings" link in the footer, manage personalized advertising at https://adssettings.google.com, and opt out of participating vendors at https://www.aboutads.info.',
         ],
       },
       {
@@ -154,7 +154,7 @@ const englishPages: Record<LegalPageId, LegalPageCopy> = {
         id: 'cookies',
         title: 'Cookies and local storage',
         blocks: [
-          'SVGlo stores your analytics choice in your browser\'s local storage under the key svglo-analytics-consent. That value stays on your device and is not transmitted.',
+          'SVGlo stores your cookie choice (analytics and advertising) in your browser\'s local storage under the key svglo-analytics-consent. That value stays on your device and is not transmitted.',
           'Analytics and advertising cookies are only set after you consent, except where a cookie is strictly necessary to deliver the page or to record your consent.',
         ],
       },
@@ -312,7 +312,7 @@ const chinesePages: Record<LegalPageId, LegalPageCopy> = {
     title: '隐私政策',
     lead:
       'SVGlo 遵循一个简单原则：你的图片留在你的设备上。本页说明本站实际处理的少量数据，以及你可以做出的选择。',
-    updated: '最后更新：2026 年 10 月 19 日',
+    updated: '最后更新：2026 年 10 月 21 日',
     sections: [
       {
         id: 'images',
@@ -327,7 +327,7 @@ const chinesePages: Record<LegalPageId, LegalPageCopy> = {
         title: '统计分析',
         blocks: [
           '在你同意后，SVGlo 使用 Google Analytics 4 了解网站的整体使用情况，例如访问了哪些页面、转换是否成功。Google Analytics 可能设置 _ga、_ga_4ZEZRGHH7R 等 Cookie，并收集 IP 地址、大致位置、设备与浏览器信息以及交互事件。',
-          '分析存储默认关闭。首次访问时，横幅会询问你是否接受统计分析；选择“拒绝统计分析”后，Google Analytics 不会存储或读取分析 Cookie。你可以随时通过页脚的“Cookie 设置”更改选择。',
+          '分析存储默认关闭。首次访问时，横幅以一个统一选择征求同意：选择“全部接受”会允许 Google Analytics Cookie；选择“全部拒绝”后，Google Analytics 不会存储或读取分析 Cookie。你可以随时通过页脚的“Cookie 设置”更改选择。',
           'Google 对此类数据的处理方式见 https://policies.google.com/technologies/partner-sites。你也可以安装 Google Analytics 停用浏览器插件，在所有网站上退出统计。',
         ],
       },
@@ -336,7 +336,7 @@ const chinesePages: Record<LegalPageId, LegalPageCopy> = {
         title: '广告',
         blocks: [
           'SVGlo 可能通过 Google AdSense 展示广告。展示广告时，Google 及其合作伙伴可能使用 Cookie、网络信标、IP 地址和其他标识符来投放和衡量广告，包括基于你此前访问本网站和其他网站的个性化广告。',
-          '在适用法律要求的地区，网站会在设置任何广告 Cookie 之前征求同意，并使用 Google Consent Mode，使广告与分析存储在获得同意前保持拒绝状态。你可以在 https://adssettings.google.com 管理个性化广告，并在 https://www.aboutads.info 退出参与供应商的个性化广告。',
+          '网站通过 Google Consent Mode 在设置任何广告 Cookie 之前收集这一选择。选择“全部接受”会启用广告 Cookie 和个性化广告；选择“全部拒绝”会关闭广告 Cookie，此时 Google 仍可能展示不使用 Cookie 的有限广告。你可以随时通过页脚的“Cookie 设置”更改选择，在 https://adssettings.google.com 管理个性化广告，并在 https://www.aboutads.info 退出参与供应商的个性化广告。',
         ],
       },
       {
@@ -351,7 +351,7 @@ const chinesePages: Record<LegalPageId, LegalPageCopy> = {
         id: 'cookies',
         title: 'Cookie 与本地存储',
         blocks: [
-          'SVGlo 会将你的分析选择保存在浏览器本地存储的 svglo-analytics-consent 键中。该值只保留在你的设备上，不会被传输。',
+          'SVGlo 会将你的 Cookie 选择（统计与广告）保存在浏览器本地存储的 svglo-analytics-consent 键中。该值只保留在你的设备上，不会被传输。',
           '除交付页面或记录同意状态所必需的 Cookie 外，分析 Cookie 与广告 Cookie 仅在你同意后设置。',
         ],
       },
