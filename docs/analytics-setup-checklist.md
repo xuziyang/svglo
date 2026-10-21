@@ -16,10 +16,10 @@
 | 增强衡量（页面浏览、滚动、出站点击等） | ✅ 已开启 |
 | Cookie 同意模式（Consent Mode v2） | ✅ 默认拒绝，用户点"接受"后才写 Cookie |
 | GA4 ↔ Search Console 关联 | ✅ 2026-10-20 完成（见下方「已完成：任务 0」） |
-| 业务事件埋点 | ✅ 6 个事件已上线代码（2026-10-20 完成，见下方「已完成：任务 2」），待部署后验证 |
+| 业务事件埋点 | ✅ 6 个事件已上线，并在线上 GA4 Realtime 确认收到（2026-10-20，见下方「已完成：任务 2」） |
 | **关键事件（Key events）** | ❌ 0 个 |
 | 数据保留期 | ✅ 事件数据已设为 14 个月（2026-10-20 完成，见下方「已完成：任务 1」） |
-| **内部流量过滤** | ⚠️ 过滤器建了，但状态是"测试中"，等于没生效 |
+| **内部流量过滤** | ⚠️ 代码侧已支持 `?internal=1` 标记（2026-10-21），GA4 过滤器仍停在"测试中"，待部署 + 切 Active |
 
 ---
 
@@ -287,11 +287,41 @@ convert: (
 
 代码检查：`npm run typecheck`、`npm run build`、`git diff --check`、`node e2e-test.mjs` 全部通过。
 
-### 上线后还要做的验证
+### 上线后的验证（2026-10-20 已完成）
 
-1. 部署后打开 **Reports → Realtime（实时）**，自己操作一遍，看 `Event count by Event name` 里是否出现上面这些事件
-2. 或者用 **Admin → DebugView** 配合「Google Analytics Debugger」插件逐条看参数
-3. 确认无误后再做**任务 3**（把 `conversion_completed` 和 `svg_downloaded` 标成 Key events）
+线上 `https://svglo.com` 已部署含事件的构建（`assets/index-aSdlwDBD.js` 内可检索到全部 6 个事件名）。
+
+**1. 线上 Realtime 确认**（GA4 → Reports → Realtime → `Event count by Event name`）：
+
+```
+conversion_completed    7
+svg_downloaded          3
+raster_tool_downloaded  2
+page_view               5
+user_engagement         5
+scroll                  3
+```
+
+`image_uploaded`、`preset_selected`、`svg_copied` 也各自出现过（不同快照时点的滚动窗口内被挤出列表，属 Realtime 30 分钟窗口的正常表现）。
+
+**2. 参数级校验**（本地 `dist/` + Playwright 拦截 dataLayer，同意为 granted）：
+
+```
+image_uploaded      {"source":"example","file_type":"image/png","file_kb":17}
+conversion_completed{"path_count":6,"duration_ms":38,"preset":"default","trigger":"image"}
+preset_selected     {"preset":"photo"}
+conversion_completed{"path_count":5,"duration_ms":49,"preset":"photo","trigger":"config"}
+svg_copied          {"preset":"photo"}
+svg_downloaded      {"file_kb":9,"preset":"photo"}
+raster_tool_downloaded {"format":"jpg"}
+raster_tool_downloaded {"format":"png"}
+```
+
+**3. 同意门禁**：把 `svglo-analytics-consent` 设为 `denied` 后重复同一串操作，dataLayer 里 **0 条业务事件**，确认 `readConsent()` 门禁生效。
+
+> 验证过程中向 GA4 发送的 `collect` 请求已被拦截并丢弃，未污染生产数据。
+
+**下一步**：确认无误后再做**任务 3**（把 `conversion_completed` 和 `svg_downloaded` 标成 Key events）。
 
 ---
 
@@ -318,6 +348,8 @@ GA4 首页的「Key events」卡片、各种报告里的「转化」列，都只
 3. 切到 **Recent events（最近的事件）** 标签页
 4. 找到 `conversion_completed`，点它左边的星标 ⭐
 5. 对 `svg_downloaded` 重复一次
+
+> ⚠️ **别被“Realtime 有、Recent events 没有”误导。** `Recent events` 列表每天只刷新一次，新事件最长要等 24 小时才会出现。2026-10-20 验证时 Realtime 已经能看到全部业务事件，但该列表里还只有 `first_visit` / `page_view` / `scroll` / `session_start` / `user_engagement` 五个自动事件。这不是埋点失败，等一天再回来标星即可。
 
 ### 怎么验证
 
@@ -362,35 +394,78 @@ GA4 只允许你把事件参数当维度用，前提是先在后台登记。这�
 
 ## 任务 5：让内部流量过滤器真正生效
 
+> **方案已于 2026-10-21 调整。** 原文档写的是"填自己的 IP"，但公网 IP 一直在变，这个做法实际上不可行。已改为使用 GA4 的 `traffic_type` 参数标记：代码侧已完成，GA4 侧还需要手动切一次 Active。
+
 ### 做什么
 
-配置你自己的 IP，并把过滤器从「测试中」切换到「生效」。
+两步：
 
-### 有什么用
+1. 访问一次 `https://svglo.com/?internal=1`，把自己的浏览器标记为内部流量
+2. 把 GA4 的 `Internal Traffic` 过滤器从 **Testing** 切到 **Active**
 
-让你自己、你的同事、你的测试设备的访问**不算进真实数据**。
+### 为什么不用 IP
 
-### 为什么
+GA4 的 Internal traffic 过滤器有两种触发方式：
 
-你每天都会打开网站测试，还会点示例图片、下载文件。这些行为会被当成真实用户，**一旦任务 2 上线，你自己就会变成最活跃的"转化用户"**，直接污染判断。现在流量还小（每天几十人），你一个人的测试就能占到 5%，影响非常明显。
+| 方式 | 实际行为 | 对你适用吗 |
+|---|---|---|
+| 在 GA4 里填 IP / 网段 | GA4 按请求来源 IP 判定 | ❌ IP 一直变，每天要重填 |
+| 页面自己声明 `traffic_type` 参数 | GA4 按事件参数判定 | ✅ 一次设置，长期生效 |
 
-### 怎么做
+实测确认第二种有效：在 `gtag('config', ...)` 里加 `traffic_type: 'internal'` 之后，发往 GA4 的 `collect` 请求会带上 `tt=internal`，**并且自动作用于后续所有事件**（`page_view`、增强衡量事件、自定义业务事件都带）。这正是过滤器匹配的字段。
 
-1. 先查自己的公网 IP：搜索「我的 IP」，记下来（形如 `1.2.3.4`）
-2. GA4 → **Admin → Data collection and modification → Data streams**
-3. 点开 `svglo.com` 数据流 → 右下角 **Configure tag settings（配置代码设置）**
-4. 找到 **Define internal traffic（定义内部流量）** → **Create**
-5. 填规则名称（比如 `My home`），匹配类型选 **IP address equals**，填入你的 IP
-6. 保存后回到 **Admin → Data filters（数据过滤器）**
-7. 找到 **Internal Traffic** 这一行，点进去
-8. 把 **Filter state（过滤器状态）** 从 `Testing` 改成 **`Active`**
-9. 保存
+> 顺带确认：GA4 里那个过滤器当前配置是 `traffic_type` / `internal` / `Exclude`，**参数名和取值都对**，只是状态停在 Testing，所以等于没生效。
 
-> 如果你经常换网络（家里、公司、手机热点），把每个 IP 都加一遍，或者用「IP address contains」填网段。
+### 代码侧已完成（`index.html`）
+
+在 gtag 初始化脚本里读取 `?internal` 参数并写入 localStorage：
+
+| 访问方式 | 结果 |
+|---|---|
+| `/?internal=1` 或 `?internal=true` | 写入 `svglo-internal-traffic=1`，之后所有页面都带 `traffic_type: internal` |
+| `/?internal=0` 或 `?internal=false` | 清除标记，恢复正常统计 |
+| 不带参数 | 不写不改，完全不受影响 |
+
+细节：
+
+- 标记写在 localStorage 的 `svglo-internal-traffic` 键，**换网络、换 IP、重启浏览器都不受影响**
+- 处理完参数后用 `history.replaceState` 把它从地址栏抹掉，避免复制链接时把标记传给别人
+- 其他查询参数（`utm_*` 等）会被保留
+- 读写用 `try/catch` 包裹，无痕模式下不会报错
+
+### 你还需要做的（GA4 后台，约 2 分钟）
+
+1. 部署新版本后，用**你自己的浏览器**访问一次 `https://svglo.com/?internal=1`
+2. GA4 → **Admin → Data collection and modification → Data filters**
+3. 点 **Internal Traffic** 那一行
+4. 把 **Filter state** 从 `Testing` 改成 **`Active`**
+5. 点 **Save**
+
+> ⚠️ 顺序不能反：先访问标记链接，再切 Active。否则从切 Active 到访问链接之间产生的流量仍会被计入。
 
 ### 怎么验证
 
-改完 24 小时后，在 **Admin → Data filters** 里能看到状态是 Active。用你的设备访问网站，第二天在报告里应该看不到自己所在城市的流量。
+**验证代码生效**（随时可做）：
+
+1. 访问 `https://svglo.com/?internal=1`，地址栏里的 `?internal=1` 应自动消失
+2. F12 → Console 输入 `localStorage.getItem('svglo-internal-traffic')`，应返回 `"1"`
+3. 再访问任意其他页面，重复第 2 步，应仍是 `"1"`
+
+**验证 GA4 收到了标记**：
+
+1. F12 → Network 标签，筛选 `collect`
+2. 刷新页面，点开任意一条 `collect` 请求
+3. 请求 URL 里应能看到 `&tt=internal`
+
+**验证过滤器生效**（改完 24 小时后）：
+
+用你的设备访问网站，第二天在报告里看不到自己所在城市的流量。也可以在 **Explore** 里用 `Test data filter name` 维度交叉检查。
+
+### 已知局限
+
+- **只对当前浏览器有效。** 换设备、换浏览器、清空 localStorage 后需要重新访问一次标记链接。
+- **不影响历史数据。** 过滤器只作用于之后进来的数据，之前已记录的测试流量还在。需要的话用 **Admin → Data deletion requests** 单独处理。
+- **不能替代 IP 规则。** 如果有不经过这个浏览器的测试设备（比如手机真机测试），需要在那台设备上也访问一次标记链接。
 
 ---
 
@@ -521,7 +596,7 @@ node e2e-test.mjs   # 端到端冒烟测试（需要装 Chrome）
 | — | ~~任务 1（数据保留期）~~ | ~~2 分钟~~ | ✅ 已完成 2026-10-20 |
 | — | ~~任务 2（业务事件）~~ | ~~1–2 小时~~ | ✅ 代码已完成 2026-10-20，待部署验证 |
 | 3 | 任务 3（关键事件） | 5 分钟 | 高，依赖任务 2 |
-| 4 | 任务 5（内部流量） | 10 分钟 | 高，依赖任务 2 |
+| 4 | 任务 5（内部流量） | 10 分钟 | 高，代码已完成，待部署 + 切 Active |
 | 5 | 任务 7（Bing 站长工具） | 15 分钟 | 高，独立于其他任务 |
 | 6 | 任务 4（自定义维度） | 10 分钟 | 中 |
 | 7 | 任务 6（受众） | 10 分钟 | 中，依赖任务 2 |
