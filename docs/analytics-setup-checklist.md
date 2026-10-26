@@ -185,7 +185,8 @@ GA4 免费版的默认值只有 2 个月，而且**这个设置只对修改之�
 | 事件名 | 什么时候记 | 记录的信息 |
 |---|---|---|
 | `image_uploaded` | 用户选中/拖入/粘贴了一张图 | 用的什么方式（拖拽/粘贴/选择文件/示例图） |
-| `conversion_completed` | 转换完成 | 生成了多少条路径、用了哪个预设、耗时多久、由什么触发 |
+| `conversion_completed` | 一张图的**首次**转换成功（新图或重试） | 生成了多少条路径、用了哪个预设、耗时多久、由什么触发 |
+| `conversion_adjusted` | 同一张图因调参而重转换成功 | 同上 |
 | `svg_downloaded` | 点了「下载 SVG」 | 文件大小 |
 | `svg_copied` | 点了「复制 SVG」 | — |
 | `preset_selected` | 切换了预设（推荐/B&W/海报/照片/像素） | 哪个预设 |
@@ -231,7 +232,8 @@ export function trackEvent(name: string, params: EventParams = {}): void {
 | `preset_selected` | `handlePreset` 开头 | `preset` |
 | `svg_downloaded` | `handleDownload` 末尾 | `file_kb`、`preset` |
 | `svg_copied` | `handleCopy` 复制成功之后 | `preset` |
-| `conversion_completed` | `reportConversion` 回调 | `path_count`、`duration_ms`、`preset`、`trigger` |
+| `conversion_completed` | `reportConversion` 回调，每张图仅首次 | `path_count`、`duration_ms`、`preset`、`trigger` |
+| `conversion_adjusted` | `reportConversion` 回调，同图后续重转换 | 同上 |
 
 `file_kb` 直接用 `handleDownload` 里已经创建好的 `blob`，不再重新 `new Blob(...)` 算一次。
 
@@ -263,6 +265,8 @@ convert: (
 - 想看真实首次转换：在 Explore 里筛 `trigger = image`
 - 想看用户调参强度：对比 `trigger = config` 的次数
 
+> **2026-10-26 修正**：`trigger` 参数不足以修正 Key event 计数——GA4 的 Key event 是按事件名统计的，不能按参数过滤。上线后实测 90 天 `conversion_completed` 2,715 次 / `image_uploaded` 360 次 ≈ 每次上传 7.5 次，触发过转换的 207 人平均 13.1 次。现在改为：`App.tsx` 用 `conversionReportedRef` 记录当前图是否已成功转换过，首次成功发 `conversion_completed`，之后同图的调参重转换发 `conversion_adjusted`（参数相同）。换图（`handleImage`）和离开工作区（`imageSrc` 变为空）时重置该标记。这样 `conversion_completed` 保持「每张图一次」，可以直接当 Key event 用；调参强度改用 `conversion_adjusted` 观察。
+
 > 注意：`path_count` 是数字。任务 4 里如果要按平均路径数做计算，应该建成 Custom metric 而不是 Custom dimension。
 
 #### 5. JPG / PNG 工具页
@@ -278,7 +282,7 @@ convert: (
 | 点「示例图片」 | `image_uploaded {source: "example", file_type: "image/png", file_kb: 17}` |
 | 同上，转换结束 | `conversion_completed {path_count: 6, duration_ms: 37, preset: "default", trigger: "image"}` |
 | 切到「照片」预设 | `preset_selected {preset: "photo"}` |
-| 同上，重转换结束 | `conversion_completed {path_count: 5, duration_ms: 60, preset: "photo", trigger: "config"}` |
+| 同上，重转换结束 | `conversion_adjusted {path_count: 5, duration_ms: 60, preset: "photo", trigger: "config"}` |
 | 点「复制 SVG」 | `svg_copied {preset: "photo"}` |
 | 点「下载 SVG」 | `svg_downloaded {file_kb: 9, preset: "photo"}` |
 | SVG 转 JPG 页下载 | `raster_tool_downloaded {format: "jpg"}` |
@@ -323,11 +327,34 @@ raster_tool_downloaded {"format":"png"}
 
 **下一步**：确认无误后再做**任务 3**（把 `conversion_completed` 和 `svg_downloaded` 标成 Key events）。
 
+### 重复触发修正与 Key events 上线（2026-10-26）
+
+**1. 问题确认**：GA4 属性 `p558468756`（svglo.com）90 天数据显示 `conversion_completed` 2,715 次、触发用户 207 人，人均 13.1 次；同期 `image_uploaded` 只有 360 次，即每次上传约产生 7.5 次 `conversion_completed`。原因是参数防抖重转换也会上报同名事件，而 GA4 的 Key event 无法按 `trigger` 参数过滤。
+
+**2. 修复**：`src/App.tsx` 新增 `conversionReportedRef`。每张图只有首次转换成功记 `conversion_completed`；同图后续调参重转换记 `conversion_adjusted`（参数完全相同，含 `trigger`）。`handleImage`（换图）和 `imageSrc` 清空（离开工作区）时重置标记。
+
+**3. 验证**（本地 `dist/` + Playwright 拦截 dataLayer）：
+
+| 操作 | 结果 |
+|---|---|
+| 加载示例图 | `conversion_completed` × 1，`trigger: "image"` |
+| 连续调参 7 次（越过 300ms 防抖） | `conversion_completed` 仍为 1，`conversion_adjusted` × 1 |
+| 3 次独立调参 | `conversion_adjusted` × 3 |
+| 替换为第二张图 | `conversion_completed` 变为 2，均为 `trigger: "image"` |
+
+`npm run typecheck`、`npm run build`、`git diff --check`、`node e2e-test.mjs` 全部通过。
+
+**4. Key events**：已在 GA4 Admin → Events 把 `conversion_completed` 和 `svg_downloaded` 打星，Key events 列表现为 `conversion_completed`、`svg_downloaded`（另有历史遗留的 `purchase`，无数据流）。
+
+**5. 遗留**：历史数据里 2026-10-26 之前的 `conversion_completed` 仍是被放大的计数，跨该日期的转化率对比不可用。如需按用户数算转化率，用「触发过 `conversion_completed` 的用户数」而不是事件数。`conversion_adjusted` 目前未标 Key event，按需在 GA4 里查看即可。
+
 ---
 
 # 待办任务
 
-## 任务 3：把重要事件标记为「关键事件」
+## 任务 3：把重要事件标记为「关键事件」 ✅ 2026-10-26 已完成
+
+> 已完成：`conversion_completed` 与 `svg_downloaded` 已在 Admin → Events 打星。标记前先修了 `conversion_completed` 的重复上报（见上文「重复触发修正与 Key events 上线」）。下面保留原始步骤供参考。
 
 ### 做什么
 

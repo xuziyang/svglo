@@ -27,6 +27,10 @@ export default function App() {
   const presetRef = useRef<PresetId>('default');
   const hasImageRef = useRef(false);
   const urlRef = useRef<string | null>(null);
+  // Whether the current image has already produced a successful conversion.
+  // Parameter tweaks re-convert many times per image, so only the first success
+  // is a `conversion_completed`; later runs are reported as adjustments.
+  const conversionReportedRef = useRef(false);
 
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [imageDims, setImageDims] = useState<{ w: number; h: number } | null>(null);
@@ -40,12 +44,15 @@ export default function App() {
     presetRef.current = selectedPresetId;
   }, [config, selectedPresetId]);
 
-  // Report a finished conversion. `trigger` separates the first run on a new
-  // image from the re-runs caused by parameter tweaks, so the two can be told
-  // apart in GA4 even though both share one event name.
+  // Report a finished conversion. A new image counts once: its first success is
+  // `conversion_completed` and the re-runs caused by parameter tweaks are
+  // `conversion_adjusted`. Both are sent separately so the key event stays
+  // one-per-image; `trigger` still distinguishes retries from first runs.
   const reportConversion = useCallback(
     (info: ConvertResult) => {
-      trackEvent('conversion_completed', {
+      const eventName = conversionReportedRef.current ? 'conversion_adjusted' : 'conversion_completed';
+      conversionReportedRef.current = true;
+      trackEvent(eventName, {
         path_count: info.pathCount,
         duration_ms: info.durationMs,
         preset: presetRef.current,
@@ -62,6 +69,8 @@ export default function App() {
       return;
     }
     hasImageRef.current = true;
+    // Each image gets its own first successful conversion.
+    conversionReportedRef.current = false;
     const img = new Image();
     img.onload = () => {
       const canvas = canvasRef.current;
